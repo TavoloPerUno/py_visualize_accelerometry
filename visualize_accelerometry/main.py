@@ -64,10 +64,10 @@ def make_plot(srs, colsource, title):
 
 
     lst_col = ['x', 'y', 'z']  # + df_signal.columns.difference(['timestamp', 'x', 'y', 'z']).tolist()
-
+    lst_line_plots = []
     for (colr, leg) in zip(lst_colors, lst_col):
-        p.line('timestamp', leg, color=colr, legend_label=leg, source=colsource, name='wave')
-        p.scatter('timestamp', leg, color=None, legend_label=leg, source=colsource, name='wave')
+        lst_line_plots.append(p.line('timestamp', leg, color=colr, legend_label=leg, source=colsource, name='wave'))
+        p.scatter('timestamp', leg, color=None, legend_label=leg, source=colsource, name='wave', visible=False)
 
     p.xaxis.formatter = DatetimeTickFormatter(days=["%m/%d %H:%M"],
                                               months=["%m/%d %H:%M"],
@@ -75,6 +75,7 @@ def make_plot(srs, colsource, title):
                                               minutes=["%m/%d %H:%M"])
     hover = p.select(dict(type=HoverTool))
     hover.tooltips = [("timestamp", "@timestamp_str")]
+    hover.renderers = lst_line_plots
 
     select = figure(title="Drag the middle and edges of the selection box to change the range above",
                     plot_height=130, y_range=p.y_range,
@@ -223,20 +224,24 @@ def update_selection(attr, old, new):
     selected_indices = colsource.selected.indices
     print("Selected indices are")
     print(selected_indices)
-    min_index = min(selected_indices)
-    max_index = max(selected_indices)
+    df_selected_data = pd.DataFrame(columns=['timestamp',
+                                             'timestamp_str',
+                                             'x', 'y', 'z'])
+    if bool(selected_indices):
+        min_index = min(selected_indices)
+        max_index = max(selected_indices)
 
-    df_selected_data = pd.DataFrame({'timestamp': [colsource.data['timestamp'][min_index],
-                                                   colsource.data['timestamp'][max_index]],
-                                     'timestamp_str': [colsource.data['timestamp_str'][min_index],
-                                                        colsource.data['timestamp_str'][max_index]],
-                                     'x': [colsource.data['x'][min_index],
-                                           colsource.data['x'][max_index]],
-                                     'y': [colsource.data['y'][min_index],
-                                           colsource.data['y'][max_index]],
-                                     'z': [colsource.data['z'][min_index],
-                                           colsource.data['z'][max_index]]
-                                     })
+        df_selected_data = pd.DataFrame({'timestamp': [colsource.data['timestamp'][min_index],
+                                                       colsource.data['timestamp'][max_index]],
+                                         'timestamp_str': [colsource.data['timestamp_str'][min_index],
+                                                            colsource.data['timestamp_str'][max_index]],
+                                         'x': [colsource.data['x'][min_index],
+                                               colsource.data['x'][max_index]],
+                                         'y': [colsource.data['y'][min_index],
+                                               colsource.data['y'][max_index]],
+                                         'z': [colsource.data['z'][min_index],
+                                               colsource.data['z'][max_index]]
+                                         })
     new_selected = bp.ColumnDataSource(df_selected_data)
     selected_data.data.update(new_selected.data)
     # selected_data.change.emit()
