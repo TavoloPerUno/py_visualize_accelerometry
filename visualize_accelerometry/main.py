@@ -102,7 +102,7 @@ def make_plot(srs, colsource, title):
 
 pdf_results = pd.DataFrame(columns=['fname', 'artifact', 'start_time', 'end_time', 'start_time_str', 'end_time_str'])
 
-selected_data = ColumnDataSource(data=dict(timestamp=[], x=[], y=[], z=[]))
+selected_data = ColumnDataSource(data=dict(timestamp=[], timestamp_str=[], x=[], y=[], z=[]))
 annotations = ColumnDataSource(data=dict())
 
 lst_fnames = get_filenames()
@@ -229,13 +229,13 @@ def update_selection(attr, old, new):
     df_selected_data = pd.DataFrame({'timestamp': [colsource.data['timestamp'][min_index],
                                                    colsource.data['timestamp'][max_index]],
                                      'timestamp_str': [colsource.data['timestamp_str'][min_index],
-                                                   colsource.data['timestamp_str'][max_index]],
-                                     'X': [colsource.data['x'][min_index],
-                                                       colsource.data['x'][max_index]],
-                                     'Y': [colsource.data['y'][min_index],
-                                                       colsource.data['y'][max_index]],
-                                     'Z': [colsource.data['z'][min_index],
-                                                       colsource.data['z'][max_index]]
+                                                        colsource.data['timestamp_str'][max_index]],
+                                     'x': [colsource.data['x'][min_index],
+                                           colsource.data['x'][max_index]],
+                                     'y': [colsource.data['y'][min_index],
+                                           colsource.data['y'][max_index]],
+                                     'z': [colsource.data['z'][min_index],
+                                           colsource.data['z'][max_index]]
                                      })
     new_selected = bp.ColumnDataSource(df_selected_data)
     selected_data.data.update(new_selected.data)
