@@ -115,8 +115,8 @@ selected_date_title = Div(text="<b>Selected segment bounds</b>")
 
 
 columns = [
-         TableColumn(field="timestamp", title="Timestamp"),
-        TableColumn(field="timestamp_str", title="Timestamp (pretty)"),
+         TableColumn(field="timestamp", title="Epoch"),
+        TableColumn(field="timestamp_str", title="Timestamp"),
          TableColumn(field="x", title="X"),
          TableColumn(field="y", title="Y"),
          TableColumn(field="z", title="Z"),]
@@ -181,23 +181,32 @@ def update_plot(attrname, old, new):
 
     btn_chairstand.label = btn_chairstand.label.replace(' (done)', '')
     btn_3m_walk.label = btn_3m_walk.label.replace(' (done)', '')
+    colsource.selected.indices = []
 
 
 def mark_chairstand():
     global pdf_results
     selected_indices = colsource.selected.indices
+
     pdf_results = pdf_results.loc[~((pdf_results['fname'] == file_picker.value) &
                                     (pdf_results['artifact'] == 'chair_stand'))]
-    pdf_results = pdf_results.append(pd.DataFrame({'fname': file_picker.value,
-                                                   'artifact': 'chair_stand',
-                                                   'start_time': colsource.data['timestamp'][selected_indices[0]],
-                                                   'end_time': colsource.data['timestamp'][selected_indices[-1]],
-                                                   'start_time_str': colsource.data['timestamp_str'][selected_indices[0]],
-                                                   'end_time_str': colsource.data['timestamp_str'][selected_indices[-1]],
-                                                   }, index=[0]))
+    if bool(selected_indices):
+        min_index = min(selected_indices)
+        max_index = max(selected_indices)
+        pdf_results = pdf_results.append(pd.DataFrame({'fname': file_picker.value,
+                                                       'artifact': 'chair_stand',
+                                                       'start_time': colsource.data['timestamp'][min_index],
+                                                       'end_time': colsource.data['timestamp'][max_index],
+                                                       'start_time_str': colsource.data['timestamp_str'][min_index],
+                                                       'end_time_str': colsource.data['timestamp_str'][max_index],
+                                                       }, index=[0]))
+        if not btn_chairstand.label.endswith('(done)') & bool:
+            btn_chairstand.label = btn_chairstand.label + ' (done)'
+    else:
+        btn_chairstand.label = btn_chairstand.label.replace(' (done)', '')
+
     annotations.data.update(bp.ColumnDataSource(pdf_results).data)
-    if not btn_chairstand.label.endswith('(done)'):
-        btn_chairstand.label = btn_chairstand.label + ' (done)'
+
 
 def clear_selection():
     colsource.selected.indices = []
@@ -207,23 +216,27 @@ def mark_3m_walk():
     selected_indices = colsource.selected.indices
     pdf_results = pdf_results.loc[~((pdf_results['fname'] == file_picker.value) &
                                     (pdf_results['artifact'] == '3m_walk'))]
-    pdf_results = pdf_results.append(pd.DataFrame({'fname': file_picker.value,
-                                                   'artifact': '3m_walk',
-                                                   'start_time': colsource.data['timestamp'][selected_indices[0]],
-                                                   'end_time': colsource.data['timestamp'][selected_indices[-1]],
-                                                   'start_time_str': colsource.data['timestamp_str'][
-                                                       selected_indices[0]],
-                                                   'end_time_str': colsource.data['timestamp_str'][
-                                                       selected_indices[-1]],
-                                                   }, index=[0]))
+
+    if bool(selected_indices):
+        min_index = min(selected_indices)
+        max_index = max(selected_indices)
+
+        pdf_results = pdf_results.append(pd.DataFrame({'fname': file_picker.value,
+                                                       'artifact': '3m_walk',
+                                                       'start_time': colsource.data['timestamp'][min_index],
+                                                       'end_time': colsource.data['timestamp'][max_index],
+                                                       'start_time_str': colsource.data['timestamp_str'][min_index],
+                                                       'end_time_str': colsource.data['timestamp_str'][max_index],
+                                                       }, index=[0]))
+        if not btn_3m_walk.label.endswith('(done)'):
+            btn_3m_walk.label = btn_3m_walk.label + ' (done)'
+    else:
+        btn_3m_walk.label = btn_3m_walk.label.replace(' (done)', '')
     annotations.data.update(bp.ColumnDataSource(pdf_results).data)
-    if not btn_3m_walk.label.endswith('(done)'):
-        btn_3m_walk.label = btn_3m_walk.label + ' (done)'
+
 
 def update_selection(attr, old, new):
     selected_indices = colsource.selected.indices
-    print("Selected indices are")
-    print(selected_indices)
     df_selected_data = pd.DataFrame(columns=['timestamp',
                                              'timestamp_str',
                                              'x', 'y', 'z'])
@@ -244,8 +257,6 @@ def update_selection(attr, old, new):
                                          })
     new_selected = bp.ColumnDataSource(df_selected_data)
     selected_data.data.update(new_selected.data)
-    # selected_data.change.emit()
-    # table.change.emit()
 
 
 ### Callback registrations
