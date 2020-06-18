@@ -200,7 +200,7 @@ def mark_chairstand():
                                                        'start_time_str': colsource.data['timestamp_str'][min_index],
                                                        'end_time_str': colsource.data['timestamp_str'][max_index],
                                                        }, index=[0]))
-        if not btn_chairstand.label.endswith('(done)') & bool:
+        if not btn_chairstand.label.endswith('(done)'):
             btn_chairstand.label = btn_chairstand.label + ' (done)'
     else:
         btn_chairstand.label = btn_chairstand.label.replace(' (done)', '')
