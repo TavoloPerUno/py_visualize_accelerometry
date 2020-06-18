@@ -219,6 +219,29 @@ def mark_3m_walk():
     if not btn_3m_walk.label.endswith('(done)'):
         btn_3m_walk.label = btn_3m_walk.label + ' (done)'
 
+def update_selection(attr, old, new):
+    selected_indices = colsource.selected.indices
+    print("Selected indices are")
+    print(selected_indices)
+    min_index = min(selected_indices)
+    max_index = max(selected_indices)
+
+    df_selected_data = pd.DataFrame({'timestamp': [colsource.data['timestamp'][min_index],
+                                                   colsource.data['timestamp'][max_index]],
+                                     'timestamp_str': [colsource.data['timestamp_str'][min_index],
+                                                   colsource.data['timestamp_str'][max_index]],
+                                     'X': [colsource.data['x'][min_index],
+                                                       colsource.data['x'][max_index]],
+                                     'Y': [colsource.data['y'][min_index],
+                                                       colsource.data['y'][max_index]],
+                                     'Z': [colsource.data['z'][min_index],
+                                                       colsource.data['z'][max_index]]
+                                     })
+    new_selected = bp.ColumnDataSource(df_selected_data)
+    selected_data.data.update(new_selected.data)
+    selected_data.change.emit()
+    table.change.emit()
+
 
 ### Callback registrations
 
@@ -228,34 +251,36 @@ btn_clear_selection.on_click(clear_selection)
 btn_export.js_on_click(CustomJS(args=dict(source=annotations),
                             code=open(os.path.join(os.path.dirname(__file__), 'js', "download.js")).read()))
 file_picker.on_change('value', update_plot)
-colsource.selected.js_on_change(
-    "indices",
-    CustomJS(
-        args=dict(s1=colsource, s2=selected_data, table=table),
-        code="""
-        var inds = cb_obj.indices;
-        var d1 = s1.data;
-        var d2 = s2.data;
-        d2['timestamp'] = []
-        d2['x'] = []
-        d2['y'] = []
-        d2['z'] = []
-        d2['timestamp_str'] = []
-        d2['timestamp'].push(d1['timestamp'][inds[0]])
-        d2['timestamp_str'].push(d1['timestamp_str'][inds[0]])
-        d2['x'].push(d1['x'][inds[0]])
-        d2['y'].push(d1['y'][inds[0]])
-        d2['z'].push(d1['z'][inds[0]])
-        d2['timestamp'].push(d1['timestamp'][inds[inds.length-1]])
-        d2['x'].push(d1['x'][inds[inds.length-1]])
-        d2['y'].push(d1['y'][inds[inds.length-1]])
-        d2['z'].push(d1['z'][inds[inds.length-1]])
-        d2['timestamp_str'].push(d1['timestamp_str'][inds[inds.length-1]])
-        s2.change.emit();
-        table.change.emit();
-    """,
-    ),
-)
+
+colsource.selected.on_change("indices", update_selection)
+# colsource.selected.js_on_change(
+#     "indices",
+#     CustomJS(
+#         args=dict(s1=colsource, s2=selected_data, table=table),
+#         code="""
+#         var inds = cb_obj.indices;
+#         var d1 = s1.data;
+#         var d2 = s2.data;
+#         d2['timestamp'] = []
+#         d2['x'] = []
+#         d2['y'] = []
+#         d2['z'] = []
+#         d2['timestamp_str'] = []
+#         d2['timestamp'].push(d1['timestamp'][inds[0]])
+#         d2['timestamp_str'].push(d1['timestamp_str'][inds[0]])
+#         d2['x'].push(d1['x'][inds[0]])
+#         d2['y'].push(d1['y'][inds[0]])
+#         d2['z'].push(d1['z'][inds[0]])
+#         d2['timestamp'].push(d1['timestamp'][inds[inds.length-1]])
+#         d2['x'].push(d1['x'][inds[inds.length-1]])
+#         d2['y'].push(d1['y'][inds[inds.length-1]])
+#         d2['z'].push(d1['z'][inds[inds.length-1]])
+#         d2['timestamp_str'].push(d1['timestamp_str'][inds[inds.length-1]])
+#         s2.change.emit();
+#         table.change.emit();
+#     """,
+#     ),
+# )
 
 ### Layout
 
