@@ -1,4 +1,6 @@
-data
+data/*
+!data/.gitkeep
+!data/output/.gitkeep
 visualize_accelerometry/data
 .idea
 .DS_Store
