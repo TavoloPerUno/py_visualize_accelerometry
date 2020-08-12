@@ -82,7 +82,7 @@ def get_filedata():
                                                                            ))
                                              ).set_index('timestamp', sorted=True)
         # df_signal['timestamp'] = df_signal['timestamp']
-        lst_timestamps = df_signal.index.tolist()
+        lst_timestamps = df_signal.index.compute().tolist()
         lst_columns = [df_signal.index.name] + df_signal.columns
     anchor_timestamp = float(lst_timestamps[0])
     time_input.value = datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
