@@ -1,6 +1,6 @@
 import pandas as pd
 import dask.dataframe as dd
-from dask.distributed import Client
+from dask.distributed import Client, LocalCluster
 import sys
 import os
 from datetime import datetime, date
@@ -25,11 +25,11 @@ from bokeh.plotting import figure, curdoc
 from bokeh.models.widgets import Button,  Dropdown
 from bokeh.layouts import column, widgetbox
 
-sys.path.append('../')
-import visualize_accelerometry.config as config
+# sys.path.append('../')
+from . import config
 #### Constants
 
-client = Client(config.computation_resources['cluster_ip'])
+client = Client() if (config.computation_resources['mode'] == 'local') else Client(config.computation_resources['cluster_ip'])
 client.restart()
 url = 'https://users.rcc.uchicago.edu/~manorathan/wave4/30_min_segments'
 lst_colors = ['red', 'blue', 'green', 'yellow', 'violet']
@@ -58,7 +58,7 @@ def get_filedata():
     global lst_columns
     global windowsize
     print("Loading {0}".format(fname))
-    if config.computation_resources.mode == 'local':
+    if config.computation_resources['mode'] == 'local':
         cmd_timestamp_read = 'cut -d"," -f1 "{0}" | tail -n +2'.format(fname)
         cmd_columnheader_read = 'head -n 1 "{0}"'.format(fname)
         cmd_read_first_timestamp = 'head -n 2 "{0}" | tail -n 1 |'.format(fname) + r"""awk 'BEGIN{FS=","} {print $1}'"""
@@ -111,7 +111,7 @@ def update_datasources():
     global fname
     global windowsize
     df_signal_to_display = pd.DataFrame()
-    if config.computation_resources.mode == 'local':
+    if config.computation_resources['mode'] == 'local':
         min_timestamp_index = next(x[0] for x in enumerate(lst_timestamps) if float(x[1]) > anchor_timestamp - (windowsize/2)) + 1
         min_timestamp_index = max(2, min_timestamp_index)
         max_timestamp_index = next(x[0] for x in enumerate(lst_timestamps) if float(x[1]) > anchor_timestamp + (windowsize/2))
