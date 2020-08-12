@@ -35,3 +35,5 @@ tornado==6.0.4
 typing-extensions==3.7.4.1
 urllib3==1.25.9
 zict==2.0.0
+dask==2.22.0
+dask.distributed=2.20.0

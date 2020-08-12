@@ -1,0 +1,9 @@
+data
+visualize_accelerometry/data
+.idea
+.DS_Store
+visualize_accelerometry/__pycache__
+__pycache__/
+.ipynb_checkpoints
+scratch_books/
+logs/
