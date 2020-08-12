@@ -125,9 +125,8 @@ def update_datasources():
                                                                                        errors='coerce'))
                                                             for col in lst_columns]))
     else:
-        df_signal_to_display = df_signal.loc[df_signal.index.between((anchor_timestamp - (windowsize/2)),
-                                                                     (anchor_timestamp + (windowsize/2)),
-                                                                     inclusive=True)].compute()
+        df_signal_to_display = df_signal.loc[(df_signal.index >= ((anchor_timestamp - (windowsize/2)))) &
+                                             (df_signal.index <= (anchor_timestamp + (windowsize/2)))].compute()
         df_signal_to_display = df_signal_to_display.reset_index(drop=False)
         df_signal_to_display = df_signal_to_display.sort_values(by='timestamp', ascending=True)
     df_signal_to_display = df_signal_to_display.assign(
