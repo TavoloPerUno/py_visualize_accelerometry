@@ -407,7 +407,7 @@ def mark_3m_walk():
 def update_anchor_timestamp(attr, old, new):
     global anchor_timestamp
     try:
-        anchor_timestamp = datetime.strptime(str(time_input.value), '%b %d %Y %I:%M %p').timestamp()
+        anchor_timestamp = (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()
         # update_plot()
     except Exception as ex:
         print(ex)
