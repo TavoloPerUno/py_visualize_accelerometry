@@ -4,6 +4,7 @@ from dask.distributed import Client, LocalCluster
 import sys
 import os
 from datetime import datetime, date
+import time
 import subprocess
 
 from bs4 import BeautifulSoup
@@ -71,7 +72,6 @@ def get_filedata():
         # anchor_timestamp = anchor_timestamp.decode("utf-8").replace("\n", "")
         process = subprocess.Popen(cmd_timestamp_read, stdout=subprocess.PIPE, shell=True)
         timestamp_output = process.communicate()[0]
-        lst_timestamps = []
         lst_timestamps = timestamp_output.decode("utf-8").replace('"', '').split("\n")
     else:
         client.restart()
@@ -86,6 +86,9 @@ def get_filedata():
         lst_columns = [df_signal.index.name] + df_signal.columns
     anchor_timestamp = float(lst_timestamps[0])
     time_input.value = datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
+    print("Anchor timestamp: {0}".format(anchor_timestamp))
+    print("Anchor timestamp (str): {0}".format(int(time.mktime(time.strptime(anchor_timestamp, '%b %d %Y %I:%M %p')))))
+
     windowsize = 3600
     windowsize_input.value = str(windowsize)
 
@@ -138,6 +141,7 @@ def update_datasources():
     print("Column datatypes:")
     print(df_signal_to_display.head().dtypes)
     print("Anchor timestamp: {0}".format(anchor_timestamp))
+    print("Anchor timestamp (str): {0}".format(int(time.mktime(time.strptime(anchor_timestamp, '%b %d %Y %I:%M %p')))))
     print("N rows:{0}".format(df_signal_to_display.shape[0]))
     dates = df_signal_to_display['timestamp'].values
     source = bp.ColumnDataSource(df_signal_to_display)
