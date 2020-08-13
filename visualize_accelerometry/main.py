@@ -75,7 +75,7 @@ def get_filedata():
         lst_timestamps = timestamp_output.decode("utf-8").replace('"', '').split("\n")
     else:
         client.restart()
-        df_signal = dd.read_csv(fname)
+        df_signal = dd.read_csv(fname, dtype='object')
         df_signal = df_signal.map_partitions(lambda pdf: pdf.assign(**dict([(col, pd.to_numeric(pdf[col],
                                                                                                 errors='coerce'))
                                                                             for col in pdf.columns]
