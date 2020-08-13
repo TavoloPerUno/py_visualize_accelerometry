@@ -63,7 +63,6 @@ def get_filedata():
         cmd_timestamp_read = 'cut -d"," -f1 "{0}" | tail -n +2'.format(fname)
         cmd_columnheader_read = 'head -n 1 "{0}"'.format(fname)
         cmd_read_first_timestamp = 'head -n 2 "{0}" | tail -n 1 |'.format(fname) + r"""awk 'BEGIN{FS=","} {print $1}'"""
-
         process = subprocess.Popen(cmd_columnheader_read, stdout=subprocess.PIPE, shell=True)
         lst_columns = process.communicate()[0]
         lst_columns = lst_columns.decode("utf-8").replace("\n", "").replace('"', '').split(",")
@@ -74,7 +73,7 @@ def get_filedata():
         timestamp_output = process.communicate()[0]
         lst_timestamps = timestamp_output.decode("utf-8").replace('"', '').split("\n")
     else:
-        client.restart()
+        # client.restart()
         df_signal = dd.read_csv(fname, dtype='object')
         df_signal = df_signal.map_partitions(lambda pdf: pdf.assign(**dict([(col, pd.to_numeric(pdf[col],
                                                                                                 errors='coerce'))
@@ -87,12 +86,9 @@ def get_filedata():
     anchor_timestamp = float(lst_timestamps[0])
     time_input.value = datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
     print("Anchor timestamp: {0}".format(anchor_timestamp))
-    print("Anchor timestamp (str): {0}".format(int(time.mktime(time.strptime(time_input.value, '%b %d %Y %I:%M %p')))))
-
+    print("Anchor timestamp (str): {0}".format((datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()))
     windowsize = 3600
     windowsize_input.value = str(windowsize)
-
-
     # df_signal = dd.read_csv(fname) #, parse_dates=['timestamp']) #.set_index('timestamp', sorted=True)
     # # print("First few rows in the loaded file:")
     # # print(df_signal.head())
@@ -141,7 +137,8 @@ def update_datasources():
     print("Column datatypes:")
     print(df_signal_to_display.head().dtypes)
     print("Anchor timestamp: {0}".format(anchor_timestamp))
-    print("Anchor timestamp (str): {0}".format(int(time.mktime(time.strptime(time_input.value, '%b %d %Y %I:%M %p')))))
+    print("Anchor timestamp (str): {0}".format(
+        (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()))
     print("N rows:{0}".format(df_signal_to_display.shape[0]))
     dates = df_signal_to_display['timestamp'].values
     source = bp.ColumnDataSource(df_signal_to_display)
