@@ -75,16 +75,20 @@ def get_filedata():
     else:
         # client.restart()
         df_signal = dd.read_csv(fname, dtype='object')
+        print(df_signal.head())
         df_signal = df_signal.map_partitions(lambda pdf: pdf.assign(**dict([(col, pd.to_numeric(pdf[col],
                                                                                                 errors='coerce'))
                                                                             for col in pdf.columns]
                                                                            ))
                                              ).set_index('timestamp', sorted=True)
         # df_signal['timestamp'] = df_signal['timestamp']
+        print(df_signal.head())
         lst_timestamps = df_signal.index.compute().tolist()
+        print(lst_timestamps[0])
         lst_columns = [df_signal.index.name] + df_signal.columns
     anchor_timestamp = float(lst_timestamps[0])
     time_input.value = datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
+    print(lst_timestamps[0])
     print("Anchor timestamp: {0}".format(anchor_timestamp))
     print("Anchor timestamp (str): {0}".format((datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()))
     windowsize = 3600
