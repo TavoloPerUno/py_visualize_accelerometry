@@ -8,16 +8,16 @@
 app_port=5601
 node=$(hostname -s)
 user=$(whoami)
-
+export PYTHONUNBUFFERED=true
 module load gcc/6.2.0 miniconda3/4.7.10
 conda activate /gpfs/data/schumm-lab/software/conda-env/py38
 cd /gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry/
 #nohup bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --address 0.0.0.0 --port=${app_port} > logs/bokeh.log 2>&1 &
-nohup bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --port=5601 > logs/bokeh.log 2>&1 &
+nohup bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --port=${app_port} > logs/bokeh.log 2>&1 &
 # print tunneling instructions jupyter-log
 echo -e "
 Command to create ssh tunnel:
-ssh -N -f -L ${app_port}:${node}:${app_port} manorathan@gardner.cri.uchicago.edu
+ssh -N -f -L ${app_port}:${node}:${app_port} ${user}@gardner.cri.uchicago.edu
 
 Use a Browser on your local machine to go to:
 localhost:${app_port}  (prefix w/ https:// if using password)
