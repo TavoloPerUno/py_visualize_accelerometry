@@ -602,6 +602,7 @@ def update_selection(attr, old, new):
 
     new_selected = bp.ColumnDataSource(df_selected_data)
     selected_data.data.update(new_selected.data)
+    table.update()
 
 
 ### Callback registrations
@@ -630,13 +631,13 @@ layout = grid(column(row(column(row(file_picker, sizing_mode='stretch_width'),
                                 ),
                          column(row(user_setter, sizing_mode='stretch_width'),
                                 # row(Spacer(height=1, sizing_mode='stretch_width')),
-                                row(btn_update_plot, btn_clear_selection, sizing_mode='stretch_width')
-                                )),
+                                row(btn_update_plot, btn_clear_selection, sizing_mode='stretch_width'),
+                                sizing_mode='stretch_width')),
                      row(column(p, select)),
-                     row(column(selected_date_title, table, sizing_mode='stretch_both')),
+                     row(column(selected_date_title, table, sizing_mode='stretch_both'), sizing_mode='stretch_both'),
 
                      row(btn_chairstand, btn_3m_walk, btn_timed_walk, sizing_mode='stretch_width'),
-                     row(btn_export, sizing_mode='stretch_width')
+                     row(btn_export, sizing_mode='stretch_width'), sizing_mode='stretch_both'
                      )
                      #
               )
