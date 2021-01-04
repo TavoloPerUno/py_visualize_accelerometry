@@ -1,81 +1,76 @@
-Follow the instructions below to configure python environment, start dask cluster on Gardner to process large accelerometry files & start wave visualization app.
+Follow the instructions below to download the app files, configure python environment, & start wave visualization app.
 
-# Download/ set up files
-You can ignore this section if you choose to use the folder `/gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry`. I would not recommend this option if you foresee your team members using the app simultaneously. 
+# Preliminary steps
+Set aside folders in your computer to store app code files, for example, `/Documents/pyWorkspace/` and python/conda environment, for example, `/Documents/venvs/`.
 
-Clone this repository to your user folder within a labshare. 
+## Download/ set up files
+Move into your code folder (`/Documents/pyWorkspace/`), and clone the project repository using the below command.
 ```
-git clone ssh://git@rcg-git.uchicago.edu:443/accelerometry/py_visualize_accelerometry.git
+git clone --single-branch --branch desktop ssh://git@rcg-git.uchicago.edu:443/accelerometry/py_visualize_accelerometry.git
+```
+The above command will download the code files to a folder named `py_visualize_accelerometry`.
+
+## Configure conda environment
+
+If you do not have anaconda, use the steps below to download and install anaconda.
+
+```
+wget https://repo.anaconda.com/archive/Anaconda3-2020.11-MacOSX-x86_64.sh
+bash Anaconda3-2020.11-MacOSX-x86_64.sh
 ```
 
-Add execute permissions to hpc util files.
+Use the code below to create your own conda environment with packages required to run this app.
 ```
-chmod +x </enter/path/to/projectfolder>/py_visualize_accelerometry/hpc_utils/dask_on_gardner.sh
-```
-
-
-# Configure conda environment 
-Skip this section if you have access to the conda environment `/gpfs/data/schumm-lab/software/conda-env/py38`
-
-Use the code below to create your own conda environment with packages required to run this app. I recommend choosing a conda environment location inside a labshare and not in your personal home folder as the allotted memory limits on CRI is typically not enough to host several conda environments.
-```
-module load gcc/6.2.0 miniconda3/4.7.10
-conda create --prefix <enter/path/to/your/env> --file /gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry/requirements.txt
-conda activate <enter/path/to/your/env>
+conda env create -f {your_app_code_parent_folder}/py_visualize_accelerometry/environment.yml -p {your_preferred_python_env_folder_path}/{any_env_name}
+conda activate {your_preferred_python_env_folder_path}/{your_env_name}
 conda init
 ```
 
-# Start dask cluster
-## Edit dask config file
-Skip this section if you have chosen to use `/gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry.` 
+# Adding accelerometry readings files
 
-Open `</enter/path/to/projectfolder>/py_visualize_accelerometry/hpc_utils/dask_on_gardner.sh` and edit as below
-* Update dashboard port in line 6. Make sure you discuss this with me to avoid port number conflicts.
-* Update extra_arg in line 7. Edit conda env path and your home path.
-* Edit conda env path in line 12
-* Edit project folder location in line 14
-* Edit scratch folder location in line 16
+Put the files that you want to view into this folder: `{your_app_code_parent_folder}/py_visualize_accelerometry/visualize_accelerometry/data/readings`
 
-## Start dask cluster
+Make sure that the files are in csv format and have the following columns: `"timestamp","x","y","z","light","button","temperature"`
+
+Bin files can be converted to csv files using GENEARead package in R. Example R code for bin - csv conversion:
+
 ```
-cd </enter/path/to/projectfolder>/py_visualize_accelerometry/hpc_utils
-nohup ./dask_on_gardner.sh > dask.log 2>&1 &
+install.packages('GENEARead')
+library(GENEAread)
+file_data <- read.bin(inputfname,
+                      verbose = TRUE, do.temp = TRUE, do.volt = TRUE)
+write.table(file_data$data.out, outputfname, sep=",", row.names = FALSE)
 ```
 
-Make sure that the above line doesn't exit with errors. Open dask.log file and note down dask ip and dashboard port (lines 14 & 15).
+App generated annotations will be saved to: `{your_app_code_parent_folder}/py_visualize_accelerometry/visualize_accelerometry/data/output/annotations.csv`
 
-Open `</enter/path/to/projectfolder>/py_visualize_accelerometry/visualize_accelerometry/config.py` and update dask ip and dashboard port.
+# Starting and viewing the app
 
+Activate your conda environment:
 
-# Start the app
-## Edit app start up parameters
-
-Open `</enter/path/to/projectfolder>/py_visualize_accelerometry/hpc_utils/bokeh_on_gardner.pbs` and edit as below
-* Edit Gardner job output & error file locations (lines 5 & 6)
-* Edit app port (line 8). Make sure you discuss this with me to avoid port number conflicts.
-* Edit conda env location (line 13)
-* Edit project folder location (line 14)
-
-## Submit Gardner job
 ```
-qsub </enter/path/to/projectfolder>/py_visualize_accelerometry/hpc_utils/bokeh_on_gardner.pbs
+conda activate {your_preferred_python_env_folder_path}/{your_env_name}
 ```
- Check app start-up status using the log file, `</enter/path/to/projectfolder>/py_visualize_accelerometry/logs/bokeh.log`
 
-Note down the compute node hostname using Gardner job output file.
-
-## View bokeh app
-
-In a separate terminal on your local computer, ssh tunnel using the below code
-`ssh -N -f -L appport:computenodehostname:appport username@gardner.cri.uchicago.edu`. Keep this tab open.
+Set aside a port for the app, example, 5601. Move into py_visualize_accelerometry and execute the below commands.
+```
+export PYTHONUNBUFFERED=true
+bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --port={your_app_port}
+```
 
 Open an internet browser on your local computer and go to this url: `http://localhost:appport/visualize_accelerometry`
 
-# Clearing your gardner jobs & closing the app
+To kill the app, press Ctrl+C in the terminal you started the app. Then, find the process using your app_port with the below command:
 
-Use qstat to view the job id and use qdel to kill it.  Use the code below to kill all your gardner jobs:
+```
+ps aux | grep {appport}
+```
 
-`qselect -u username | xargs qdel`
+Get the id of the process from the above command's output and kill it with the below command:
 
-Kill your dask cluster job to free dask dashboard port. You can find the process id using `ps aux | grep dask`
+```
+kill -9 processid
+```
+
+
 
