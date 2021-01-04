@@ -1,7 +1,6 @@
 Follow the instructions below to configure python environment, start dask cluster on Gardner to process large accelerometry files & start wave visualization app.
 
 # Download/ set up files
-You can ignore this section if you choose to use the folder `/gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry`. I would not recommend this option if you foresee your team members using the app simultaneously. 
 
 Clone this repository to your user folder within a labshare. 
 ```
@@ -20,14 +19,13 @@ Skip this section if you have access to the conda environment `/gpfs/data/schumm
 Use the code below to create your own conda environment with packages required to run this app. I recommend choosing a conda environment location inside a labshare and not in your personal home folder as the allotted memory limits on CRI is typically not enough to host several conda environments.
 ```
 module load gcc/6.2.0 miniconda3/4.7.10
-conda create --prefix <enter/path/to/your/env> --file /gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry/requirements.txt
+conda create --prefix <enter/path/to/your/env> --file /gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry/environment.yml
 conda activate <enter/path/to/your/env>
 conda init
 ```
 
 # Start dask cluster
 ## Edit dask config file
-Skip this section if you have chosen to use `/gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry.` 
 
 Open `</enter/path/to/projectfolder>/py_visualize_accelerometry/hpc_utils/dask_on_gardner.sh` and edit as below
 * Update dashboard port in line 6. Make sure you discuss this with me to avoid port number conflicts.
@@ -67,7 +65,7 @@ Note down the compute node hostname using Gardner job output file.
 ## View bokeh app
 
 In a separate terminal on your local computer, ssh tunnel using the below code
-`ssh -N -f -L appport:computenodehostname:appport username@gardner.cri.uchicago.edu`. Keep this tab open.
+`ssh -L appport:computenodehostname:appport username@gardner.cri.uchicago.edu`. Keep this tab open.
 
 Open an internet browser on your local computer and go to this url: `http://localhost:appport/visualize_accelerometry`
 
