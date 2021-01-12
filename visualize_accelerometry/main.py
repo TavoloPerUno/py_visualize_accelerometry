@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import subprocess
 
 import io
@@ -27,7 +27,7 @@ lst_users = list(sorted(['manu', 'phil', 'megan', 'hannah', 'joscelyn', 'martha'
 #### Intial data loaders
 
 def get_filenames():
-	lst_files = [f for f in os.listdir(readings_folder) if os.path.splitext(f)[1].lower() == '.csv']
+	lst_files = [f for f in os.listdir(readings_folder) if os.path.splitext(f)[1].lower() == '.h5']
 	return lst_files
 
 
@@ -45,43 +45,51 @@ def get_filedata():
 		print("Loading {0}".format(fname))
 		windowsize = 3600
 		windowsize_input.value = str(windowsize)
-		cmd_read_first_timestamp = 'head -n 2 "{0}" | tail -n 1 |'.format(fname) + r"""awk 'BEGIN{FS=","} {print $1}'"""
-		process = subprocess.Popen(cmd_read_first_timestamp, stdout=subprocess.PIPE, shell=True)
-		anchor_timestamp = process.communicate()[0]
-		anchor_timestamp = float(anchor_timestamp.decode("utf-8").replace("\n", ""))
+		anchor_timestamp = pd.read_hdf(fname, "readings", start=0,
+		                               stop=1)['timestamp'].dt.strftime('%b %d %Y %I:%M %p').values[0]
+		# cmd_read_first_timestamp = 'head -n 2 "{0}" | tail -n 1 |'.format(fname) + r"""awk 'BEGIN{FS=","} {print $1}'"""
+		# process = subprocess.Popen(cmd_read_first_timestamp, stdout=subprocess.PIPE, shell=True)
+		# anchor_timestamp = process.communicate()[0]
+		# anchor_timestamp = float(anchor_timestamp.decode("utf-8").replace("\n", ""))
 
-	time_input.value = datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
+	time_input.value = anchor_timestamp #datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
 	print("Loading a {0} minute window centered around {1} from {2}".format(int(windowsize/60),
-	                                                                        datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p'),
+	                                                                        anchor_timestamp,
 	                                                                        fname))
-	cmd_fetch_readings = """awk -F, -v from=""" + str(anchor_timestamp - (windowsize / 2)) + """ -v to=""" + str(anchor_timestamp + (windowsize / 2)) + """ '$1 <= from { next } $1 >= to { exit } 1' '""" + fname + """'"""
-	# cmd_fetch_readings = """awk 'BEGIN{FS=","} { if ($1 >= """ + str(anchor_timestamp - (windowsize / 2)) + """ && $1 <= """ + str(anchor_timestamp + (windowsize / 2)) + """) print $1,$2,$3,$4,$5,$6,$7 }' '""" + fname + "'"
-	process = subprocess.Popen(cmd_fetch_readings, stdout=subprocess.PIPE, shell=True)
-	pdf_signal_to_display = io.StringIO(process.communicate()[0].decode('utf-8'))
-	pdf_signal_to_display = pd.read_csv(pdf_signal_to_display, sep=",", header=None,
-	                                    dtype=dict([("timestamp", "float64"),
-	                                                ("x", "float32"),
-	                                                ("y", "float32"),
-	                                                ("z", "float32"),
-	                                                ("light", "float32"),
-	                                                ("button", "int8"),
-	                                                ("temperature", "float32")]), names=lst_columns)
+	start_timestamp = (datetime.strptime(anchor_timestamp, '%b %d %Y %I:%M %p') -
+	              timedelta(seconds=int(windowsize/2))).strftime('%b %d %Y %I:%M %p')
+	end_timestamp = (datetime.strptime(anchor_timestamp, '%b %d %Y %I:%M %p') +
+	              timedelta(seconds=int(windowsize / 2))).strftime('%b %d %Y %I:%M %p')
+	pdf_signal_to_display = pd.read_hdf(fname, 'readings',
+	                where="(timestamp >= Timestamp('{0}')) & (timestamp <= Timestamp('{1}'))".format(start_timestamp,
+	                                                                                                 end_timestamp))
+	# cmd_fetch_readings = """awk -F, -v from=""" + str(anchor_timestamp - (windowsize / 2)) + """ -v to=""" + str(anchor_timestamp + (windowsize / 2)) + """ '$1 <= from { next } $1 >= to { exit } 1' '""" + fname + """'"""
+	# process = subprocess.Popen(cmd_fetch_readings, stdout=subprocess.PIPE, shell=True)
+	# pdf_signal_to_display = io.StringIO(process.communicate()[0].decode('utf-8'))
+	# pdf_signal_to_display = pd.read_csv(pdf_signal_to_display, sep=",", header=None,
+	#                                     dtype=dict([("timestamp", "float64"),
+	#                                                 ("x", "float32"),
+	#                                                 ("y", "float32"),
+	#                                                 ("z", "float32"),
+	#                                                 ("light", "float32"),
+	#                                                 ("button", "int8"),
+	#                                                 ("temperature", "float32")]), names=lst_columns)
 	return None
 
 
 def update_datasources():
 	get_filedata()
 	global pdf_signal_to_display
-	pdf_signal_to_display = pdf_signal_to_display.rename(columns={'timestamp': 'epoch'})
-	pdf_signal_to_display = pdf_signal_to_display.assign(
-		timestamp=pd.to_datetime(pdf_signal_to_display['epoch'], unit='s', errors='coerce')
-	)
+	# pdf_signal_to_display = pdf_signal_to_display.rename(columns={'timestamp': 'epoch'})
+	# pdf_signal_to_display = pdf_signal_to_display.assign(
+	# 	timestamp=pd.to_datetime(pdf_signal_to_display['epoch'], unit='s', errors='coerce')
+	# )
 
 
 	print("Column datatypes:")
 	print(pdf_signal_to_display.head().dtypes)
-	print("Anchor timestamp: {0}".format(anchor_timestamp))
-	print("Anchor timestamp (str): {0}".format(
+	print("Anchor timestamp (str): {0}".format(anchor_timestamp))
+	print("Anchor timestamp : {0}".format(
 		(datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()))
 	print("N rows:{0}".format(pdf_signal_to_display.shape[0]))
 	dates = pdf_signal_to_display['timestamp'].values
@@ -298,15 +306,17 @@ def update_selection():
 		min_index = min(selected_indices)
 		max_index = max(selected_indices)
 
-		pdf_selected_data = pd.DataFrame({'start_time': colsource.data['timestamp'].astype(str)[min_index],
-		                                 'end_time': colsource.data['timestamp'].astype(str)[max_index],
+		pdf_selected_data = pd.DataFrame({'start_time': colsource.data['timestamp'][min_index],
+		                                 'end_time': colsource.data['timestamp'][max_index],
 		                                }, index=[0])
+		pdf_selected_data = pdf_selected_data.assign(**dict([(col, pdf_selected_data[col].astype(str))
+		                                                                   for col in ['start_time', 'end_time']]))
 
 		pdf_selected_annotations = pdf_displayed_annotations.loc[
-		    pd.to_numeric(pdf_displayed_annotations['start_epoch'], errors='coerce').between(
-		        colsource.data['epoch'][min_index], colsource.data['epoch'][max_index], inclusive=True) &
-		    pd.to_numeric(pdf_displayed_annotations['end_epoch'], errors='coerce').between(
-		        colsource.data['epoch'][min_index], colsource.data['epoch'][max_index], inclusive=True)]
+		    pd.to_datetime(pd.to_numeric(pdf_displayed_annotations['start_epoch'], errors='coerce'), unit='s', errors='coerce').between(
+		        colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index], inclusive=True) &
+		    pd.to_datetime(pd.to_numeric(pdf_displayed_annotations['end_epoch'], errors='coerce'), unit='s', errors='coerce').between(
+		        colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index], inclusive=True)]
 		pdf_selected_annotations = pdf_selected_annotations.assign(**dict([(col, pdf_selected_annotations[col].astype(str))
 		                                                                   for col in ['start_time', 'end_time']]))
 
@@ -369,15 +379,25 @@ def mark_chairstand():
 	if bool(selected_indices):
 		min_index = min(selected_indices)
 		max_index = max(selected_indices)
-		pdf_annotations = pdf_annotations.append(pd.DataFrame({'fname': os.path.basename(fname),
+		pdf_new_annotations = pd.DataFrame({'fname': os.path.basename(fname),
 		                                               'artifact': 'chair_stand',
-		                                               'start_epoch': colsource.data['epoch'][min_index],
-		                                               'end_epoch': colsource.data['epoch'][max_index],
+		                                               'start_epoch': colsource.data['timestamp'][min_index],
+		                                               'end_epoch': colsource.data['timestamp'][max_index],
 		                                               'start_time': colsource.data['timestamp'][min_index],
 		                                               'end_time': colsource.data['timestamp'][max_index],
 		                                               'annotated_at': datetime.now(),
 		                                               'user': uname
-		                                               }, index=[0]))
+		                                               }, index=[0])
+		pdf_new_annotations = pdf_new_annotations.assign(
+			**dict([(col, (pdf_new_annotations[col] - datetime(1970, 1, 1)).dt.total_seconds())
+			        for col in ['start_epoch', 'end_epoch']] +
+			       [(col,
+			         pdf_new_annotations[col].astype(str))
+			        for col in ['start_time', 'end_time', 'annotated_at']]
+			       ))
+		pdf_annotations = pdf_annotations.append(pdf_new_annotations)
+		print(pdf_annotations)
+
 	update_annotations()
 
 
@@ -391,15 +411,23 @@ def mark_6min_walk():
 	if bool(selected_indices):
 		min_index = min(selected_indices)
 		max_index = max(selected_indices)
-		pdf_annotations = pdf_annotations.append(pd.DataFrame({'fname': os.path.basename(fname),
-		                                               'artifact': '6min_walk',
-		                                               'start_epoch': colsource.data['epoch'][min_index],
-		                                               'end_epoch': colsource.data['epoch'][max_index],
-		                                               'start_time': colsource.data['timestamp'][min_index],
-		                                               'end_time': colsource.data['timestamp'][max_index],
-		                                               'annotated_at': datetime.now(),
-		                                              'user': uname
-		                                               }, index=[0]))
+		pdf_new_annotations = pd.DataFrame({'fname': os.path.basename(fname),
+		                                    'artifact': '6min_walk',
+		                                    'start_epoch': colsource.data['timestamp'][min_index],
+		                                    'end_epoch': colsource.data['timestamp'][max_index],
+		                                    'start_time': colsource.data['timestamp'][min_index],
+		                                    'end_time': colsource.data['timestamp'][max_index],
+		                                    'annotated_at': datetime.now(),
+		                                    'user': uname
+		                                    }, index=[0])
+		pdf_new_annotations = pdf_new_annotations.assign(
+			**dict([(col, (pdf_new_annotations[col] - datetime(1970, 1, 1)).dt.total_seconds())
+			        for col in ['start_epoch', 'end_epoch']] +
+			       [(col,
+			         pdf_new_annotations[col].astype(str))
+			        for col in ['start_time', 'end_time', 'annotated_at']]
+			       ))
+		pdf_annotations = pdf_annotations.append(pdf_new_annotations)
 	update_annotations()
 
 
@@ -414,10 +442,10 @@ def remove_selected_annotations():
 		min_index = min(selected_indices)
 		max_index = max(selected_indices)
 
-		pdf_annotations = pdf_annotations.loc[~(pd.to_numeric(pdf_annotations['start_epoch'], errors='coerce').between(
-		        colsource.data['epoch'][min_index], colsource.data['epoch'][max_index], inclusive=True) &
-		    pd.to_numeric(pdf_annotations['end_epoch'], errors='coerce').between(
-		            colsource.data['epoch'][min_index], colsource.data['epoch'][max_index], inclusive=True) &
+		pdf_annotations = pdf_annotations.loc[~(pd.to_datetime(pd.to_numeric(pdf_annotations['start_epoch'], errors='coerce'), unit='s', errors='coerce').between(
+		        colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index], inclusive=True) &
+		    pd.to_datetime(pd.to_numeric(pdf_annotations['end_epoch'], errors='coerce'), unit='s', errors='coerce').between(
+		            colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index], inclusive=True) &
 		                                      (pdf_annotations['user'] == uname) &
 		                                      (pdf_annotations['fname'] == os.path.basename(fname)))]
 
@@ -458,22 +486,32 @@ def mark_3m_walk():
 		min_index = min(selected_indices)
 		max_index = max(selected_indices)
 
-		pdf_annotations = pdf_annotations.append(pd.DataFrame({'fname': os.path.basename(fname),
-		                                               'artifact': '3m_walk',
-		                                               'start_epoch': colsource.data['epoch'][min_index],
-		                                               'end_epoch': colsource.data['epoch'][max_index],
-		                                               'start_time': colsource.data['timestamp'][min_index],
-		                                               'end_time': colsource.data['timestamp'][max_index],
-		                                               'annotated_at': datetime.now(),
-		                                               'user': uname
-		                                               }, index=[0]))
+		pdf_new_annotations = pd.DataFrame({'fname': os.path.basename(fname),
+		                                    'artifact': '3m_walk',
+		                                    'start_epoch': colsource.data['timestamp'][min_index],
+		                                    'end_epoch': colsource.data['timestamp'][max_index],
+		                                    'start_time': colsource.data['timestamp'][min_index],
+		                                    'end_time': colsource.data['timestamp'][max_index],
+		                                    'annotated_at': datetime.now(),
+		                                    'user': uname
+		                                    }, index=[0])
+		pdf_new_annotations = pdf_new_annotations.assign(
+			**dict([(col, (pdf_new_annotations[col] - datetime(1970, 1, 1)).dt.total_seconds())
+			        for col in ['start_epoch', 'end_epoch']] +
+			       [(col,
+			         pdf_new_annotations[col].astype(str))
+			        for col in ['start_time', 'end_time', 'annotated_at']]
+			       ))
+		pdf_annotations = pdf_annotations.append(pdf_new_annotations)
 	update_annotations()
 
 
 def update_anchor_timestamp(attr, old, new):
 	global anchor_timestamp
 	try:
-		anchor_timestamp = (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()
+		anchor_timestamp =  (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') +
+		                     timedelta(seconds=0)).strftime('%b %d %Y %I:%M %p')
+		# anchor_timestamp = (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()
 	except Exception as ex:
 		print(ex)
 		print("Invalid time entered {0}".format(str(time_input.value)))
