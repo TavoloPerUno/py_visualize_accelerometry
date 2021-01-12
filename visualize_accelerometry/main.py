@@ -92,12 +92,12 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 		                             ))
 		p.scatter('timestamp', leg, color=None, legend_label=leg, source=colsource, name='wave')
 
-	p.xaxis.formatter = DatetimeTickFormatter(days=['%m/%d'],
-	                                          months=['%m/%Y'],
-	                                          hours=['%Hh'],
-	                                          minutes=[':%M'],
-	                                          seconds=['%Ss'],
-	                                          milliseconds = ['%3Nms'],)
+	p.xaxis.formatter = DatetimeTickFormatter(days=["%Y/%m/%d"],
+	                                          months=['%Y/%m/%d %H:%M'],
+	                                          hours=['%Y/%m/%d %H:%M'],
+	                                          minutes=['%Y/%m/%d %H:%M'],
+	                                          seconds=[':%Ss'],
+	                                          milliseconds = ['%Ss:%3Nms'],)
 	p.xaxis.minor_tick_line_color = "black"
 	p.xgrid.minor_grid_line_alpha = 0.2
 	p.xaxis.minor_tick_line_color = "black"
@@ -111,11 +111,12 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 	for (colr, leg) in zip(lst_colors, lst_col):
 		select.line('timestamp', leg, color=colr, source=colsource, nonselection_alpha=0.4, selection_alpha=1)
 	select.ygrid.grid_line_color = None
-	select.xaxis.formatter = DatetimeTickFormatter(days=['%m/%d'],
-	                                          months=['%m/%Y'],
-	                                          hours=['%Hh'],
-	                                          minutes=[':%M'],
-	                                          seconds=['%Ss'])
+	select.xaxis.formatter = DatetimeTickFormatter(days=["%Y/%m/%d"],
+	                                          months=['%Y/%m/%d %H:%M'],
+	                                          hours=['%Y/%m/%d %H:%M'],
+	                                          minutes=['%Y/%m/%d %H:%M'],
+	                                          seconds=[':%Ss'],
+	                                          milliseconds = ['%Ss:%3Nms'],)
 
 	# annot_chairstand = Quad()
 	p.quad(left="start_time", right="end_time", top=5, bottom=-5, fill_color="cyan", fill_alpha=0.2,
