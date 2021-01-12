@@ -147,4 +147,5 @@ dependencies:
     - xlrd==2.0.1
     - zict==2.0.0
     - zipp==3.4.0
+    - tables==3.6.1
 

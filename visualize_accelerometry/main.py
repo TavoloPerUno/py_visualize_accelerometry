@@ -1,9 +1,6 @@
 import pandas as pd
 import os
 from datetime import datetime, timedelta
-import subprocess
-
-import io
 
 from bokeh.layouts import grid, row
 from bokeh.models import TextInput, Div, ColumnDataSource, RangeTool, Select, DatetimeTickFormatter
@@ -15,7 +12,6 @@ from bokeh.layouts import column
 
 #### Constants
 
-url = 'https://users.rcc.uchicago.edu/~manorathan/wave4/30_min_segments'
 lst_colors = ['red', 'blue', 'green', 'yellow', 'violet']
 data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 readings_folder = os.path.join(data_folder, 'readings')
@@ -27,7 +23,7 @@ lst_users = list(sorted(['manu', 'phil', 'megan', 'hannah', 'joscelyn', 'martha'
 #### Intial data loaders
 
 def get_filenames():
-	lst_files = [f for f in os.listdir(readings_folder) if os.path.splitext(f)[1].lower() == '.h5']
+	lst_files = [os.path.splitext(f)[0] for f in os.listdir(readings_folder) if os.path.splitext(f)[1].lower() == '.h5']
 	return lst_files
 
 
@@ -45,14 +41,10 @@ def get_filedata():
 		print("Loading {0}".format(fname))
 		windowsize = 3600
 		windowsize_input.value = str(windowsize)
-		anchor_timestamp = pd.read_hdf(fname, "readings", start=0,
+		anchor_timestamp = pd.read_hdf(fname + '.h5', "readings", start=0,
 		                               stop=1)['timestamp'].dt.strftime('%b %d %Y %I:%M %p').values[0]
-		# cmd_read_first_timestamp = 'head -n 2 "{0}" | tail -n 1 |'.format(fname) + r"""awk 'BEGIN{FS=","} {print $1}'"""
-		# process = subprocess.Popen(cmd_read_first_timestamp, stdout=subprocess.PIPE, shell=True)
-		# anchor_timestamp = process.communicate()[0]
-		# anchor_timestamp = float(anchor_timestamp.decode("utf-8").replace("\n", ""))
 
-	time_input.value = anchor_timestamp #datetime.utcfromtimestamp(anchor_timestamp).strftime('%b %d %Y %I:%M %p')
+	time_input.value = anchor_timestamp
 	print("Loading a {0} minute window centered around {1} from {2}".format(int(windowsize/60),
 	                                                                        anchor_timestamp,
 	                                                                        fname))
@@ -60,31 +52,15 @@ def get_filedata():
 	              timedelta(seconds=int(windowsize/2))).strftime('%b %d %Y %I:%M %p')
 	end_timestamp = (datetime.strptime(anchor_timestamp, '%b %d %Y %I:%M %p') +
 	              timedelta(seconds=int(windowsize / 2))).strftime('%b %d %Y %I:%M %p')
-	pdf_signal_to_display = pd.read_hdf(fname, 'readings',
+	pdf_signal_to_display = pd.read_hdf(fname + '.h5', 'readings',
 	                where="(timestamp >= Timestamp('{0}')) & (timestamp <= Timestamp('{1}'))".format(start_timestamp,
 	                                                                                                 end_timestamp))
-	# cmd_fetch_readings = """awk -F, -v from=""" + str(anchor_timestamp - (windowsize / 2)) + """ -v to=""" + str(anchor_timestamp + (windowsize / 2)) + """ '$1 <= from { next } $1 >= to { exit } 1' '""" + fname + """'"""
-	# process = subprocess.Popen(cmd_fetch_readings, stdout=subprocess.PIPE, shell=True)
-	# pdf_signal_to_display = io.StringIO(process.communicate()[0].decode('utf-8'))
-	# pdf_signal_to_display = pd.read_csv(pdf_signal_to_display, sep=",", header=None,
-	#                                     dtype=dict([("timestamp", "float64"),
-	#                                                 ("x", "float32"),
-	#                                                 ("y", "float32"),
-	#                                                 ("z", "float32"),
-	#                                                 ("light", "float32"),
-	#                                                 ("button", "int8"),
-	#                                                 ("temperature", "float32")]), names=lst_columns)
 	return None
 
 
 def update_datasources():
 	get_filedata()
 	global pdf_signal_to_display
-	# pdf_signal_to_display = pdf_signal_to_display.rename(columns={'timestamp': 'epoch'})
-	# pdf_signal_to_display = pdf_signal_to_display.assign(
-	# 	timestamp=pd.to_datetime(pdf_signal_to_display['epoch'], unit='s', errors='coerce')
-	# )
-
 
 	print("Column datatypes:")
 	print(pdf_signal_to_display.head().dtypes)
@@ -103,33 +79,43 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 	p = figure(plot_height=300, tools=tools, toolbar_location='left',
 	           x_axis_type="datetime",
 	           x_axis_location="above",
-	           background_fill_color="#efefef", x_range=(srs[400], srs[3000]), title=title, sizing_mode='stretch_width')
+	           background_fill_color="#efefef", x_range=(srs[400], srs[3000]), title=title, sizing_mode='stretch_width',
+	           output_backend="webgl")
 	p.xaxis.axis_label = 'Timestamp'
 
-	lst_col = ['x', 'y', 'z']  # + df_signal.columns.difference(['timestamp', 'x', 'y', 'z']).tolist()
+
+	lst_col = ['x', 'y', 'z']
 	lst_line_plots = []
 	for (colr, leg) in zip(lst_colors, lst_col):
 		lst_line_plots.append(p.line('timestamp', leg, color=colr, legend_label=leg, source=colsource, name='wave',
-		                             nonselection_alpha=0.4, selection_alpha=1))
+		                             nonselection_alpha=0.4, selection_alpha=1
+		                             ))
 		p.scatter('timestamp', leg, color=None, legend_label=leg, source=colsource, name='wave')
 
-	p.xaxis.formatter = DatetimeTickFormatter(days=["%m/%d %H:%M"],
-	                                          months=["%m/%d %H:%M"],
-	                                          hours=["%m/%d %H:%M"],
-	                                          minutes=["%m/%d %H:%M"])
+	p.xaxis.formatter = DatetimeTickFormatter(days=['%m/%d'],
+	                                          months=['%m/%Y'],
+	                                          hours=['%Hh'],
+	                                          minutes=[':%M'],
+	                                          seconds=['%Ss'],
+	                                          milliseconds = ['%3Nms'],)
+	p.xaxis.minor_tick_line_color = "black"
+	p.xgrid.minor_grid_line_alpha = 0.2
+	p.xaxis.minor_tick_line_color = "black"
 
 	select = figure(title="Drag the middle and edges of the selection box to change the range above",
 	                plot_height=130, y_range=p.y_range,
 	                x_axis_type="datetime", y_axis_type=None,
-	                tools="", toolbar_location=None, background_fill_color="#efefef", sizing_mode='stretch_width')
+	                tools="", toolbar_location=None, background_fill_color="#efefef", sizing_mode='stretch_width',
+	                output_backend="webgl")
 
 	for (colr, leg) in zip(lst_colors, lst_col):
 		select.line('timestamp', leg, color=colr, source=colsource, nonselection_alpha=0.4, selection_alpha=1)
 	select.ygrid.grid_line_color = None
-	select.xaxis.formatter = DatetimeTickFormatter(days=["%m/%d %H:%M"],
-	                                               months=["%m/%d %H:%M"],
-	                                               hours=["%m/%d %H:%M"],
-	                                               minutes=["%m/%d %H:%M"])
+	select.xaxis.formatter = DatetimeTickFormatter(days=['%m/%d'],
+	                                          months=['%m/%Y'],
+	                                          hours=['%Hh'],
+	                                          minutes=[':%M'],
+	                                          seconds=['%Ss'])
 
 	# annot_chairstand = Quad()
 	p.quad(left="start_time", right="end_time", top=5, bottom=-5, fill_color="cyan", fill_alpha=0.2,
@@ -511,7 +497,6 @@ def update_anchor_timestamp(attr, old, new):
 	try:
 		anchor_timestamp =  (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') +
 		                     timedelta(seconds=0)).strftime('%b %d %Y %I:%M %p')
-		# anchor_timestamp = (datetime.strptime(time_input.value, '%b %d %Y %I:%M %p') - datetime(1970, 1, 1)).total_seconds()
 	except Exception as ex:
 		print(ex)
 		print("Invalid time entered {0}".format(str(time_input.value)))
@@ -563,7 +548,6 @@ layout = grid(column(row(column(row(file_picker, sizing_mode='stretch_width'),
                          column(selected_annotations_title, selected_annotations_table, sizing_mode='scale_both'),
                          sizing_mode='stretch_both'), sizing_mode='stretch_both'
                      )
-              #
               )
 
 bokeh_doc = curdoc()
