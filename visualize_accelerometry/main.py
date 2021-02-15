@@ -15,7 +15,7 @@ lst_colors = ['red', 'blue', 'green', 'yellow', 'violet']
 data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 readings_folder = os.path.join(data_folder, 'readings')
 output_folder = os.path.join(data_folder, 'output')
-annotations_fname = os.path.join(output_folder, 'annotations.csv')
+annotations_fname = os.path.join(output_folder, 'annotations.xlsx')
 lst_users = list(sorted(['manu', 'phil', 'megan', 'hannah', 'joscelyn', 'martha', 'kristen']))
 
 
@@ -529,6 +529,7 @@ def save_annotations():
 	global uname
 	global fname
 	global pdf_annotations
+	global annotations_fname
 	pdf_old_results = pd.DataFrame(columns=pdf_annotations.columns)
 	if os.path.exists(annotations_fname):
 		pdf_old_results = pd.read_excel(annotations_fname)

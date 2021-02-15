@@ -1,7 +1,11 @@
 Follow the instructions below to download the app files, configure python environment, & start wave visualization app.
 
+<<<<<<< HEAD
 # Preliminary steps
 Set aside folders in your computer to store app code files, for example, `/Documents/pyWorkspace/` and python/conda environment, for example, `/Documents/venvs/`.
+=======
+# Download/ set up files
+>>>>>>> dccc478204c55aeef888b35652591ee63545fa51
 
 ## Download/ set up files
 Move into your code folder (`/Documents/pyWorkspace/`), and clone the project repository using the below command.
@@ -21,12 +25,23 @@ bash Anaconda3-2020.11-MacOSX-x86_64.sh
 
 Use the code below to create your own conda environment with packages required to run this app.
 ```
+<<<<<<< HEAD
 conda env create -f {your_app_code_parent_folder}/py_visualize_accelerometry/environment.yml -p {your_preferred_python_env_folder_path}/{any_env_name}
 conda activate {your_preferred_python_env_folder_path}/{your_env_name}
 conda init
 ```
 
 # Adding accelerometry readings files
+=======
+module load gcc/6.2.0 miniconda3/4.7.10
+conda create --prefix <enter/path/to/your/env> --file /gpfs/data/schumm-lab/rcg/codebase/py_visualize_accelerometry/environment.yml
+conda activate <enter/path/to/your/env>
+conda init
+```
+
+# Start dask cluster
+## Edit dask config file
+>>>>>>> dccc478204c55aeef888b35652591ee63545fa51
 
 Put the files that you want to view into this folder: `{your_app_code_parent_folder}/py_visualize_accelerometry/visualize_accelerometry/data/readings`
 
@@ -60,7 +75,12 @@ bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000
 
 Open an internet browser on your local computer and go to this url: `http://localhost:appport/visualize_accelerometry`
 
+<<<<<<< HEAD
 To kill the app, press Ctrl+C in the terminal you started the app. Then, find the process using your app_port with the below command:
+=======
+In a separate terminal on your local computer, ssh tunnel using the below code
+`ssh -L appport:computenodehostname:appport username@gardner.cri.uchicago.edu`. Keep this tab open.
+>>>>>>> dccc478204c55aeef888b35652591ee63545fa51
 
 ```
 ps aux | grep {appport}
