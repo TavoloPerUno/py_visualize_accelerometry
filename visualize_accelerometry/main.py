@@ -142,6 +142,9 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 	       source=data_annot_segment, legend_label='segment',
 	       hatch_pattern='cross', hatch_color="black", hatch_weight=0.5, hatch_alpha=0.1)
 	p.quad(left="start_time", right="end_time", top=4, bottom=-4, fill_color=None, fill_alpha=0,
+	       source=data_annot_scoring, legend_label='scoring',
+	       hatch_pattern='dot', hatch_color="black", hatch_weight=0.5, hatch_alpha=0.1)
+	p.quad(left="start_time", right="end_time", top=4, bottom=-4, fill_color=None, fill_alpha=0,
 	       source=data_annot_review, legend_label='review',
 	       hatch_pattern='spiral', hatch_color="black", hatch_weight=0.5, hatch_alpha=0.1)
 
@@ -152,7 +155,7 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 
 # Util functions
 def cleanup_annotations(pdf):
-	pdf = pdf.sort_values(by=['user', 'fname', 'artifact', 'segment', 'review', 'annotated_at'], ascending=False)
+	pdf = pdf.sort_values(by=['user', 'fname', 'artifact', 'segment', 'scoring', 'review', 'annotated_at'], ascending=False)
 	if pdf.shape[0] > 0:
 		pdf = pdf.assign(start_time=pd.to_datetime(pdf['start_time'], errors='coerce'),
 		                 end_time=pd.to_datetime(pdf['end_time'], errors='coerce'))
@@ -165,6 +168,7 @@ def capture_new_annotation(colsource, selected_indices, artifact, fname, uname):
 	pdf_new_annotations = pd.DataFrame({'fname': os.path.basename(fname),
 	                                    'artifact': artifact,
 	                                    'segment': 0,
+	                                    'scoring': 0,
 	                                    'review': 0,
 	                                    'start_epoch': colsource.data['timestamp'][min_index],
 	                                    'end_epoch': colsource.data['timestamp'][max_index],
@@ -187,7 +191,7 @@ def capture_new_annotation(colsource, selected_indices, artifact, fname, uname):
 pdf_signal_to_display = None
 # pdf_results = pd.DataFrame(columns=['fname', 'artifact', 'start_epoch', 'end_epoch', 'start_time', 'end_time'])
 pdf_annotations = pd.read_excel(annotations_fname, engine='openpyxl') if os.path.exists(annotations_fname) else pd.DataFrame(
-	columns=['fname', 'artifact', 'segment', 'review', 'start_epoch', 'end_epoch', 'start_time', 'end_time',
+	columns=['fname', 'artifact', 'segment', 'scoring', 'review', 'start_epoch', 'end_epoch', 'start_time', 'end_time',
 	         'annotated_at', 'user'])
 pdf_annotations = cleanup_annotations(pdf_annotations)
 pdf_displayed_annotations = pdf_annotations.copy()
@@ -197,19 +201,20 @@ file_end_timestamp = None
 windowsize = 3600
 
 selected_data = ColumnDataSource(data=dict(start_time=[], end_time=[]))
-selected_annotations = ColumnDataSource(data=dict(artifact=[], segment=[], review=[], start_time=[], end_time=[], annotated_at=[],
+selected_annotations = ColumnDataSource(data=dict(artifact=[], segment=[], scoring=[], review=[], start_time=[], end_time=[], annotated_at=[],
                                                   user=[]))
 data_annot_chairstand = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[]))
 data_annot_3m_walk = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[]))
 data_annot_tug = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[]))
 data_annot_6min_walk = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[]))
 data_annot_segment = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[], artifact=[]))
+data_annot_scoring = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[], artifact=[]))
 data_annot_review = ColumnDataSource(data=dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[], artifact=[]))
 # data_annotations = ColumnDataSource(data=dict())
 lst_fnames = get_filenames()
 
 lst_columns = ["timestamp", "x", "y", "z", "light", "button", "temperature"]
-lst_displayed_annotations_table_columns = ['artifact', 'segment', 'review', 'start_time', 'end_time',
+lst_displayed_annotations_table_columns = ['artifact', 'segment', 'scoring', 'review', 'start_time', 'end_time',
                                            'annotated_at', 'user']
 lst_timestamps = []
 rowread_start = 0
@@ -229,6 +234,7 @@ selected_datatable_columns = [
 
 selected_annotations_table_columns = [TableColumn(field="artifact", title="Artifact"),
                                       TableColumn(field="segment", title="Segment"),
+									  TableColumn(field="scoring", title="Scoring"),
 									  TableColumn(field="review", title="Review"),
                                       TableColumn(field="start_time", title="Start Time"),
                                       TableColumn(field="end_time", title="End Time"),
@@ -315,6 +321,12 @@ btn_segment = Button(
 	width=20
 )
 btn_segment.disabled = True
+btn_scoring = Button(
+	label="(Un/)Mark for scoring",
+	button_type="success",
+	width=20
+)
+btn_scoring.disabled = True
 btn_review = Button(
 	label="(Un/)Flag for review",
 	button_type="success",
@@ -373,7 +385,7 @@ def update_selection():
 	                                                (pdf_annotations['fname'] == os.path.basename(fname))]
 	selected_indices = colsource.selected.indices
 	pdf_selected_data = pd.DataFrame(columns=['start_time', 'end_time'])
-	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'review',
+	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'scoring', 'review',
 	                                                 'start_epoch', 'end_epoch', 'start_time', 'end_time',
 	                                                 'annotated_at', 'user'])
 	if bool(selected_indices):
@@ -406,10 +418,12 @@ def update_selection():
 		if pdf_selected_annotations.shape[0] > 0:
 			btn_remove_annotations.disabled = False
 			btn_segment.disabled = False
+			btn_scoring.disabled = False
 			btn_review.disabled = False
 		else:
 			btn_remove_annotations.disabled = True
 			btn_segment.disabled = True
+			btn_scoring.disabled = True
 			btn_review.disabled = True
 	else:
 		btn_clear_selection.disabled = True
@@ -419,10 +433,11 @@ def update_selection():
 		btn_remove_annotations.disabled = True
 		btn_chairstand.disabled = True
 		btn_segment.disabled = True
+		btn_scoring.disabled = True
 		btn_review.disabled = True
 
 	new_selected = bp.ColumnDataSource(pdf_selected_data)
-	# print(pdf_selected_annotations[['fname', 'artifact', 'segment', 'start_time', 'end_time',
+	# print(pdf_selected_annotations[['fname', 'artifact', 'segment', 'scoring', 'start_time', 'end_time',
 	#          'annotated_at', 'user']])
 	new_selected_annotations = bp.ColumnDataSource(pdf_selected_annotations[lst_displayed_annotations_table_columns])
 	selected_data.data.update(new_selected.data)
@@ -452,6 +467,9 @@ def update_annotations():
 		                    [['start_epoch', 'end_epoch', 'start_time', 'end_time']]).data)
 	data_annot_segment.data.update(
 		bp.ColumnDataSource(pdf_displayed_annotations.loc[pdf_displayed_annotations['segment'] == 1]
+		                    [['start_epoch', 'end_epoch', 'start_time', 'end_time', 'artifact']]).data)
+	data_annot_scoring.data.update(
+		bp.ColumnDataSource(pdf_displayed_annotations.loc[pdf_displayed_annotations['scoring'] == 1]
 		                    [['start_epoch', 'end_epoch', 'start_time', 'end_time', 'artifact']]).data)
 	data_annot_review.data.update(
 		bp.ColumnDataSource(pdf_displayed_annotations.loc[pdf_displayed_annotations['review'] == 1]
@@ -512,7 +530,7 @@ def toggle_annotation_segment():
 	global fname
 	global uname
 	global lst_displayed_annotations_table_columns
-	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'review', 'start_time', 'end_time',
+	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'scoring', 'review', 'start_time', 'end_time',
 	                                                 'annotated_at', 'user'])
 	selected_indices = colsource.selected.indices
 	if bool(selected_indices):
@@ -551,12 +569,56 @@ def toggle_annotation_segment():
 	update_annotations()
 
 
+def toggle_annotation_scoring():
+	global pdf_annotations
+	global fname
+	global uname
+	global lst_displayed_annotations_table_columns
+	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'scoring', 'review', 'start_time', 'end_time',
+	                                                 'annotated_at', 'user'])
+	selected_indices = colsource.selected.indices
+	if bool(selected_indices):
+		min_index = min(selected_indices)
+		max_index = max(selected_indices)
+
+		pdf_selected_annotations = pdf_annotations.loc[(
+					pd.to_datetime(pd.to_numeric(pdf_annotations['start_epoch'], errors='coerce'), unit='s',
+					               errors='coerce').between(
+						colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index],
+						inclusive=True) &
+					pd.to_datetime(pd.to_numeric(pdf_annotations['end_epoch'], errors='coerce'), unit='s',
+					               errors='coerce').between(
+						colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index],
+						inclusive=True) &
+					(pdf_annotations['user'] == uname) &
+					(pdf_annotations['fname'] == os.path.basename(fname)))]
+		pdf_annotations = pdf_annotations.loc[~(
+					pd.to_datetime(pd.to_numeric(pdf_annotations['start_epoch'], errors='coerce'), unit='s',
+					               errors='coerce').between(
+						colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index],
+						inclusive=True) &
+					pd.to_datetime(pd.to_numeric(pdf_annotations['end_epoch'], errors='coerce'), unit='s',
+					               errors='coerce').between(
+						colsource.data['timestamp'][min_index], colsource.data['timestamp'][max_index],
+						inclusive=True) &
+					(pdf_annotations['user'] == uname) &
+					(pdf_annotations['fname'] == os.path.basename(fname)))]
+		pdf_selected_annotations = pdf_selected_annotations.assign(
+			scoring=(pdf_selected_annotations['scoring'] != 1).astype(int))
+		pdf_annotations = pd.concat([pdf_annotations, pdf_selected_annotations], ignore_index=True)
+
+	new_selected_annotations = bp.ColumnDataSource(pdf_selected_annotations[lst_displayed_annotations_table_columns])
+	selected_annotations.data.update(new_selected_annotations.data)
+	selected_annotations_table.update()
+	update_annotations()
+
+
 def toggle_review_flag():
 	global pdf_annotations
 	global fname
 	global uname
 	global lst_displayed_annotations_table_columns
-	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'review', 'start_time', 'end_time',
+	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'scoring', 'review', 'start_time', 'end_time',
 	                                                 'annotated_at', 'user'])
 	selected_indices = colsource.selected.indices
 	if bool(selected_indices):
@@ -600,7 +662,7 @@ def remove_selected_annotations():
 	global fname
 	global uname
 	global lst_displayed_annotations_table_columns
-	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'review', 'start_time', 'end_time',
+	pdf_selected_annotations = pd.DataFrame(columns=['fname', 'artifact', 'segment', 'scoring', 'review', 'start_time', 'end_time',
 	                                                 'annotated_at', 'user'])
 	selected_indices = colsource.selected.indices
 	if bool(selected_indices):
@@ -720,6 +782,7 @@ btn_3m_walk.on_click(mark_3m_walk)
 btn_tug.on_click(mark_tug)
 btn_6min_walk.on_click(mark_6min_walk)
 btn_segment.on_click(toggle_annotation_segment)
+btn_scoring.on_click(toggle_annotation_scoring)
 btn_review.on_click(toggle_review_flag)
 btn_clear_selection.on_click(clear_selection)
 btn_remove_annotations.on_click(remove_selected_annotations)
@@ -739,7 +802,7 @@ layout = grid(column(row(column(row(file_picker, sizing_mode='stretch_width'),
                                 ),
                          column(row(btn_update_plot, btn_prev_window, btn_next_window, btn_clear_selection, sizing_mode='stretch_width'),
                                 row(btn_chairstand, btn_tug, btn_3m_walk, btn_6min_walk, sizing_mode='stretch_width'),
-                                row(btn_segment, btn_review, btn_remove_annotations, btn_export, sizing_mode='stretch_width'),
+                                row(btn_segment, btn_scoring, btn_review, btn_remove_annotations, btn_export, sizing_mode='stretch_width'),
                                 sizing_mode='stretch_width')),
                      row(column(p, select, sizing_mode='stretch_width'), sizing_mode='stretch_width'),
                      row(column(selected_data_title, selected_data_table, sizing_mode='scale_both'),
