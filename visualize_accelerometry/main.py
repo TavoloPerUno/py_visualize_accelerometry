@@ -16,7 +16,7 @@ data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 readings_folder = os.path.join(data_folder, 'readings')
 output_folder = os.path.join(data_folder, 'output')
 annotations_fname = os.path.join(output_folder, 'annotations.xlsx')
-lst_users = list(sorted(['manu', 'phil', 'megan', 'victor', 'kristen']))
+lst_users = list(sorted(['manu', 'phil', 'megan', 'victor', 'kristen', 'chahak', 'alena']))
 
 
 # Intial data loaders
@@ -91,7 +91,7 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 	           x_axis_type="datetime",
 	           x_axis_location="above",
 	           background_fill_color="#efefef", x_range=(srs[400], srs[3000]), title=title, sizing_mode='stretch_width',
-	           output_backend="webgl"
+	           # output_backend="webgl"
 	           )
 	p.xaxis.axis_label = 'Timestamp'
 
@@ -99,7 +99,7 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 	lst_line_plots = []
 	for (colr, leg) in zip(lst_colors, lst_col):
 		lst_line_plots.append(p.line('timestamp', leg, color=colr, legend_label=leg, source=colsource, name='wave',
-		                             nonselection_alpha=0.4, selection_alpha=1
+		                             nonselection_alpha=0.2, selection_alpha=1
 		                             ))
 		p.scatter('timestamp', leg, color=None, legend_label=leg, source=colsource, name='wave')
 
