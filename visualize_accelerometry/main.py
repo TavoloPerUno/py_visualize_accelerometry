@@ -91,7 +91,7 @@ def make_plot(srs, colsource, data_annot_chairstand, data_annot_3m_walk, data_an
 	           x_axis_type="datetime",
 	           x_axis_location="above",
 	           background_fill_color="#efefef", x_range=(srs[400], srs[3000]), title=title, sizing_mode='stretch_width',
-	           # output_backend="webgl"
+	           output_backend="webgl"
 	           )
 	p.xaxis.axis_label = 'Timestamp'
 
