@@ -73,13 +73,24 @@ def get_filedata():
             .dt.strftime("%b %d %Y %I:%M %p")
             .values[0]
         )
+        print(f"File starts at {file_start_timestamp} and ends at {file_end_timestamp}")
 
-    if anchor_timestamp >= file_end_timestamp:
+    if datetime.strptime(anchor_timestamp, "%b %d %Y %I:%M %p") >= datetime.strptime(
+        file_end_timestamp, "%b %d %Y %I:%M %p"
+    ):
+        print(
+            f"Anchor timestamp {anchor_timestamp} is invalid; file ends at {file_end_timestamp}"
+        )
         anchor_timestamp = (
             datetime.strptime(file_end_timestamp, "%b %d %Y %I:%M %p")
             - timedelta(seconds=int(windowsize / 2))
         ).strftime("%b %d %Y %I:%M %p")
-    if anchor_timestamp <= file_start_timestamp:
+    if datetime.strptime(anchor_timestamp, "%b %d %Y %I:%M %p") <= datetime.strptime(
+        file_start_timestamp, "%b %d %Y %I:%M %p"
+    ):
+        print(
+            f"Anchor timestamp {anchor_timestamp} is invalid; file starts at {file_start_timestamp}"
+        )
         anchor_timestamp = (
             datetime.strptime(file_start_timestamp, "%b %d %Y %I:%M %p")
             + timedelta(seconds=int(windowsize / 2))
@@ -176,8 +187,8 @@ def make_plot(
         days=["%Y/%m/%d"],
         months=["%Y/%m/%d %H:%M"],
         hours=["%Y/%m/%d %H:%M"],
-        minutes=["%Y/%m/%d %H:%M"],
-        seconds=[":%Ss"],
+        minutes=["%H:%M"],
+        seconds=["%H:%M:%S"],
         milliseconds=["%Ss:%3Nms"],
     )
     p.xaxis.minor_tick_line_color = "black"
@@ -196,6 +207,7 @@ def make_plot(
         sizing_mode="stretch_width",
         output_backend="webgl",
     )
+    select.ygrid.grid_line_color = None
 
     for (colr, leg) in zip(lst_colors, lst_col):
         select.line(
@@ -206,14 +218,14 @@ def make_plot(
             nonselection_alpha=0.4,
             selection_alpha=1,
         )
-    select.ygrid.grid_line_color = None
+
     select.xaxis.formatter = DatetimeTickFormatter(
-        days=["%Y/%m/%d"],
-        months=["%Y/%m/%d %H:%M"],
-        hours=["%Y/%m/%d %H:%M"],
-        minutes=["%Y/%m/%d %H:%M"],
-        seconds=[":%Ss"],
-        milliseconds=["%Ss:%3Nms"],
+        days=["%m/%d %H:%M"],
+        months=["%m/%d %H:%M"],
+        hours=["%m/%d %H:%M"],
+        minutes=["%m/%d %H:%M"],
+        seconds=["%m/%d %H:%M:%S"],
+        milliseconds=["%m/%d %H:%M:%Ss:%3Nms"],
     )
 
     # annot_chairstand = Quad()
@@ -734,7 +746,7 @@ def add_notes():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -743,7 +755,7 @@ def add_notes():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -763,7 +775,7 @@ def add_notes():
                         ).between(
                             colsource.data["timestamp"][min_index],
                             colsource.data["timestamp"][max_index],
-                            inclusive=True,
+                            inclusive="both",
                         )
                         & pd.to_datetime(
                             pd.to_numeric(
@@ -774,7 +786,7 @@ def add_notes():
                         ).between(
                             colsource.data["timestamp"][min_index],
                             colsource.data["timestamp"][max_index],
-                            inclusive=True,
+                            inclusive="both",
                         )
                         & (pdf_annotations["user"] == uname)
                         & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -934,7 +946,7 @@ def toggle_annotation_segment():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -943,7 +955,7 @@ def toggle_annotation_segment():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -958,7 +970,7 @@ def toggle_annotation_segment():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -967,7 +979,7 @@ def toggle_annotation_segment():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -1021,7 +1033,7 @@ def toggle_annotation_scoring():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -1030,7 +1042,7 @@ def toggle_annotation_scoring():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -1045,7 +1057,7 @@ def toggle_annotation_scoring():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -1054,7 +1066,7 @@ def toggle_annotation_scoring():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -1108,7 +1120,7 @@ def toggle_review_flag():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -1117,7 +1129,7 @@ def toggle_review_flag():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -1132,7 +1144,7 @@ def toggle_review_flag():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -1141,7 +1153,7 @@ def toggle_review_flag():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -1194,7 +1206,7 @@ def remove_selected_annotations():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & pd.to_datetime(
                     pd.to_numeric(pdf_annotations["end_epoch"], errors="coerce"),
@@ -1203,7 +1215,7 @@ def remove_selected_annotations():
                 ).between(
                     colsource.data["timestamp"][min_index],
                     colsource.data["timestamp"][max_index],
-                    inclusive=True,
+                    inclusive="both",
                 )
                 & (pdf_annotations["user"] == uname)
                 & (pdf_annotations["fname"] == os.path.basename(fname))
@@ -1303,6 +1315,7 @@ def move_to_next_window():
         datetime.strptime(anchor_timestamp, "%b %d %Y %I:%M %p")
         + timedelta(seconds=windowsize)
     ).strftime("%b %d %Y %I:%M %p")
+    print(f"Anchor timestamp is set to {anchor_timestamp}")
     update_plot()
 
 
