@@ -74,6 +74,7 @@ def get_filedata():
             .values[0]
         )
         print(f"File starts at {file_start_timestamp} and ends at {file_end_timestamp}")
+        update_summary()
 
     if datetime.strptime(anchor_timestamp, "%b %d %Y %I:%M %p") >= datetime.strptime(
         file_end_timestamp, "%b %d %Y %I:%M %p"
@@ -343,6 +344,63 @@ def cleanup_annotations(pdf):
     return pdf
 
 
+def update_summary():
+    global pdf_annotations
+    global fname
+    global uname
+    global file_start_timestamp
+    global file_end_timestamp
+    global summary
+    artifacts = ''
+    notes = ''
+    if pdf_annotations.shape[0] > 0:
+        pdf_selected = pdf_annotations.loc[
+            (pdf_annotations["fname"] == os.path.basename(fname))
+        ].reset_index(drop=True)
+        if pdf_selected.shape[0] > 0:
+            pdf_selected = pdf_selected.assign(
+                **{col: pdf_selected[col].dt.strftime("%d-%m %H:%M:%S") for col in ['start_time', 'end_time']})
+            pdf_selected = pdf_selected.assign(
+                annotations_txt=pdf_selected.apply(
+                    lambda x: f"{x['start_time']} - {x['end_time']} ({x['user']})", axis=1),
+                notes_txt=pdf_selected.apply(
+                    lambda x: f"{x['notes']} ({x['user']})", axis=1)
+            )
+            dct_artifacts = {artifact: "<br/>".join(
+                pdf_selected.loc[
+                    (pdf_selected['artifact'] == artifact) &
+                    (pdf_selected['scoring'] == 0) &
+                    (pdf_selected['segment'] == 0)]['annotations_txt'].tolist())
+                for artifact in ['chair_stand', '6min_walk', '3m_walk', 'tug']}
+            dct_artifacts = {artifact: dct_artifacts[artifact] for artifact in dct_artifacts
+                             if bool(dct_artifacts[artifact])}
+            artifacts = ("<table cellpadding='2' >" +
+                         '<tr>' + ''.join([f'<td><b>{artifact}</b></td>' for artifact in dct_artifacts]) + '</tr>' +
+                         '<tr>' + ''.join([f'<td>{dct_artifacts[artifact]}</td>' for artifact in dct_artifacts]) + '</tr>' +
+                         '</table>')
+            notes = "<br/>".join(
+                pdf_selected.loc[
+                    (pdf_selected['notes'].fillna("").str.strip() != '')]['notes_txt'].tolist())
+    summary = f"""
+    <br/>
+    <table cellpadding='2' >
+    <tr>
+    <td><b>Start Time<b/></td>
+    <td><b>End Time<b/></td>
+    <td><b>Annotations<b/></td>
+    <td><b>Notes<b/></td>
+    </tr>
+    <tr>
+    <td>{pd.to_datetime(file_start_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
+    <td>{pd.to_datetime(file_start_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
+    <td>{artifacts}</td>
+    <td>{notes}</td>
+    </tr>
+    """
+    summary_box.text = summary
+    print(summary)
+
+
 def capture_new_annotation(colsource, selected_indices, artifact, fname, uname):
     min_index = min(selected_indices)
     max_index = max(selected_indices)
@@ -569,6 +627,8 @@ user_setter = Select(value=lst_users[0], title="Annotate as", options=sorted(lst
 # Dashboard init
 fname = os.path.join(readings_folder, lst_fnames[0].split("--")[1])
 uname = lst_users[0]
+summary = ""
+summary_box = Div(text=summary)
 srs, colsource = update_datasources()
 p, select = make_plot(
     srs,
@@ -1268,6 +1328,7 @@ def save_annotations():
     pdf_all_results.to_excel(annotations_fname, index=False)
     pdf_annotations = pdf_all_results
     update_annotations()
+    update_summary()
 
 
 def mark_3m_walk():
@@ -1403,6 +1464,9 @@ layout = grid(
                 ),
                 sizing_mode="stretch_width",
             ),
+        ),
+        row(
+            column(summary_box, sizing_mode="stretch_width"), sizing_mode="stretch_width"
         ),
         row(
             column(p, select, sizing_mode="stretch_width"), sizing_mode="stretch_width"
