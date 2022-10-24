@@ -392,7 +392,7 @@ def update_summary():
     </tr>
     <tr>
     <td>{pd.to_datetime(file_start_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
-    <td>{pd.to_datetime(file_start_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
+    <td>{pd.to_datetime(file_end_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
     <td>{artifacts}</td>
     <td>{notes}</td>
     </tr>
