@@ -15,7 +15,7 @@ from bokeh.models import (
 from bokeh.models.widgets import DataTable, TableColumn
 import bokeh.plotting as bp
 from bokeh.plotting import figure, curdoc
-from bokeh.models.widgets import Button
+from bokeh.models.widgets import Button, MultiSelect
 from bokeh.layouts import column
 
 # Constants
@@ -24,7 +24,7 @@ data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 readings_folder = os.path.join(data_folder, "readings")
 output_folder = os.path.join(data_folder, "output")
 annotations_fname = os.path.join(output_folder, "annotations.xlsx")
-lst_users = list(sorted(["megan", "victor", "chahak", "alena"]))
+lst_users = ['None'] + list(sorted(["megan", "victor", "chahak", "alena"]))
 
 
 # Intial data loaders
@@ -33,7 +33,7 @@ def get_filenames():
     np.random.seed(2020)
     lst_files = sorted(
         [
-            np.random.choice(lst_users) + "--" + os.path.splitext(f)[0]
+            np.random.choice([user for user in lst_users if user != 'None']) + "--" + os.path.splitext(f)[0]
             for f in os.listdir(readings_folder)
             if os.path.splitext(f)[1].lower() == ".h5"
         ]
@@ -366,11 +366,17 @@ def update_summary():
                 notes_txt=pdf_selected.apply(
                     lambda x: f"{x['notes']} ({x['user']})", axis=1)
             )
+            pdf_reviews = pdf_selected.loc[pdf_selected['review'] == 1].drop_duplicates(subset=['user', 'artifact'])
+            pdf_reviews = pdf_reviews.groupby('artifact')['user'].apply(lambda x: ','.join(x)).reset_index()
+            pdf_reviews = pdf_reviews.assign(review_txt=pdf_reviews.apply(lambda x: f"{x['artifact']} : {x['user']}",
+                                                                          axis=1),
+                                             )
             dct_artifacts = {artifact: "<br/>".join(
                 pdf_selected.loc[
                     (pdf_selected['artifact'] == artifact) &
                     (pdf_selected['scoring'] == 0) &
-                    (pdf_selected['segment'] == 0)]['annotations_txt'].tolist())
+                    (pdf_selected['segment'] == 0) &
+                    (~pdf_selected['start_time'].isna())]['annotations_txt'].tolist())
                 for artifact in ['chair_stand', '6min_walk', '3m_walk', 'tug']}
             dct_artifacts = {artifact: dct_artifacts[artifact] for artifact in dct_artifacts
                              if bool(dct_artifacts[artifact])}
@@ -381,6 +387,8 @@ def update_summary():
             notes = "<br/>".join(
                 pdf_selected.loc[
                     (pdf_selected['notes'].fillna("").str.strip() != '')]['notes_txt'].tolist())
+            reviews = "<br/>".join(
+                pdf_reviews['review_txt'].tolist())
     summary = f"""
     <br/>
     <table cellpadding='2' >
@@ -389,12 +397,14 @@ def update_summary():
     <td><b>End Time<b/></td>
     <td><b>Annotations<b/></td>
     <td><b>Notes<b/></td>
+    <td><b>Reviews<b/></td>
     </tr>
     <tr>
     <td>{pd.to_datetime(file_start_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
     <td>{pd.to_datetime(file_end_timestamp).strftime('%d-%m-%Y %H:%M:%S')}</td>
     <td>{artifacts}</td>
     <td>{notes}</td>
+    <td>{reviews}</td>
     </tr>
     """
     summary_box.text = summary
@@ -623,6 +633,9 @@ file_picker = Select(
     value=lst_fnames[0], title="Select a file", options=sorted(lst_fnames)
 )
 user_setter = Select(value=lst_users[0], title="Annotate as", options=sorted(lst_users))
+review_multi_select = MultiSelect(title="Mark for review", value=[],
+                           options=[("chair_stand", "Chairstand"),
+                                    ("tug", "TUG"), ("3m_walk", "3MW"), ("6min_walk", "6MW")])
 
 # Dashboard init
 fname = os.path.join(readings_folder, lst_fnames[0].split("--")[1])
@@ -688,7 +701,7 @@ def update_selection():
             "notes",
         ]
     )
-    if bool(selected_indices):
+    if bool(selected_indices) and (uname != 'None'):
         btn_clear_selection.disabled = False
         btn_tug.disabled = False
         btn_3m_walk.disabled = False
@@ -780,7 +793,7 @@ def add_notes():
 
     selected_indices = colsource.selected.indices
 
-    if bool(selected_indices):
+    if bool(selected_indices) and (uname != 'None'):
         btn_clear_selection.disabled = False
         btn_tug.disabled = False
         btn_3m_walk.disabled = False
@@ -937,6 +950,12 @@ def load_user_annotations(attrname, old, new):
     global uname
     uname = user_setter.value
     update_annotations()
+    global pdf_displayed_annotations
+    pdf_review_flags = pdf_displayed_annotations.loc[
+        (pdf_displayed_annotations["review"] == 1)
+        & (pdf_displayed_annotations["start_time"].isna())
+        ]
+    review_multi_select.value = pdf_review_flags.artifact.unique().tolist()
 
 
 def redraw_plots():
@@ -1403,6 +1422,39 @@ def update_selected_tables(attr, old, new):
     update_selection()
 
 
+def update_review_flags(attr, old, new):
+    lst_new_reviews = review_multi_select.value
+    global uname
+    global pdf_annotations
+    global pdf_displayed_annotations
+    global fname
+    if set(lst_new_reviews) != set(pdf_annotations.loc[
+                                       (pdf_annotations["user"] == uname)
+                                       & (pdf_annotations["fname"] == os.path.basename(fname))
+                                   ].artifact.tolist()):
+        pdf_annotations = pdf_annotations.loc[
+            ~((pdf_annotations["user"] == uname)
+              & (pdf_annotations["fname"] == os.path.basename(fname))
+              & (pdf_annotations["review"] == 1)
+              & (pdf_annotations["start_time"].isna()))
+        ]
+        pdf_annotations = pd.concat([pdf_annotations,
+                                     pd.DataFrame([{'fname': os.path.basename(fname),
+                                                    'artifact': artifact,
+                                                    'segment': 0,
+                                                    'scoring': 0,
+                                                    'review': 1,
+                                                    'annotated_at': datetime.now(),
+                                                    'user': uname
+                                                    } for artifact in lst_new_reviews],
+                                                  index=list(range(len(lst_new_reviews))))],
+                                    ignore_index=True).reset_index(drop=True)
+        pdf_displayed_annotations = pdf_annotations.loc[
+            (pdf_annotations["user"] == uname)
+            & (pdf_annotations["fname"] == os.path.basename(fname))
+            ]
+
+
 # Callback registrations
 windowsize_input.on_change("value", update_windowsize)
 btn_next_window.on_click(move_to_next_window)
@@ -1422,7 +1474,7 @@ btn_export.on_click(save_annotations)
 btn_notes.on_click(add_notes)
 file_picker.on_change("value", plot_new_file)
 user_setter.on_change("value", load_user_annotations)
-
+review_multi_select.on_change("value", update_review_flags)
 colsource.selected.on_change("indices", update_selected_tables)
 
 # Layout
@@ -1431,40 +1483,32 @@ layout = grid(
     column(
         row(
             column(
-                row(file_picker, sizing_mode="stretch_width"),
-                row(time_input, sizing_mode="stretch_width"),
-            ),
-            column(
-                row(user_setter, sizing_mode="stretch_width"),
-                row(windowsize_input, sizing_mode="stretch_width"),
-            ),
-            column(
-                row(
-                    btn_update_plot,
-                    btn_prev_window,
-                    btn_next_window,
-                    btn_clear_selection,
-                    sizing_mode="stretch_width",
-                ),
-                row(
-                    btn_chairstand,
-                    btn_tug,
-                    btn_3m_walk,
-                    btn_6min_walk,
-                    btn_notes,
-                    sizing_mode="stretch_width",
-                ),
-                row(
-                    btn_segment,
-                    btn_scoring,
-                    btn_review,
-                    btn_remove_annotations,
-                    btn_export,
-                    sizing_mode="stretch_width",
-                ),
-                sizing_mode="stretch_width",
-            ),
-        ),
+                row(file_picker, user_setter, time_input, windowsize_input, sizing_mode="stretch_width"),
+                row(column(review_multi_select),
+                    column(
+                        row(btn_update_plot,
+                            btn_prev_window,
+                            btn_next_window,
+                            btn_clear_selection,
+                            btn_review,
+                            btn_remove_annotations,
+                            btn_export,
+                            sizing_mode="stretch_width",
+                            ),
+                        row(btn_chairstand,
+                            btn_tug,
+                            btn_3m_walk,
+                            btn_6min_walk,
+                            btn_segment,
+                            btn_scoring,
+                            btn_notes,
+                            sizing_mode="stretch_width",
+                            ),
+                        sizing_mode="stretch_width"
+                    )
+                    ),
+                sizing_mode="stretch_width"
+            ), sizing_mode="stretch_width"),
         row(
             column(summary_box, sizing_mode="stretch_width"), sizing_mode="stretch_width"
         ),
