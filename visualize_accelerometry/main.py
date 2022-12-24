@@ -353,6 +353,7 @@ def update_summary():
     global summary
     artifacts = ''
     notes = ''
+    reviews = ''
     if pdf_annotations.shape[0] > 0:
         pdf_selected = pdf_annotations.loc[
             (pdf_annotations["fname"] == os.path.basename(fname))
