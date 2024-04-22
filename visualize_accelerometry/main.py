@@ -1,3 +1,4 @@
+import glob
 import pandas as pd
 import os
 import numpy as np
@@ -23,7 +24,7 @@ lst_colors = ["red", "blue", "green", "yellow", "violet"]
 data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 readings_folder = os.path.join(data_folder, "readings")
 output_folder = os.path.join(data_folder, "output")
-annotations_fname = os.path.join(output_folder, "annotations.xlsx")
+annotations_fname = os.path.join(output_folder, "annotations_*.xlsx")
 lst_users = ['None'] + list(sorted(["megan", "victor", "chahak", "alena"]))
 
 
@@ -452,25 +453,13 @@ def capture_new_annotation(colsource, selected_indices, artifact, fname, uname):
     return pdf_new_annotations
 
 
-# Global Variables
-lst_columns = ["timestamp", "x", "y", "z", "light", "button", "temperature"]
-lst_displayed_annotations_table_columns = [
-    "artifact",
-    "segment",
-    "scoring",
-    "review",
-    "start_time",
-    "end_time",
-    "annotated_at",
-    "user",
-    "notes",
-]
-pdf_signal_to_display = None
-# pdf_results = pd.DataFrame(columns=['fname', 'artifact', 'start_epoch', 'end_epoch', 'start_time', 'end_time'])
-pdf_annotations = (
-    pd.read_excel(annotations_fname, engine="openpyxl")
-    if os.path.exists(annotations_fname)
-    else pd.DataFrame(
+def get_annotations_from_user_files(annotations_fname):
+    return (pd.concat(
+        [pd.read_excel(n, engine="openpyxl")
+         for n in glob.glob(annotations_fname) if os.path.isfile(n)])
+                       if bool(
+        [n for n in glob.glob(annotations_fname) if os.path.isfile(n)])
+                       else pd.DataFrame(
         columns=[
             "fname",
             "artifact",
@@ -486,7 +475,25 @@ pdf_annotations = (
             "notes",
         ]
     )
-)
+                       )
+
+
+# Global Variables
+lst_columns = ["timestamp", "x", "y", "z", "light", "button", "temperature"]
+lst_displayed_annotations_table_columns = [
+    "artifact",
+    "segment",
+    "scoring",
+    "review",
+    "start_time",
+    "end_time",
+    "annotated_at",
+    "user",
+    "notes",
+]
+pdf_signal_to_display = None
+# pdf_results = pd.DataFrame(columns=['fname', 'artifact', 'start_epoch', 'end_epoch', 'start_time', 'end_time'])
+pdf_annotations = get_annotations_from_user_files(annotations_fname)
 pdf_annotations = cleanup_annotations(pdf_annotations)
 pdf_displayed_annotations = pdf_annotations.copy()
 anchor_timestamp = None
@@ -949,7 +956,10 @@ def plot_new_file(attrname, old, new):
 
 def load_user_annotations(attrname, old, new):
     global uname
+    global pdf_annotations
+    global annotations_fname
     uname = user_setter.value
+    pdf_annotations = get_annotations_from_user_files(annotations_fname)
     update_annotations()
     global pdf_displayed_annotations
     pdf_review_flags = pdf_displayed_annotations.loc[
@@ -1345,8 +1355,10 @@ def save_annotations():
         ignore_index=True,
     ).reset_index(drop=True)
     pdf_all_results = cleanup_annotations(pdf_all_results)
-    pdf_all_results.to_excel(annotations_fname, index=False)
-    pdf_annotations = pdf_all_results
+    pdf_all_results.to_excel(annotations_fname.replace("*", uname),
+                             index=False)
+    # pdf_annotations = pdf_all_results
+    pdf_annotations = get_annotations_from_user_files(annotations_fname)
     update_annotations()
     update_summary()
 
