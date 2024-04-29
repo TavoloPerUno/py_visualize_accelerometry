@@ -148,7 +148,7 @@ def make_plot(
 ):
     tools = "box_select"
     p = figure(
-        plot_height=300,
+        height=300,
         tools=tools,
         toolbar_location="left",
         x_axis_type="datetime",
@@ -199,7 +199,7 @@ def make_plot(
 
     select = figure(
         title="Drag the middle and edges of the selection box to change the range above",
-        plot_height=130,
+        height=130,
         y_range=p.y_range,
         x_axis_type="datetime",
         y_axis_type=None,
@@ -665,7 +665,7 @@ range_tool = RangeTool(x_range=p.x_range)
 range_tool.overlay.fill_color = "navy"
 range_tool.overlay.fill_alpha = 0.2
 select.add_tools(range_tool)
-select.toolbar.active_multi = range_tool
+select.toolbar.active_multi = 'auto'
 
 
 # Callbacks
@@ -983,7 +983,8 @@ def mark_chairstand():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "chair_stand", fname, uname
         )
-        pdf_annotations = pdf_annotations.append(pdf_new_annotations)
+        pdf_annotations = pd.concat([pdf_annotations,
+                                     pdf_new_annotations], ignore_index=True)
         # print(pdf_annotations)
 
     update_annotations()
@@ -999,7 +1000,9 @@ def mark_6min_walk():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "6min_walk", fname, uname
         )
-        pdf_annotations = pdf_annotations.append(pdf_new_annotations)
+        pdf_annotations = pd.concat([
+            pdf_annotations,
+            pdf_new_annotations], ignore_index=True)
     update_annotations()
 
 
@@ -1372,7 +1375,8 @@ def mark_3m_walk():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "3m_walk", fname, uname
         )
-        pdf_annotations = pdf_annotations.append(pdf_new_annotations)
+        pdf_annotations = pd.concat([pdf_annotations,
+            pdf_new_annotations], ignore_index=True)
     update_annotations()
 
 
@@ -1385,7 +1389,8 @@ def mark_tug():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "tug", fname, uname
         )
-        pdf_annotations = pdf_annotations.append(pdf_new_annotations)
+        pdf_annotations = pd.concat([pdf_annotations,
+            pdf_new_annotations], ignore_index=True)
     update_annotations()
 
 
