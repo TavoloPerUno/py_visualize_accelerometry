@@ -17,9 +17,8 @@ module load gcc/12.1.0
 module load miniconda3/23.1.0
 source activate /gpfs/data/nshap-lab/users/mmurugesan/venvs/py39
 
-# Change username in the line below
 cd /gpfs/data/nshap-lab/users/mmurugesan/projects/accelerometry/codebase/py_visualize_accelerometry/
-nohup bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --port=${app_port} > logs/bokeh.log 2>&1 &
+nohup bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --port=${app_port} > logs/${user}_bokeh.log 2>&1 &
 # print tunneling instructions jupyter-log
 echo -e "
 Command to create ssh tunnel:
