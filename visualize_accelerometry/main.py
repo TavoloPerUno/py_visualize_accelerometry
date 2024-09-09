@@ -25,8 +25,7 @@ data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 readings_folder = os.path.join(data_folder, "readings")
 output_folder = os.path.join(data_folder, "output")
 annotations_fname = os.path.join(output_folder, "annotations_*.xlsx")
-lst_users = ['None'] + list(sorted(["natasha", "rusi", "krittika", "ruoqi",
-                                    "megan"]))
+lst_users = ["None"] + list(sorted(["natasha", "rusi", "krittika", "ruoqi", "megan"]))
 
 
 # Intial data loaders
@@ -35,7 +34,9 @@ def get_filenames():
     np.random.seed(2020)
     lst_files = sorted(
         [
-            np.random.choice([user for user in lst_users if user != 'None']) + "--" + os.path.splitext(f)[0]
+            np.random.choice([user for user in lst_users if user != "None"])
+            + "--"
+            + os.path.splitext(f)[0]
             for f in os.listdir(readings_folder)
             if os.path.splitext(f)[1].lower() == ".h5"
         ]
@@ -353,45 +354,79 @@ def update_summary():
     global file_start_timestamp
     global file_end_timestamp
     global summary
-    artifacts = ''
-    notes = ''
-    reviews = ''
+    artifacts = ""
+    notes = ""
+    reviews = ""
     if pdf_annotations.shape[0] > 0:
         pdf_selected = pdf_annotations.loc[
             (pdf_annotations["fname"] == os.path.basename(fname))
         ].reset_index(drop=True)
         if pdf_selected.shape[0] > 0:
             pdf_selected = pdf_selected.assign(
-                **{col: pdf_selected[col].dt.strftime("%d-%m %H:%M:%S") for col in ['start_time', 'end_time']})
+                **{
+                    col: pdf_selected[col].dt.strftime("%d-%m %H:%M:%S")
+                    for col in ["start_time", "end_time"]
+                }
+            )
             pdf_selected = pdf_selected.assign(
                 annotations_txt=pdf_selected.apply(
-                    lambda x: f"{x['start_time']} - {x['end_time']} ({x['user']})", axis=1),
+                    lambda x: f"{x['start_time']} - {x['end_time']} ({x['user']})",
+                    axis=1,
+                ),
                 notes_txt=pdf_selected.apply(
-                    lambda x: f"{x['notes']} ({x['user']})", axis=1)
+                    lambda x: f"{x['notes']} ({x['user']})", axis=1
+                ),
             )
-            pdf_reviews = pdf_selected.loc[pdf_selected['review'] == 1].drop_duplicates(subset=['user', 'artifact'])
-            pdf_reviews = pdf_reviews.groupby('artifact')['user'].apply(lambda x: ','.join(x)).reset_index()
-            pdf_reviews = pdf_reviews.assign(review_txt=pdf_reviews.apply(lambda x: f"{x['artifact']} : {x['user']}",
-                                                                          axis=1),
-                                             )
-            dct_artifacts = {artifact: "<br/>".join(
-                pdf_selected.loc[
-                    (pdf_selected['artifact'] == artifact) &
-                    (pdf_selected['scoring'] == 0) &
-                    (pdf_selected['segment'] == 0) &
-                    (~pdf_selected['start_time'].isna())]['annotations_txt'].tolist())
-                for artifact in ['chair_stand', '6min_walk', '3m_walk', 'tug']}
-            dct_artifacts = {artifact: dct_artifacts[artifact] for artifact in dct_artifacts
-                             if bool(dct_artifacts[artifact])}
-            artifacts = ("<table cellpadding='2' >" +
-                         '<tr>' + ''.join([f'<td><b>{artifact}</b></td>' for artifact in dct_artifacts]) + '</tr>' +
-                         '<tr>' + ''.join([f'<td>{dct_artifacts[artifact]}</td>' for artifact in dct_artifacts]) + '</tr>' +
-                         '</table>')
+            pdf_reviews = pdf_selected.loc[pdf_selected["review"] == 1].drop_duplicates(
+                subset=["user", "artifact"]
+            )
+            pdf_reviews = (
+                pdf_reviews.groupby("artifact")["user"]
+                .apply(lambda x: ",".join(x))
+                .reset_index()
+            )
+            pdf_reviews = pdf_reviews.assign(
+                review_txt=pdf_reviews.apply(
+                    lambda x: f"{x['artifact']} : {x['user']}", axis=1
+                ),
+            )
+            dct_artifacts = {
+                artifact: "<br/>".join(
+                    pdf_selected.loc[
+                        (pdf_selected["artifact"] == artifact)
+                        & (pdf_selected["scoring"] == 0)
+                        & (pdf_selected["segment"] == 0)
+                        & (~pdf_selected["start_time"].isna())
+                    ]["annotations_txt"].tolist()
+                )
+                for artifact in ["chair_stand", "6min_walk", "3m_walk", "tug"]
+            }
+            dct_artifacts = {
+                artifact: dct_artifacts[artifact]
+                for artifact in dct_artifacts
+                if bool(dct_artifacts[artifact])
+            }
+            artifacts = (
+                "<table cellpadding='2' >"
+                + "<tr>"
+                + "".join([f"<td><b>{artifact}</b></td>" for artifact in dct_artifacts])
+                + "</tr>"
+                + "<tr>"
+                + "".join(
+                    [
+                        f"<td>{dct_artifacts[artifact]}</td>"
+                        for artifact in dct_artifacts
+                    ]
+                )
+                + "</tr>"
+                + "</table>"
+            )
             notes = "<br/>".join(
-                pdf_selected.loc[
-                    (pdf_selected['notes'].fillna("").str.strip() != '')]['notes_txt'].tolist())
-            reviews = "<br/>".join(
-                pdf_reviews['review_txt'].tolist())
+                pdf_selected.loc[(pdf_selected["notes"].fillna("").str.strip() != "")][
+                    "notes_txt"
+                ].tolist()
+            )
+            reviews = "<br/>".join(pdf_reviews["review_txt"].tolist())
     summary = f"""
     <br/>
     <table cellpadding='2' >
@@ -455,28 +490,32 @@ def capture_new_annotation(colsource, selected_indices, artifact, fname, uname):
 
 
 def get_annotations_from_user_files(annotations_fname):
-    return (pd.concat(
-        [pd.read_excel(n, engine="openpyxl")
-         for n in glob.glob(annotations_fname) if os.path.isfile(n)])
-                       if bool(
-        [n for n in glob.glob(annotations_fname) if os.path.isfile(n)])
-                       else pd.DataFrame(
-        columns=[
-            "fname",
-            "artifact",
-            "segment",
-            "scoring",
-            "review",
-            "start_epoch",
-            "end_epoch",
-            "start_time",
-            "end_time",
-            "annotated_at",
-            "user",
-            "notes",
-        ]
+    return (
+        pd.concat(
+            [
+                pd.read_excel(n, engine="openpyxl")
+                for n in glob.glob(annotations_fname)
+                if os.path.isfile(n)
+            ]
+        )
+        if bool([n for n in glob.glob(annotations_fname) if os.path.isfile(n)])
+        else pd.DataFrame(
+            columns=[
+                "fname",
+                "artifact",
+                "segment",
+                "scoring",
+                "review",
+                "start_epoch",
+                "end_epoch",
+                "start_time",
+                "end_time",
+                "annotated_at",
+                "user",
+                "notes",
+            ]
+        )
     )
-                       )
 
 
 # Global Variables
@@ -642,9 +681,16 @@ file_picker = Select(
     value=lst_fnames[0], title="Select a file", options=sorted(lst_fnames)
 )
 user_setter = Select(value=lst_users[0], title="Annotate as", options=sorted(lst_users))
-review_multi_select = MultiSelect(title="Mark for review", value=[],
-                           options=[("chair_stand", "Chairstand"),
-                                    ("tug", "TUG"), ("3m_walk", "3MW"), ("6min_walk", "6MW")])
+review_multi_select = MultiSelect(
+    title="Mark for review",
+    value=[],
+    options=[
+        ("chair_stand", "Chairstand"),
+        ("tug", "TUG"),
+        ("3m_walk", "3MW"),
+        ("6min_walk", "6MW"),
+    ],
+)
 
 # Dashboard init
 fname = os.path.join(readings_folder, lst_fnames[0].split("--")[1])
@@ -666,7 +712,7 @@ range_tool = RangeTool(x_range=p.x_range)
 range_tool.overlay.fill_color = "navy"
 range_tool.overlay.fill_alpha = 0.2
 select.add_tools(range_tool)
-select.toolbar.active_multi = 'auto'
+select.toolbar.active_multi = "auto"
 
 
 # Callbacks
@@ -710,7 +756,7 @@ def update_selection():
             "notes",
         ]
     )
-    if bool(selected_indices) and (uname != 'None'):
+    if bool(selected_indices) and (uname != "None"):
         btn_clear_selection.disabled = False
         btn_tug.disabled = False
         btn_3m_walk.disabled = False
@@ -802,7 +848,7 @@ def add_notes():
 
     selected_indices = colsource.selected.indices
 
-    if bool(selected_indices) and (uname != 'None'):
+    if bool(selected_indices) and (uname != "None"):
         btn_clear_selection.disabled = False
         btn_tug.disabled = False
         btn_3m_walk.disabled = False
@@ -966,7 +1012,7 @@ def load_user_annotations(attrname, old, new):
     pdf_review_flags = pdf_displayed_annotations.loc[
         (pdf_displayed_annotations["review"] == 1)
         & (pdf_displayed_annotations["start_time"].isna())
-        ]
+    ]
     review_multi_select.value = pdf_review_flags.artifact.unique().tolist()
 
 
@@ -984,8 +1030,9 @@ def mark_chairstand():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "chair_stand", fname, uname
         )
-        pdf_annotations = pd.concat([pdf_annotations,
-                                     pdf_new_annotations], ignore_index=True)
+        pdf_annotations = pd.concat(
+            [pdf_annotations, pdf_new_annotations], ignore_index=True
+        )
         # print(pdf_annotations)
 
     update_annotations()
@@ -1001,9 +1048,9 @@ def mark_6min_walk():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "6min_walk", fname, uname
         )
-        pdf_annotations = pd.concat([
-            pdf_annotations,
-            pdf_new_annotations], ignore_index=True)
+        pdf_annotations = pd.concat(
+            [pdf_annotations, pdf_new_annotations], ignore_index=True
+        )
     update_annotations()
 
 
@@ -1334,13 +1381,17 @@ def save_annotations():
     global pdf_annotations
     global annotations_fname
     pdf_old_results = pd.DataFrame(columns=pdf_annotations.columns)
-    if os.path.exists(annotations_fname):
-        pdf_old_results = pd.read_excel(annotations_fname, engine="openpyxl")
+    if os.path.exists(annotations_fname.replace("*", uname)):
+        pdf_old_results = pd.read_excel(
+            annotations_fname.replace("*", uname), engine="openpyxl"
+        )
         pdf_old_results = pdf_old_results.assign(
             annotated_at=pd.to_datetime(
                 pdf_old_results["annotated_at"], errors="coerce"
             )
         )
+    print("Old annotations")
+    print(pdf_old_results)
     pdf_all_results = pd.concat(
         [
             pdf_old_results.loc[
@@ -1358,9 +1409,10 @@ def save_annotations():
         ],
         ignore_index=True,
     ).reset_index(drop=True)
+    print("Latest annotations")
+    print(pdf_all_results)
     pdf_all_results = cleanup_annotations(pdf_all_results)
-    pdf_all_results.to_excel(annotations_fname.replace("*", uname),
-                             index=False)
+    pdf_all_results.to_excel(annotations_fname.replace("*", uname), index=False)
     # pdf_annotations = pdf_all_results
     pdf_annotations = get_annotations_from_user_files(annotations_fname)
     update_annotations()
@@ -1376,8 +1428,9 @@ def mark_3m_walk():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "3m_walk", fname, uname
         )
-        pdf_annotations = pd.concat([pdf_annotations,
-            pdf_new_annotations], ignore_index=True)
+        pdf_annotations = pd.concat(
+            [pdf_annotations, pdf_new_annotations], ignore_index=True
+        )
     update_annotations()
 
 
@@ -1390,8 +1443,9 @@ def mark_tug():
         pdf_new_annotations = capture_new_annotation(
             colsource, selected_indices, "tug", fname, uname
         )
-        pdf_annotations = pd.concat([pdf_annotations,
-            pdf_new_annotations], ignore_index=True)
+        pdf_annotations = pd.concat(
+            [pdf_annotations, pdf_new_annotations], ignore_index=True
+        )
     update_annotations()
 
 
@@ -1447,31 +1501,45 @@ def update_review_flags(attr, old, new):
     global pdf_annotations
     global pdf_displayed_annotations
     global fname
-    if set(lst_new_reviews) != set(pdf_annotations.loc[
-                                       (pdf_annotations["user"] == uname)
-                                       & (pdf_annotations["fname"] == os.path.basename(fname))
-                                   ].artifact.tolist()):
+    if set(lst_new_reviews) != set(
+        pdf_annotations.loc[
+            (pdf_annotations["user"] == uname)
+            & (pdf_annotations["fname"] == os.path.basename(fname))
+        ].artifact.tolist()
+    ):
         pdf_annotations = pdf_annotations.loc[
-            ~((pdf_annotations["user"] == uname)
-              & (pdf_annotations["fname"] == os.path.basename(fname))
-              & (pdf_annotations["review"] == 1)
-              & (pdf_annotations["start_time"].isna()))
+            ~(
+                (pdf_annotations["user"] == uname)
+                & (pdf_annotations["fname"] == os.path.basename(fname))
+                & (pdf_annotations["review"] == 1)
+                & (pdf_annotations["start_time"].isna())
+            )
         ]
-        pdf_annotations = pd.concat([pdf_annotations,
-                                     pd.DataFrame([{'fname': os.path.basename(fname),
-                                                    'artifact': artifact,
-                                                    'segment': 0,
-                                                    'scoring': 0,
-                                                    'review': 1,
-                                                    'annotated_at': datetime.now(),
-                                                    'user': uname
-                                                    } for artifact in lst_new_reviews],
-                                                  index=list(range(len(lst_new_reviews))))],
-                                    ignore_index=True).reset_index(drop=True)
+        pdf_annotations = pd.concat(
+            [
+                pdf_annotations,
+                pd.DataFrame(
+                    [
+                        {
+                            "fname": os.path.basename(fname),
+                            "artifact": artifact,
+                            "segment": 0,
+                            "scoring": 0,
+                            "review": 1,
+                            "annotated_at": datetime.now(),
+                            "user": uname,
+                        }
+                        for artifact in lst_new_reviews
+                    ],
+                    index=list(range(len(lst_new_reviews))),
+                ),
+            ],
+            ignore_index=True,
+        ).reset_index(drop=True)
         pdf_displayed_annotations = pdf_annotations.loc[
             (pdf_annotations["user"] == uname)
             & (pdf_annotations["fname"] == os.path.basename(fname))
-            ]
+        ]
 
 
 # Callback registrations
@@ -1502,10 +1570,18 @@ layout = grid(
     column(
         row(
             column(
-                row(file_picker, user_setter, time_input, windowsize_input, sizing_mode="stretch_width"),
-                row(column(review_multi_select),
+                row(
+                    file_picker,
+                    user_setter,
+                    time_input,
+                    windowsize_input,
+                    sizing_mode="stretch_width",
+                ),
+                row(
+                    column(review_multi_select),
                     column(
-                        row(btn_update_plot,
+                        row(
+                            btn_update_plot,
                             btn_prev_window,
                             btn_next_window,
                             btn_clear_selection,
@@ -1513,8 +1589,9 @@ layout = grid(
                             btn_remove_annotations,
                             btn_export,
                             sizing_mode="stretch_width",
-                            ),
-                        row(btn_chairstand,
+                        ),
+                        row(
+                            btn_chairstand,
                             btn_tug,
                             btn_3m_walk,
                             btn_6min_walk,
@@ -1522,14 +1599,17 @@ layout = grid(
                             btn_scoring,
                             btn_notes,
                             sizing_mode="stretch_width",
-                            ),
-                        sizing_mode="stretch_width"
-                    )
+                        ),
+                        sizing_mode="stretch_width",
                     ),
-                sizing_mode="stretch_width"
-            ), sizing_mode="stretch_width"),
+                ),
+                sizing_mode="stretch_width",
+            ),
+            sizing_mode="stretch_width",
+        ),
         row(
-            column(summary_box, sizing_mode="stretch_width"), sizing_mode="stretch_width"
+            column(summary_box, sizing_mode="stretch_width"),
+            sizing_mode="stretch_width",
         ),
         row(
             column(p, select, sizing_mode="stretch_width"), sizing_mode="stretch_width"
