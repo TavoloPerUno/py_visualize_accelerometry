@@ -156,7 +156,7 @@ def make_plot(
         x_axis_type="datetime",
         x_axis_location="above",
         background_fill_color="#efefef",
-        x_range=(srs[400], srs[min(3000, len(srs))]),
+        x_range=(srs[400], srs[min(3000, len(srs) - 1)]),
         title=title,
         sizing_mode="stretch_width",
         output_backend="webgl",
