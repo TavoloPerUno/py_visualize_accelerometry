@@ -1,4 +1,5 @@
 import glob
+from itertools import cycle
 import pandas as pd
 import os
 import numpy as np
@@ -32,9 +33,12 @@ lst_users = ["None"] + list(sorted(["natasha", "rusi", "krittika", "ruoqi", "meg
 def get_filenames():
     global lst_users
     np.random.seed(2020)
+    lst_users_to_assign = [user for user in lst_users if user != "None"]
+    np.random.shuffle(lst_users_to_assign)
+    lst_users_to_assign = cycle(lst_users_to_assign)
     lst_files = sorted(
         [
-            np.random.choice([user for user in lst_users if user != "None"])
+            next(lst_users_to_assign)
             + "--"
             + os.path.splitext(f)[0]
             for f in os.listdir(readings_folder)
