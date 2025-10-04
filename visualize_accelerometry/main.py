@@ -28,7 +28,10 @@ output_folder = os.path.join(data_folder, "output")
 annotations_fname = os.path.join(output_folder, "annotations_*.xlsx")
 lst_users = ["None"] + list(sorted(["natasha", "ideyah", "evelyn", "rusi",
                                                                 "krittika",
-                                                                  "ruoqi", "megan"]))
+                                                                  "ruoqi",
+                                    "megan",
+                                    'junny', 'amritap1', 'ldepablo1', 'ar277'
+                                    ]))
 
 
 # Intial data loaders
