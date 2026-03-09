@@ -19,8 +19,8 @@ ANNOTATIONS_GLOB = os.path.join(OUTPUT_FOLDER, "annotations_*.xlsx")
 
 # Known users (used for file assignment; login users come from OAuth)
 KNOWN_USERS = sorted([
-    "natasha", "ideyah", "evelyn", "rusi", "krittika",
-    "ruoqi", "megan", "junny", "amritap1", "ldepablo1", "ar277",
+    "ideyah", "evelyn", "junny", "amritap1", "ldepablo1", "ar277",
+    "megan", "fran", "alan", "anita", "liberto",
 ])
 
 # Default time window in seconds
