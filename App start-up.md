@@ -53,12 +53,34 @@ conda activate {your_preferred_python_env_folder_path}/{your_env_name}
 ```
 
 Set aside a port for the app, example, 5601. Move into py_visualize_accelerometry and execute the below commands.
+
+### Option A: Panel with basic auth (recommended for local/team use)
+First, copy `credentials.json.example` to `credentials.json` and set passwords for each user.
+```
+cp credentials.json.example credentials.json
+# Edit credentials.json with real passwords
+export PYTHONUNBUFFERED=true
+panel serve visualize_accelerometry/app.py --show --port={your_app_port} --basic-auth credentials.json --cookie-secret=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+```
+
+### Option B: Panel with OAuth (recommended for production)
+```
+export PYTHONUNBUFFERED=true
+panel serve visualize_accelerometry/app.py --show --port={your_app_port} \
+    --oauth-provider github \
+    --oauth-key {GITHUB_CLIENT_ID} \
+    --oauth-secret {GITHUB_CLIENT_SECRET} \
+    --cookie-secret {RANDOM_SECRET} \
+    --oauth-encryption-key $(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+```
+
+### Option C: Legacy Bokeh serve (no auth)
 ```
 export PYTHONUNBUFFERED=true
 bokeh serve --show visualize_accelerometry --unused-session-lifetime 10370000000 --port={your_app_port}
 ```
 
-Open an internet browser on your local computer and go to this url: `http://localhost:appport/visualize_accelerometry`
+Open an internet browser on your local computer and go to this url: `http://localhost:{your_app_port}/app`
 
 To kill the app, press Ctrl+C in the terminal you started the app. Then, find the process using your app_port with the below command:
 
