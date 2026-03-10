@@ -13,9 +13,9 @@ user=$(whoami)
 export PYTHONUNBUFFERED=true
 module load gcc/12.1.0
 module load miniconda3/23.1.0
-source activate /gpfs/data/nshap-lab/users/${user}/venvs/panel_app
+source activate /gpfs/data/nshap-lab/users/mmurugesan/venvs/panel_app
 
-cd /gpfs/data/nshap-lab/users/${user}/projects/accelerometry/codebase/py_visualize_accelerometry/
+cd /gpfs/data/nshap-lab/users/mmurugesan/projects/accelerometry/codebase/py_visualize_accelerometry/
 
 nohup panel serve visualize_accelerometry/app.py \
     --port=${app_port} \
