@@ -1,1 +1,0 @@
-web: panel serve visualize_accelerometry/app.py --port=$PORT --allow-websocket-origin=py-visualize-accelerometry.herokuapp.com --address=0.0.0.0 --basic-auth credentials.json --cookie-secret=$COOKIE_SECRET
