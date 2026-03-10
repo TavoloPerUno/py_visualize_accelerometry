@@ -10,3 +10,4 @@ __pycache__/
 scratch_books/
 dask-worker-space/
 logs/
+docs/_build/
