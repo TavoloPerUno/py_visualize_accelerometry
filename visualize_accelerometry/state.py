@@ -1,12 +1,19 @@
+"""
+Per-session application state.
+
+Each browser session (user) gets its own ``AppState`` instance that
+tracks the current file, time window, signal data, and annotations.
+Persistent ``ColumnDataSource`` objects are shared with Bokeh figures
+so that updating ``.data`` triggers a re-render without rebuilding
+the entire plot.
+"""
+
 import os
 
 import pandas as pd
 from bokeh.models import ColumnDataSource
-import bokeh.plotting as bp
 
 from .config import (
-    ANNOTATION_COLUMNS,
-    ANNOTATIONS_GLOB,
     DEFAULT_WINDOW_SIZE,
     DISPLAYED_ANNOTATION_COLUMNS,
     READINGS_FOLDER,
@@ -20,7 +27,23 @@ from .data_loading import (
 
 
 class AppState:
-    """Per-session application state. Each user session gets its own instance."""
+    """Per-session application state.
+
+    Parameters
+    ----------
+    username : str
+        Authenticated username for this session.
+
+    Attributes
+    ----------
+    signal_cds : ColumnDataSource or None
+        The downsampled signal CDS currently rendered in the plot.
+        Set externally by ``app.py`` / ``CallbackManager._refresh_plot``
+        after each plot (re)build.
+    selection_bounds : tuple or None
+        ``(start_timestamp, end_timestamp)`` set by the box-select
+        callback, or None when nothing is selected.
+    """
 
     def __init__(self, username):
         self.username = username
@@ -31,32 +54,47 @@ class AppState:
         self.file_end_timestamp = None
         self.windowsize = DEFAULT_WINDOW_SIZE
 
-        # DataFrames
+        # Signal data for the current time window
         self.pdf_signal_to_display = None
+
+        # Annotations: full in-memory set and current-user subset
         self.pdf_annotations = get_annotations_from_files()
         self.pdf_annotations = cleanup_annotations(self.pdf_annotations)
         self.pdf_displayed_annotations = self.pdf_annotations.copy()
 
-        # Bokeh data sources
-        self.colsource = ColumnDataSource(data=dict(timestamp=[], x=[], y=[], z=[]))
-        self.selected_data = ColumnDataSource(data=dict(start_time=[], end_time=[]))
-        self.selected_annotations = ColumnDataSource(
-            self.pdf_annotations[DISPLAYED_ANNOTATION_COLUMNS]
-        )
-
-        empty_annot = dict(start_epoch=[], end_epoch=[], start_time=[], end_time=[])
-        self.annotation_sources = {
-            "chair_stand": ColumnDataSource(data=dict(**empty_annot)),
-            "3m_walk": ColumnDataSource(data=dict(**empty_annot)),
-            "6min_walk": ColumnDataSource(data=dict(**empty_annot)),
-            "tug": ColumnDataSource(data=dict(**empty_annot)),
-            "segment": ColumnDataSource(data=dict(**empty_annot, artifact=[])),
-            "scoring": ColumnDataSource(data=dict(**empty_annot, artifact=[])),
-            "review": ColumnDataSource(data=dict(**empty_annot, artifact=[])),
+        # Persistent ColumnDataSources for annotation overlay quads.
+        # Updating .data triggers Bokeh to re-render without a plot rebuild.
+        empty = dict(start_time=[], end_time=[])
+        self.annotation_cds = {
+            "chair_stand": ColumnDataSource(data=dict(**empty)),
+            "3m_walk": ColumnDataSource(data=dict(**empty)),
+            "6min_walk": ColumnDataSource(data=dict(**empty)),
+            "tug": ColumnDataSource(data=dict(**empty)),
+            "segment": ColumnDataSource(data=dict(**empty)),
+            "scoring": ColumnDataSource(data=dict(**empty)),
+            "review": ColumnDataSource(data=dict(**empty)),
         }
 
+        # CDS for the "selected bounds" and "selected annotations" tables
+        self.selected_data = ColumnDataSource(data=dict(start_time=[], end_time=[]))
+        self.selected_annotations = ColumnDataSource(
+            pd.DataFrame(columns=DISPLAYED_ANNOTATION_COLUMNS)
+        )
+
+        # Set by box-select callback in app.py (via selected.on_change)
+        self.selection_bounds = None
+        # Set after plot creation by app.py / _refresh_plot
+        self.signal_cds = None
+
     def load_file_data(self):
-        """Load signal data for the current file/anchor/window."""
+        """Load signal data for the current file, anchor, and window size.
+
+        Returns
+        -------
+        DataFrame or None
+            Signal data with ``timestamp``, ``x``, ``y``, ``z`` columns,
+            or None if the file is empty / unreadable.
+        """
         from .data_loading import clamp_anchor, get_filedata
 
         anchor, file_start, file_end, pdf = get_filedata(
@@ -68,7 +106,7 @@ class AppState:
         if file_end is not None:
             self.file_end_timestamp = file_end
 
-        # Clamp anchor within bounds
+        # Keep the anchor inside the file so next/prev don't run off the edge
         if self.file_start_timestamp and self.file_end_timestamp:
             self.anchor_timestamp = clamp_anchor(
                 self.anchor_timestamp,
@@ -78,17 +116,22 @@ class AppState:
             )
 
         self.pdf_signal_to_display = pdf
-        dates = pdf["timestamp"].values
-        source = bp.ColumnDataSource(pdf)
-        return dates, source
+        return pdf
 
     def refresh_annotations(self):
-        """Reload annotations from disk."""
+        """Reload annotations from disk (all users, all files)."""
         self.pdf_annotations = get_annotations_from_files()
         self.pdf_annotations = cleanup_annotations(self.pdf_annotations)
 
     def get_displayed_annotations(self):
-        """Filter annotations for current user + file."""
+        """Filter annotations for the current user and file.
+
+        Returns
+        -------
+        DataFrame
+            Subset of ``pdf_annotations`` matching the current
+            ``username`` and ``fname``.
+        """
         self.pdf_displayed_annotations = self.pdf_annotations.loc[
             (self.pdf_annotations["user"] == self.username)
             & (self.pdf_annotations["fname"] == os.path.basename(self.fname))
@@ -96,20 +139,26 @@ class AppState:
         return self.pdf_displayed_annotations
 
     def update_annotation_sources(self):
-        """Sync all annotation ColumnDataSources from pdf_annotations."""
+        """Sync all annotation ColumnDataSources from ``pdf_annotations``.
+
+        Filters out rows with NaT timestamps (e.g. review-only flags that
+        have no time range) to prevent Bokeh NaN serialization errors.
+        """
         self.pdf_annotations = cleanup_annotations(self.pdf_annotations)
         displayed = self.get_displayed_annotations()
+        # Exclude review-only rows that have no time range
+        has_time = displayed["start_time"].notna() & displayed["end_time"].notna()
 
-        artifact_keys = ["chair_stand", "3m_walk", "6min_walk", "tug"]
-        for key in artifact_keys:
-            subset = displayed.loc[displayed["artifact"] == key][
-                ["start_epoch", "end_epoch", "start_time", "end_time"]
-            ]
-            self.annotation_sources[key].data.update(bp.ColumnDataSource(subset).data)
+        for key in ["chair_stand", "3m_walk", "6min_walk", "tug"]:
+            subset = displayed.loc[has_time & (displayed["artifact"] == key)]
+            self.annotation_cds[key].data = {
+                "start_time": subset["start_time"].tolist(),
+                "end_time": subset["end_time"].tolist(),
+            }
 
-        flag_keys = ["segment", "scoring", "review"]
-        for key in flag_keys:
-            subset = displayed.loc[displayed[key] == 1][
-                ["start_epoch", "end_epoch", "start_time", "end_time", "artifact"]
-            ]
-            self.annotation_sources[key].data.update(bp.ColumnDataSource(subset).data)
+        for key in ["segment", "scoring", "review"]:
+            subset = displayed.loc[has_time & (displayed[key] == 1)]
+            self.annotation_cds[key].data = {
+                "start_time": subset["start_time"].tolist(),
+                "end_time": subset["end_time"].tolist(),
+            }

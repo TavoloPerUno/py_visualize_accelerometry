@@ -1,126 +1,240 @@
-from bokeh.models import ColumnDataSource, DatetimeTickFormatter, RangeTool
+"""
+Plotting module — native Bokeh figures with LTTB downsampling.
+
+Creates a main signal plot (with annotation overlays and box-select)
+and a range selector (minimap) for navigating large time series.
+LTTB downsampling keeps the browser responsive by limiting the number
+of points sent over the websocket while preserving visual fidelity.
+"""
+
+import numpy as np
+from bokeh.models import (
+    BoxSelectTool, ColumnDataSource, DatetimeTickFormatter,
+    Range1d, RangeTool,
+)
 from bokeh.plotting import figure
-import bokeh.plotting as bp
 
-from .config import LST_COLORS
+from .config import ARTIFACT_COLORS, LST_COLORS, UCHICAGO_MAROON
+
+# Maximum points to send to the browser per signal axis.
+# 5000 is a good balance between visual fidelity and rendering speed
+# with the canvas backend.
+MAX_POINTS = 5000
 
 
-def make_plot(srs, colsource, annotation_sources, title):
+def _downsample(timestamps, values, n_out):
+    """Downsample a time series using LTTB (Largest Triangle Three Buckets).
+
+    LTTB selects representative points that preserve the visual shape
+    of the signal.  Falls back to uniform strided sampling if the
+    ``lttbc`` C extension is not installed.
+
+    Parameters
+    ----------
+    timestamps : ndarray
+        Datetime64 array of timestamps.
+    values : ndarray
+        Signal values corresponding to *timestamps*.
+    n_out : int
+        Target number of output points.
+
+    Returns
+    -------
+    tuple of (ndarray, ndarray)
+        Downsampled ``(timestamps, values)``.
+    """
+    if len(timestamps) <= n_out:
+        return timestamps, values
+    try:
+        import lttbc
+        # lttbc operates on float64 arrays
+        ts_float = timestamps.astype(np.float64)
+        vals_float = values.astype(np.float64)
+        ds_ts, ds_vals = lttbc.downsample(ts_float, vals_float, n_out)
+        return ds_ts.astype(timestamps.dtype), ds_vals
+    except Exception:
+        # Graceful fallback: take every Nth sample
+        step = max(1, len(timestamps) // n_out)
+        return timestamps[::step], values[::step]
+
+
+def make_plot(pdf, annotation_cds):
     """Create the main signal plot and range selector.
 
-    Args:
-        srs: array of timestamp values
-        colsource: ColumnDataSource with signal data
-        annotation_sources: dict with keys 'chair_stand', '3m_walk', '6min_walk',
-            'tug', 'segment', 'scoring', 'review' mapping to ColumnDataSources
-        title: plot title string
+    Parameters
+    ----------
+    pdf : DataFrame or None
+        Signal data with columns ``timestamp``, ``x``, ``y``, ``z``.
+        If None or empty, returns empty placeholder plots.
+    annotation_cds : dict[str, ColumnDataSource]
+        Persistent Bokeh ColumnDataSources keyed by annotation type
+        (``"chair_stand"``, ``"segment"``, etc.).  Their ``.data`` is
+        updated externally; the plot just references them so overlays
+        refresh without rebuilding the figure.
 
-    Returns:
-        (main_plot, range_selector, range_tool)
+    Returns
+    -------
+    tuple of (Panel.pane.Bokeh, Panel.pane.Bokeh, Figure, ColumnDataSource)
+        ``(main_pane, range_pane, main_fig, signal_cds)`` where
+        ``signal_cds`` is the downsampled signal data source (needed
+        for wiring box-select callbacks).
     """
-    tools = "box_select"
-    p = figure(
+    import panel as pn
+
+    if pdf is None or len(pdf) == 0:
+        empty_fig = figure(height=300, sizing_mode="stretch_width")
+        empty_cds = ColumnDataSource(data=dict(timestamp=[], x=[], y=[], z=[]))
+        return (
+            pn.pane.Bokeh(empty_fig, sizing_mode="stretch_width"),
+            pn.pane.Bokeh(empty_fig, sizing_mode="stretch_width"),
+            empty_fig,
+            empty_cds,
+        )
+
+    ts_raw = pdf["timestamp"].values
+
+    # --- Downsample each axis independently via LTTB ---
+    # Each axis may pick slightly different representative timestamps,
+    # but we reuse the first axis's timestamps for all three.  This is
+    # a minor approximation that keeps the code simple without visible
+    # impact on the plot.
+    ds_data = {"timestamp": None}
+    for col in ["x", "y", "z"]:
+        ds_ts, ds_vals = _downsample(ts_raw, pdf[col].values, MAX_POINTS)
+        if ds_data["timestamp"] is None:
+            ds_data["timestamp"] = ds_ts
+        ds_data[col] = ds_vals
+
+    colsource = ColumnDataSource(data=ds_data)
+
+    full_start = ts_raw[0]
+    full_end = ts_raw[-1]
+    # Show ~10% of the file initially so the user sees detail
+    initial_end_idx = min(len(ts_raw) - 1, int(len(ts_raw) * 0.1))
+    initial_end = ts_raw[initial_end_idx]
+
+    # Explicit y_range computed from signal data.  Using Range1d (not
+    # DataRange1d) is critical because DataRange1d would auto-expand to
+    # include annotation quad bounds, squashing the signal to a thin line.
+    y_min = min(ds_data["x"].min(), ds_data["y"].min(), ds_data["z"].min())
+    y_max = max(ds_data["x"].max(), ds_data["y"].max(), ds_data["z"].max())
+    y_pad = (y_max - y_min) * 0.05
+    y_range = Range1d(start=y_min - y_pad, end=y_max + y_pad)
+
+    # --- Main signal plot ---
+    main_fig = figure(
         height=300,
-        tools=tools,
-        toolbar_location="left",
         x_axis_type="datetime",
         x_axis_location="above",
-        background_fill_color="#efefef",
-        x_range=(srs[400], srs[min(3000, len(srs) - 1)]),
-        title=title,
+        background_fill_color="#e8e8e8",
+        x_range=Range1d(start=full_start, end=initial_end),
+        y_range=y_range,
         sizing_mode="stretch_width",
-        output_backend="webgl",
+        toolbar_location=None,
     )
-    p.xaxis.axis_label = "Timestamp"
+    main_fig.yaxis.visible = False
 
-    lst_col = ["x", "y", "z"]
-    for colr, leg in zip(LST_COLORS, lst_col):
-        p.line(
-            "timestamp", leg, color=colr, legend_label=leg,
-            source=colsource, name="wave",
+    for color, col in zip(LST_COLORS, ["x", "y", "z"]):
+        main_fig.line(
+            "timestamp", col, color=color, source=colsource,
+            alpha=0.8, line_width=1,
+            # Dim unselected data so the box-selected region stands out
             nonselection_alpha=0.2, selection_alpha=1,
         )
-        p.scatter(
-            "timestamp", leg, color=None, legend_label=leg,
-            source=colsource, name="wave",
+        # Invisible scatter points on top of lines so that BoxSelectTool
+        # can select data indices.  Line glyphs alone don't support
+        # index-based hit testing.
+        main_fig.scatter(
+            "timestamp", col, color=None, source=colsource,
+            size=0, alpha=0, nonselection_alpha=0, selection_alpha=0,
         )
 
-    p.xaxis.formatter = DatetimeTickFormatter(
-        days=["%Y/%m/%d"],
-        months=["%Y/%m/%d %H:%M"],
-        hours=["%Y/%m/%d %H:%M"],
-        minutes=["%H:%M"],
-        seconds=["%H:%M:%S"],
-        milliseconds=["%Ss:%3Nms"],
+    main_fig.xaxis.formatter = DatetimeTickFormatter(
+        days="%Y/%m/%d",
+        months="%Y/%m/%d %H:%M",
+        hours="%Y/%m/%d %H:%M",
+        minutes="%H:%M",
+        seconds="%H:%M:%S",
+        milliseconds="%Ss:%3Nms",
     )
-    p.xaxis.minor_tick_line_color = "black"
-    p.xgrid.minor_grid_line_alpha = 0.2
 
-    # Range selector
-    select = figure(
-        title="Drag the middle and edges of the selection box to change the range above",
+    # Width-only box select for time-range annotation
+    box_select = BoxSelectTool(dimensions="width")
+    main_fig.add_tools(box_select)
+    main_fig.toolbar.active_drag = box_select
+
+    # --- Annotation overlay quads ---
+    # Quads span the full y_range so they are visible behind the signal.
+    # Using level="overlay" prevents them from affecting auto-range.
+    q_top = y_max + y_pad
+    q_bot = y_min - y_pad
+
+    # Activity type overlays (semi-transparent colored fills)
+    for key, color in ARTIFACT_COLORS.items():
+        main_fig.quad(
+            left="start_time", right="end_time", top=q_top, bottom=q_bot,
+            fill_color=color, fill_alpha=0.2, line_alpha=0,
+            source=annotation_cds[key], level="overlay",
+        )
+
+    # Flag overlays (hatch patterns with no fill, matching the original app)
+    flag_hatches = {
+        "segment": "cross",
+        "scoring": "dot",
+        "review": "spiral",
+    }
+    for key, hatch in flag_hatches.items():
+        main_fig.quad(
+            left="start_time", right="end_time", top=q_top, bottom=q_bot,
+            fill_color=None, fill_alpha=0, line_alpha=0,
+            hatch_pattern=hatch, hatch_color="black",
+            hatch_weight=0.5, hatch_alpha=0.1,
+            source=annotation_cds[key], level="overlay",
+        )
+
+    # --- Range selector (minimap) ---
+    # Uses fewer points than the main plot since it's smaller
+    range_data = {"timestamp": None}
+    for col in ["x", "y", "z"]:
+        r_ts, r_vals = _downsample(ts_raw, pdf[col].values, 2000)
+        if range_data["timestamp"] is None:
+            range_data["timestamp"] = r_ts
+        range_data[col] = r_vals
+    range_source = ColumnDataSource(data=range_data)
+
+    range_fig = figure(
         height=130,
-        y_range=p.y_range,
+        y_range=main_fig.y_range,
         x_axis_type="datetime",
         y_axis_type=None,
         tools="",
         toolbar_location=None,
-        background_fill_color="#efefef",
+        background_fill_color="#e8e8e8",
         sizing_mode="stretch_width",
-        output_backend="webgl",
-    )
-    select.ygrid.grid_line_color = None
-    for colr, leg in zip(LST_COLORS, lst_col):
-        select.line(
-            "timestamp", leg, color=colr, source=colsource,
-            nonselection_alpha=0.4, selection_alpha=1,
-        )
-    select.xaxis.formatter = DatetimeTickFormatter(
-        days=["%m/%d %H:%M"],
-        months=["%m/%d %H:%M"],
-        hours=["%m/%d %H:%M"],
-        minutes=["%m/%d %H:%M"],
-        seconds=["%m/%d %H:%M:%S"],
-        milliseconds=["%m/%d %H:%M:%Ss:%3Nms"],
     )
 
-    # Annotation overlays
-    artifact_configs = [
-        ("chair_stand", "cyan", "chairstand"),
-        ("3m_walk", "magenta", "3m_walk"),
-        ("6min_walk", "green", "6min_walk"),
-        ("tug", "yellow", "tug"),
-    ]
-    for key, color, label in artifact_configs:
-        p.quad(
-            left="start_time", right="end_time", top=4, bottom=-4,
-            fill_color=color, fill_alpha=0.2,
-            source=annotation_sources[key], legend_label=label,
+    for color, col in zip(LST_COLORS, ["x", "y", "z"]):
+        range_fig.line(
+            "timestamp", col, color=color, source=range_source,
+            alpha=0.6, line_width=1,
         )
 
-    # Hatched overlays for flags
-    flag_configs = [
-        ("segment", "cross", "segment"),
-        ("scoring", "dot", "scoring"),
-        ("review", "spiral", "review"),
-    ]
-    for key, pattern, label in flag_configs:
-        p.quad(
-            left="start_time", right="end_time", top=4, bottom=-4,
-            fill_color=None, fill_alpha=0,
-            source=annotation_sources[key], legend_label=label,
-            hatch_pattern=pattern, hatch_color="black",
-            hatch_weight=0.5, hatch_alpha=0.1,
-        )
+    range_fig.xaxis.formatter = DatetimeTickFormatter(
+        days="%m/%d %H:%M",
+        months="%m/%d %H:%M",
+        hours="%m/%d %H:%M",
+        minutes="%m/%d %H:%M",
+        seconds="%m/%d %H:%M:%S",
+    )
 
-    p.legend.background_fill_alpha = 0.0
-    p.legend.label_text_font_size = "7pt"
+    # RangeTool links the minimap's draggable overlay to main_fig.x_range
+    range_tool = RangeTool(x_range=main_fig.x_range)
+    range_tool.overlay.fill_color = UCHICAGO_MAROON
+    range_tool.overlay.fill_alpha = 0.15
+    range_fig.add_tools(range_tool)
+    range_fig.toolbar.active_multi = "auto"
 
-    # Range tool
-    range_tool = RangeTool(x_range=p.x_range)
-    range_tool.overlay.fill_color = "navy"
-    range_tool.overlay.fill_alpha = 0.2
-    select.add_tools(range_tool)
-    select.toolbar.active_multi = "auto"
+    main_pane = pn.pane.Bokeh(main_fig, sizing_mode="stretch_width")
+    range_pane = pn.pane.Bokeh(range_fig, sizing_mode="stretch_width")
 
-    return p, select, range_tool
+    return main_pane, range_pane, main_fig, colsource

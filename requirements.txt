@@ -1,7 +1,8 @@
 bokeh>=3.0
 panel>=1.0
-dask
 pandas
+numpy
 tables
 openpyxl
-cryptography
+jinja2
+lttbc  # optional: LTTB downsampling (strided fallback if missing)
