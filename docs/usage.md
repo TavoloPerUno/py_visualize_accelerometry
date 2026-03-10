@@ -4,6 +4,8 @@
 
 Navigate to the app URL and enter your credentials from `credentials.json`.
 
+![Login page](images/login_page.png)
+
 ## Interface overview
 
 The app has three main areas:
@@ -11,6 +13,20 @@ The app has three main areas:
 - **Sidebar** (left) — File picker, time navigation, window size, review flags, and notes
 - **Main area** (center) — Signal plot, annotation toolbar, summary table, and data tables
 - **Header** (top) — Username display, impersonation selector (admins), and logout
+
+![Full application interface](images/full_app.png)
+
+### Header bar
+
+The header displays the app title, current user, impersonation selector (for admins), and a logout icon on the far right.
+
+![Header bar](images/header_bar.png)
+
+### Sidebar
+
+The sidebar contains file selection, time navigation, review flags, and notes.
+
+![Sidebar](images/sidebar.png)
 
 ## Navigating signals
 
@@ -26,6 +42,10 @@ Use the **File** dropdown in the sidebar to select a file. Files are determinist
 - **Range selector** (minimap below the plot) lets you drag a window across the entire file
 
 ### Understanding the plot
+
+The signal plot shows tri-axial accelerometry data (x, y, z) with colored overlays for annotations and hatch patterns for flags.
+
+![Signal plot](images/signal_plot.png)
 
 - **Colored lines** show the three accelerometry axes (x, y, z)
 - **Colored overlays** show existing annotations (cyan = chair stand, magenta = 3m walk, green = 6min walk, yellow = TUG)
@@ -56,6 +76,12 @@ Use the **Flag file for review** multi-select in the sidebar to mark entire acti
 Click **Export** in the annotation toolbar to save all annotations for the current user and file to an Excel file in `visualize_accelerometry/data/output/`.
 
 Annotations are stored per-user: `annotations_username.xlsx`.
+
+## Logging out
+
+Click the logout icon in the top-right corner of the header. You will see a branded logout confirmation page.
+
+![Logout page](images/logout_page.png)
 
 ## Admin features
 

@@ -47,6 +47,10 @@ See `credentials.json.example` for a template.
 
 ## Running the app
 
+Once the app is running you will see the branded login page:
+
+![Login page](images/login_page.png)
+
 ### Local development
 
 ```bash
