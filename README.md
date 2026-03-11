@@ -2,6 +2,21 @@
 
 A web-based application for visualizing and annotating wrist-worn accelerometry data from physical performance assessments. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/), it enables research teams to collaboratively label activity segments in large time-series recordings.
 
+## Live Demo
+
+A publicly accessible demo is hosted on Hugging Face Spaces:
+
+**[Launch Demo](https://huggingface.co/spaces/TavoloPerUno/accelerometry-demo)**
+
+| Username | Password | Role |
+|---|---|---|
+| `demo_admin` | `demo` | Admin (can manage users, impersonate) |
+| `demo_user` | `demo` | Annotator |
+
+> **Note:** The demo uses synthetic accelerometry data generated from sine waves
+> and noise. It does not contain real participant recordings. File sizes are
+> small (~1 hour at 85 Hz) to keep the free deployment responsive.
+
 ## What it does
 
 Researchers collect tri-axial accelerometry signals (x, y, z) during standardized physical performance tests. This tool lets annotators visually inspect those signals and mark the time boundaries of each test:
