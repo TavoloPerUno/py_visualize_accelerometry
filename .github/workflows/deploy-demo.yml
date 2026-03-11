@@ -12,8 +12,8 @@
 # How it works:
 #   1. Checks out the release tag.
 #   2. Generates synthetic demo data so the HDF5 files are in the image.
-#   3. Pushes the entire repo (with demo data) to the Hugging Face Space repo.
-#      HF Spaces auto-builds the Dockerfile and serves the app.
+#   3. Uploads the repo to HF Spaces using the huggingface_hub API
+#      (avoids git binary file restrictions).
 
 name: Deploy Demo to Hugging Face Spaces
 
@@ -40,44 +40,41 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies for data generation
-        run: |
-          pip install pandas numpy tables
+      - name: Install dependencies
+        run: pip install pandas numpy tables huggingface_hub
 
       - name: Generate synthetic demo data
         run: python scripts/generate_demo_data.py
 
-      - name: Push to Hugging Face Space
+      - name: Prepare deployment directory
+        run: |
+          # Build a clean staging directory with only what HF Spaces needs
+          mkdir -p /tmp/hf-space
+
+          # Copy the full project
+          rsync -a --exclude='.git' --exclude='__pycache__' \
+            --exclude='.github' --exclude='docs/images' \
+            . /tmp/hf-space/
+
+          # Dockerfile must be at repo root for HF Spaces
+          cp demo/Dockerfile /tmp/hf-space/Dockerfile
+
+          # HF Spaces requires README.md with YAML front-matter at root
+          cp demo/README.md /tmp/hf-space/README.md
+
+      - name: Upload to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE: ${{ vars.HF_SPACE }}
         run: |
-          # Install the huggingface_hub CLI
-          pip install huggingface_hub
-
-          # The Space repo is a git repo on HF. We push our full tree to it.
-          # The Dockerfile in demo/ needs to be at the repo root for HF Spaces,
-          # so we copy it.
-          cp demo/Dockerfile Dockerfile
-          cp demo/README.md README_HF.md
-
-          # HF Spaces require a README.md with YAML front-matter at the root.
-          # We keep the project README intact and use the demo one for HF.
-          mv README_HF.md README.md
-
-          # Configure git for the push
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Add generated demo data and Dockerfile to git index
-          git add -f demo/data/readings/*.h5
-          git add -f demo/credentials.json
-          git add -f demo/config_overrides.py
-          git add -f demo/app_demo.py
-          git add -f Dockerfile
-          git add -f README.md
-          git commit -m "build: add demo data and Dockerfile for HF Spaces"
-
-          # Push to Hugging Face
-          git remote add hf "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}"
-          git push hf HEAD:main --force
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi(token='$HF_TOKEN')
+          api.upload_folder(
+              folder_path='/tmp/hf-space',
+              repo_id='$HF_SPACE',
+              repo_type='space',
+              commit_message='deploy: update demo app',
+          )
+          print('Deployed to https://huggingface.co/spaces/$HF_SPACE')
+          "
