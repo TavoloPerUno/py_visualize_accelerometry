@@ -63,5 +63,5 @@ These physical performance tests are part of the **National Social Life, Health,
 
 ### References
 
-- Waite, L. J., Cagney, K. A., Dale, W., et al. (2014). Household and neighborhood contexts of health and social connections of older adults: The National Social Life, Health, and Aging Project (NSHAP). In *Handbook of Aging and the Social Sciences* (8th ed.). Academic Press.
-- Huisingh-Scheetz, M., Wroblewski, K., Giffuni, J., et al. (2018). Relating wrist accelerometry measures to disability in older adults. *Archives of Gerontology and Geriatrics*, 77, 153–159. [doi:10.1016/j.archger.2018.05.001](https://doi.org/10.1016/j.archger.2018.05.001)
+- Suzman, R. (2009). The National Social Life, Health, and Aging Project: An Introduction. *The Journals of Gerontology Series B: Psychological Sciences and Social Sciences*, 64B(Suppl 1), i5–i11. [doi:10.1093/geronb/gbp078](https://doi.org/10.1093/geronb/gbp078)
+- Huisingh-Scheetz, M., Kocherginsky, M., Magett, E., Rush, P., Dale, W., & Waite, L. (2016). Relating wrist accelerometry measures to disability in older adults. *Archives of Gerontology and Geriatrics*, 62, 68–74. [doi:10.1016/j.archger.2015.09.004](https://doi.org/10.1016/j.archger.2015.09.004)
