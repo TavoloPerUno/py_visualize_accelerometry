@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2026-03-11
+
+### Fixed
+- add --prefix / to Panel serve for HF Spaces proxy compatibility
+
+### Changed
+- Merge branch 'desktop' of github.com:TavoloPerUno/py_visualize_accelerometry into desktop
+
 ## [1.2.6] - 2026-03-11
 
 ### Fixed
@@ -130,3 +138,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.5]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.4...v1.2.5
 
 [1.2.6]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.5...v1.2.6
+
+[1.2.7]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.6...v1.2.7
