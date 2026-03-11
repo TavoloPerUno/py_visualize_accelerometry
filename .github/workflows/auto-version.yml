@@ -182,3 +182,24 @@ jobs:
           git tag -a "$NEW_TAG" -m "release: ${NEW_TAG}"
           git push origin desktop
           git push origin "$NEW_TAG"
+
+      - name: Create GitHub Release
+        if: steps.bump.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          NEW_TAG="${{ steps.version.outputs.new_tag }}"
+
+          # Extract release notes from the just-updated CHANGELOG.md
+          VERSION="${NEW_TAG#v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, "[" ver "]")) { found=1; next }
+            }
+            found { print }
+          ' CHANGELOG.md > /tmp/release-notes.md
+
+          gh release create "$NEW_TAG" \
+            --title "$NEW_TAG" \
+            --notes-file /tmp/release-notes.md
