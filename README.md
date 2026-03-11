@@ -6,7 +6,7 @@ A web-based application for visualizing and annotating wrist-worn accelerometry 
 
 A publicly accessible demo is hosted on Hugging Face Spaces:
 
-**[Launch Demo](https://huggingface.co/spaces/TavoloPerUno/accelerometry-demo)**
+**[Launch Demo](https://tavoloperuno-accelerometry-viewer-demo.hf.space/)**
 
 | Username | Password | Role |
 |---|---|---|
