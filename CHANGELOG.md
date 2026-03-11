@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.10] - 2026-03-11
+
+### Fixed
+- add desktop branch and workflow_dispatch to docs workflow
+
+### Changed
+- Merge branch 'desktop' of github.com:TavoloPerUno/py_visualize_accelerometry into desktop
+
 ## [1.2.9] - 2026-03-11
 
 ### Fixed
@@ -160,3 +168,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.8]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.7...v1.2.8
 
 [1.2.9]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.8...v1.2.9
+
+[1.2.10]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.9...v1.2.10
