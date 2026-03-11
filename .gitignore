@@ -11,3 +11,4 @@ scratch_books/
 dask-worker-space/
 logs/
 docs/_build/
+credentials.json

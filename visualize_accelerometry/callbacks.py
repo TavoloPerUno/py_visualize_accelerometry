@@ -13,7 +13,7 @@ import pandas as pd
 import bokeh.plotting as bp
 
 from .config import DISPLAYED_ANNOTATION_COLUMNS, TIME_FMT
-from .data_loading import cleanup_annotations, save_annotations
+from .data_loading import save_annotations
 
 
 def capture_new_annotation(start_ts, end_ts, artifact, fname, uname):
@@ -159,7 +159,8 @@ def build_summary_html(state):
     )
 
     return f"""
-    <table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; font-family:'Montserrat',Helvetica,Arial,sans-serif;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px;
+     margin-top:8px; font-family:'Montserrat',Helvetica,Arial,sans-serif;">
     <tr style="background-color:#58595b;">
     <th style="padding:5px 10px; color:#fff; font-size:11px; text-align:left;">Start Time</th>
     <th style="padding:5px 10px; color:#fff; font-size:11px; text-align:left;">End Time</th>
@@ -228,13 +229,27 @@ class CallbackManager:
     # Plot lifecycle
     # ------------------------------------------------------------------
 
+    def _notify(self, msg, duration=3000, kind="info"):
+        """Show a toast notification in the bottom-right corner."""
+        import panel as pn
+        getattr(pn.state.notifications, kind)(msg, duration=duration)
+
     def update_plot(self):
         """Load data for the current file/anchor and rebuild the plot.
 
         If the file is empty or unreadable, shows a notification and
         advances to the next file in the dropdown.
         """
-        self.w["file_label"].object = f"### Annotating: {os.path.basename(self.state.fname)}"
+        self._notify("Building plot\u2026", duration=2000)
+        basename = os.path.splitext(os.path.basename(self.state.fname))[0]
+        # Find the file picker entry (e.g. "alan--060294-20221208125829")
+        # which includes the assigned user prefix
+        label = basename
+        for entry in self.state.lst_fnames:
+            if entry.endswith(basename):
+                label = entry
+                break
+        self.w["file_label"].object = f"### Annotating: {label}"
         try:
             pdf = self.state.load_file_data()
         except Exception as ex:
@@ -248,6 +263,7 @@ class CallbackManager:
         self._refresh_plot(pdf)
         self.state.selection_bounds = None
         self.update_annotations()
+        self._update_nav_buttons()
 
     def _handle_empty_file(self):
         """Show a notification and skip to the next file when data is empty."""
@@ -361,9 +377,12 @@ class CallbackManager:
             w["btn_notes"].disabled = not has_annots
             w["notes_input"].disabled = not has_annots
         else:
-            for key in ["btn_clear", "btn_tug", "btn_3m_walk", "btn_6min_walk",
-                         "btn_chairstand", "btn_remove", "btn_segment",
-                         "btn_scoring", "btn_review", "btn_notes"]:
+            for key in [
+                "btn_clear", "btn_tug", "btn_3m_walk",
+                "btn_6min_walk", "btn_chairstand", "btn_remove",
+                "btn_segment", "btn_scoring", "btn_review",
+                "btn_notes",
+            ]:
                 w[key].disabled = True
             w["notes_input"].disabled = True
 
@@ -458,6 +477,7 @@ class CallbackManager:
         )
         self.update_annotations()
         self.w["summary"].object = build_summary_html(s)
+        self._notify("Annotations exported", duration=3000, kind="success")
 
     # ------------------------------------------------------------------
     # Navigation
@@ -471,6 +491,7 @@ class CallbackManager:
         fname_with_user : str
             ``"username--filename"`` string from the file picker.
         """
+        self._notify("Loading file\u2026", duration=3000)
         s = self.state
         s.anchor_timestamp = None
         s.fname = os.path.join(
@@ -481,22 +502,50 @@ class CallbackManager:
         self.w["summary"].object = build_summary_html(s)
 
     def move_next_window(self):
-        """Advance the anchor timestamp by one full window."""
+        """Advance the anchor timestamp by one full window, clamped to file end."""
         s = self.state
-        s.anchor_timestamp = (
-            datetime.strptime(s.anchor_timestamp, TIME_FMT)
-            + timedelta(seconds=s.windowsize)
-        ).strftime(TIME_FMT)
+        if not s.file_end_timestamp:
+            return
+        anchor_dt = datetime.strptime(s.anchor_timestamp, TIME_FMT)
+        end_dt = datetime.strptime(s.file_end_timestamp, TIME_FMT)
+        new_anchor = anchor_dt + timedelta(seconds=s.windowsize)
+        # Don't advance past the point where the window would exceed file end
+        if new_anchor > end_dt:
+            new_anchor = end_dt - timedelta(seconds=s.windowsize / 2)
+        if new_anchor <= anchor_dt:
+            return
+        s.anchor_timestamp = new_anchor.strftime(TIME_FMT)
         self.update_plot()
+        self._update_nav_buttons()
 
     def move_prev_window(self):
-        """Move the anchor timestamp back by one full window."""
+        """Move the anchor timestamp back by one full window, clamped to file start."""
         s = self.state
-        s.anchor_timestamp = (
-            datetime.strptime(s.anchor_timestamp, TIME_FMT)
-            - timedelta(seconds=s.windowsize)
-        ).strftime(TIME_FMT)
+        if not s.file_start_timestamp:
+            return
+        anchor_dt = datetime.strptime(s.anchor_timestamp, TIME_FMT)
+        start_dt = datetime.strptime(s.file_start_timestamp, TIME_FMT)
+        new_anchor = anchor_dt - timedelta(seconds=s.windowsize)
+        # Don't go before the point where the window would precede file start
+        if new_anchor < start_dt:
+            new_anchor = start_dt + timedelta(seconds=s.windowsize / 2)
+        if new_anchor >= anchor_dt:
+            return
+        s.anchor_timestamp = new_anchor.strftime(TIME_FMT)
         self.update_plot()
+        self._update_nav_buttons()
+
+    def _update_nav_buttons(self):
+        """Enable or disable prev/next buttons based on file boundaries."""
+        s = self.state
+        if not s.file_start_timestamp or not s.file_end_timestamp or not s.anchor_timestamp:
+            return
+        anchor_dt = datetime.strptime(s.anchor_timestamp, TIME_FMT)
+        start_dt = datetime.strptime(s.file_start_timestamp, TIME_FMT)
+        end_dt = datetime.strptime(s.file_end_timestamp, TIME_FMT)
+        half_win = timedelta(seconds=s.windowsize / 2)
+        self.w["btn_prev"].disabled = (anchor_dt - half_win) <= start_dt
+        self.w["btn_next"].disabled = (anchor_dt + half_win) >= end_dt
 
     def update_anchor_timestamp(self, value):
         """Parse and store a user-entered anchor time string.

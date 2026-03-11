@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" width="120" height="48">
+  <!-- Tri-axial waveform background -->
+  <g transform="translate(10, 4)">
+    <path d="M0,20 Q8,20 14,10 T28,8 T42,20 T56,16 T70,6 T84,20 T98,14"
+          fill="none" stroke="#fff" stroke-width="1.8" opacity="0.5"/>
+    <path d="M0,20 Q10,20 16,26 T32,32 T48,20 T64,14 T80,28 T98,22"
+          fill="none" stroke="#7EBEC5" stroke-width="1.8" opacity="0.6"/>
+    <path d="M0,20 Q7,20 12,16 T26,24 T40,14 T54,20 T68,26 T82,12 T98,20"
+          fill="none" stroke="#ccc" stroke-width="1.4" opacity="0.4"/>
+  </g>
+
+  <!-- Walking figure — centered, larger, with glow for contrast -->
+  <g transform="translate(28, 1)">
+    <!-- Glow outline behind figure -->
+    <circle cx="12" cy="5" r="6" fill="none" stroke="rgba(128,0,0,0.15)" stroke-width="4"/>
+    <line x1="12" y1="9" x2="12" y2="26" stroke="rgba(128,0,0,0.1)" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Figure -->
+    <circle cx="12" cy="5" r="5" fill="#fff"/>
+    <line x1="12" y1="10" x2="12" y2="26" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="12" y1="16" x2="4" y2="23" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="12" y1="16" x2="21" y2="13" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="12" y1="26" x2="4" y2="38" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+    <line x1="12" y1="26" x2="22" y2="36" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Annotation bracket region -->
+  <g transform="translate(10, 4)">
+    <rect x="60" y="2" width="24" height="36" rx="2" fill="#7EBEC5" opacity="0.18" stroke="#7EBEC5" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <path d="M60,4 L60,2 L64,2" fill="none" stroke="#7EBEC5" stroke-width="1.2"/>
+    <path d="M84,4 L84,2 L80,2" fill="none" stroke="#7EBEC5" stroke-width="1.2"/>
+    <path d="M60,36 L60,38 L64,38" fill="none" stroke="#7EBEC5" stroke-width="1.2"/>
+    <path d="M84,36 L84,38 L80,38" fill="none" stroke="#7EBEC5" stroke-width="1.2"/>
+
+    <g transform="translate(81, 34) rotate(-45)">
+      <rect x="0" y="0" width="3" height="12" rx="0.5" fill="#7EBEC5"/>
+      <polygon points="0,12 1.5,15 3,12" fill="#7EBEC5"/>
+      <rect x="0.5" y="1" width="2" height="2" fill="#fff" opacity="0.4"/>
+    </g>
+  </g>
+</svg>

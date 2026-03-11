@@ -30,7 +30,7 @@ Annotation overlays use persistent `ColumnDataSource` objects that are created o
 
 ### LTTB downsampling
 
-Raw accelerometry files can contain 500K+ data points per axis. Sending all of them to the browser would be slow and unresponsive. The plotting module uses the **Largest Triangle Three Buckets** (LTTB) algorithm to reduce each axis to ~5,000 visually representative points. This preserves the shape of the signal while keeping the browser responsive. If the `lttbc` C extension is not installed, it falls back to uniform strided sampling.
+Raw accelerometry files can contain 500K+ data points per axis. Sending all of them to the browser would be slow and unresponsive. The plotting module uses the **Largest Triangle Three Buckets** (LTTB) algorithm to reduce each axis to ~10,000 visually representative points for the main plot and ~2,000 for the range selector minimap. LTTB preserves the visual shape of the signal — peaks, valleys, and rapid transitions are retained while flat regions are compressed. If the `lttbc` C extension is not installed, it falls back to uniform strided sampling.
 
 ### Box-select via invisible scatter points
 

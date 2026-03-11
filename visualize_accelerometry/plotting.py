@@ -17,9 +17,9 @@ from bokeh.plotting import figure
 from .config import ARTIFACT_COLORS, LST_COLORS, UCHICAGO_MAROON
 
 # Maximum points to send to the browser per signal axis.
-# 5000 is a good balance between visual fidelity and rendering speed
-# with the canvas backend.
-MAX_POINTS = 5000
+# 10000 provides high visual fidelity while remaining responsive
+# with the canvas backend (no WebGL).
+MAX_POINTS = 10000
 
 
 def _downsample(timestamps, values, n_out):
@@ -108,7 +108,6 @@ def make_plot(pdf, annotation_cds):
     colsource = ColumnDataSource(data=ds_data)
 
     full_start = ts_raw[0]
-    full_end = ts_raw[-1]
     # Show ~10% of the file initially so the user sees detail
     initial_end_idx = min(len(ts_raw) - 1, int(len(ts_raw) * 0.1))
     initial_end = ts_raw[initial_end_idx]
@@ -137,7 +136,7 @@ def make_plot(pdf, annotation_cds):
     for color, col in zip(LST_COLORS, ["x", "y", "z"]):
         main_fig.line(
             "timestamp", col, color=color, source=colsource,
-            alpha=0.8, line_width=1,
+            alpha=0.95, line_width=1.5,
             # Dim unselected data so the box-selected region stands out
             nonselection_alpha=0.2, selection_alpha=1,
         )
@@ -216,7 +215,7 @@ def make_plot(pdf, annotation_cds):
     for color, col in zip(LST_COLORS, ["x", "y", "z"]):
         range_fig.line(
             "timestamp", col, color=color, source=range_source,
-            alpha=0.6, line_width=1,
+            alpha=0.8, line_width=1.2,
         )
 
     range_fig.xaxis.formatter = DatetimeTickFormatter(
