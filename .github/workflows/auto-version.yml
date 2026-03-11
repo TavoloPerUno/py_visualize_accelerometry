@@ -1,5 +1,5 @@
 # Automatically bump the version and create a tag when commits are pushed
-# to the desktop branch.
+# to the master branch.
 #
 # Version bump rules (based on conventional commits since the last tag):
 #   - "feat!:" or "BREAKING CHANGE" in any commit → major bump (e.g. 1.2.3 → 2.0.0)
@@ -18,7 +18,7 @@ name: Auto Version
 on:
   push:
     branches:
-      - desktop
+      - master
     paths-ignore:
       - 'CHANGELOG.md'
       - 'visualize_accelerometry/__init__.py'
@@ -180,7 +180,7 @@ jobs:
           git add visualize_accelerometry/__init__.py CHANGELOG.md
           git commit -m "release: ${NEW_TAG} [skip ci]"
           git tag -a "$NEW_TAG" -m "release: ${NEW_TAG}"
-          git push origin desktop
+          git push origin master
           git push origin "$NEW_TAG"
 
       - name: Create GitHub Release
