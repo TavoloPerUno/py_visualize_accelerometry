@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-%b
+## [1.2.0] - 2026-03-11
+
+### Added
+- Demo hosting on Hugging Face Spaces with auto-deploy
+- Auto-version workflow for conventional commit-based releases
+- Synthetic data generator for demo deployment
+- Release workflow extracts notes from CHANGELOG.md
+
+### Changed
+- Demo data reduced to 10 minutes (under HF 10 MB file limit)
+
 ## [1.1.0] - 2026-03-10
 
 ### Changed

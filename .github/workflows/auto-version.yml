@@ -118,49 +118,52 @@ jobs:
           PREV_TAG="${{ steps.bump.outputs.latest_tag }}"
           TODAY=$(date +%Y-%m-%d)
 
-          # Build changelog entry from commits
-          ENTRY="## [${NEW_VER}] - ${TODAY}\n"
+          # Build the new changelog entry as a file to avoid shell escaping issues
+          {
+            echo "## [${NEW_VER}] - ${TODAY}"
+            echo ""
 
-          # Categorize commits
-          FEATS=$(grep -iE '^feat(\(|:)' /tmp/commits.txt | sed 's/^feat[^:]*: *//' || true)
-          FIXES=$(grep -iE '^fix(\(|:)' /tmp/commits.txt | sed 's/^fix[^:]*: *//' || true)
-          OTHERS=$(grep -viE '^(feat|fix)(\(|:)' /tmp/commits.txt || true)
+            # Categorize commits into Added (feat), Fixed (fix), Changed (other)
+            FEATS=$(grep -iE '^feat(\(|:)' /tmp/commits.txt | sed 's/^feat[^:]*: *//' || true)
+            FIXES=$(grep -iE '^fix(\(|:)' /tmp/commits.txt | sed 's/^fix[^:]*: *//' || true)
+            OTHERS=$(grep -viE '^(feat|fix)(\(|:)' /tmp/commits.txt || true)
 
-          if [ -n "$FEATS" ]; then
-            ENTRY="${ENTRY}\n### Added\n"
-            while IFS= read -r line; do
-              [ -n "$line" ] && ENTRY="${ENTRY}- ${line}\n"
-            done <<< "$FEATS"
-          fi
+            if [ -n "$FEATS" ]; then
+              echo "### Added"
+              echo "$FEATS" | while IFS= read -r line; do
+                [ -n "$line" ] && echo "- ${line}"
+              done
+              echo ""
+            fi
 
-          if [ -n "$FIXES" ]; then
-            ENTRY="${ENTRY}\n### Fixed\n"
-            while IFS= read -r line; do
-              [ -n "$line" ] && ENTRY="${ENTRY}- ${line}\n"
-            done <<< "$FIXES"
-          fi
+            if [ -n "$FIXES" ]; then
+              echo "### Fixed"
+              echo "$FIXES" | while IFS= read -r line; do
+                [ -n "$line" ] && echo "- ${line}"
+              done
+              echo ""
+            fi
 
-          if [ -n "$OTHERS" ]; then
-            ENTRY="${ENTRY}\n### Changed\n"
-            while IFS= read -r line; do
-              [ -n "$line" ] && ENTRY="${ENTRY}- ${line}\n"
-            done <<< "$OTHERS"
-          fi
+            if [ -n "$OTHERS" ]; then
+              echo "### Changed"
+              echo "$OTHERS" | while IFS= read -r line; do
+                [ -n "$line" ] && echo "- ${line}"
+              done
+              echo ""
+            fi
+          } > /tmp/changelog-entry.md
 
-          # Add comparison link
           LINK="[${NEW_VER}]: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${NEW_VER}"
 
-          # Insert new entry after the "## [Unreleased]" or first "## [" line
-          # Uses awk to insert after the changelog header
-          awk -v entry="$ENTRY" -v link="$LINK" '
+          # Insert new entry before the first "## [" line in CHANGELOG.md
+          awk -v entryfile="/tmp/changelog-entry.md" -v link="$LINK" '
             /^## \[/ && !inserted {
-              printf "%b\n", entry
+              while ((getline line < entryfile) > 0) print line
+              close(entryfile)
               inserted=1
             }
             { print }
-            END {
-              if (link != "") printf "\n%s\n", link
-            }
+            END { printf "\n%s\n", link }
           ' CHANGELOG.md > /tmp/changelog-new.md
 
           mv /tmp/changelog-new.md CHANGELOG.md
