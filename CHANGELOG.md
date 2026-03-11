@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-03-11
+
+### Fixed
+- hash demo passwords with bcrypt for Panel compatibility
+
+### Changed
+- Merge branch 'desktop' of github.com:TavoloPerUno/py_visualize_accelerometry into desktop
+
 ## [1.2.2] - 2026-03-11
 
 ### Fixed
@@ -90,3 +98,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.0...v1.2.1
 
 [1.2.2]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.1...v1.2.2
+
+[1.2.3]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.2...v1.2.3
