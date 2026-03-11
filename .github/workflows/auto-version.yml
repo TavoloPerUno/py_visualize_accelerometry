@@ -1,0 +1,178 @@
+# Automatically bump the version and create a tag when commits are pushed
+# to the desktop branch.
+#
+# Version bump rules (based on conventional commits since the last tag):
+#   - "feat!:" or "BREAKING CHANGE" in any commit → major bump (e.g. 1.2.3 → 2.0.0)
+#   - "feat:" or "feat(" in any commit            → minor bump (e.g. 1.2.3 → 1.3.0)
+#   - everything else (fix, chore, docs, etc.)     → patch bump (e.g. 1.2.3 → 1.2.4)
+#
+# The workflow:
+#   1. Determines the bump level from commit messages
+#   2. Bumps __version__ in visualize_accelerometry/__init__.py
+#   3. Adds a dated section to CHANGELOG.md with commit summaries
+#   4. Commits the version bump and pushes a new tag
+#   5. The tag push triggers the Release workflow (release.yml)
+
+name: Auto Version
+
+on:
+  push:
+    branches:
+      - desktop
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'visualize_accelerometry/__init__.py'
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+
+    # Skip if the commit was made by this workflow (prevent loops)
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+
+          # Get commit messages since last tag
+          COMMITS=$(git log "${LATEST_TAG}..HEAD" --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
+
+          if [ -z "$COMMITS" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+          # Determine bump level
+          if echo "$COMMITS" | grep -qiE '(^feat!|BREAKING CHANGE)'; then
+            echo "level=major" >> "$GITHUB_OUTPUT"
+          elif echo "$COMMITS" | grep -qiE '^feat(\(|:)'; then
+            echo "level=minor" >> "$GITHUB_OUTPUT"
+          else
+            echo "level=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Save commits for changelog
+          echo "$COMMITS" > /tmp/commits.txt
+
+      - name: Calculate new version
+        if: steps.bump.outputs.skip != 'true'
+        id: version
+        run: |
+          LATEST="${{ steps.bump.outputs.latest_tag }}"
+          LEVEL="${{ steps.bump.outputs.level }}"
+
+          # Strip leading 'v'
+          VER="${LATEST#v}"
+          MAJOR=$(echo "$VER" | cut -d. -f1)
+          MINOR=$(echo "$VER" | cut -d. -f2)
+          PATCH=$(echo "$VER" | cut -d. -f3)
+
+          case "$LEVEL" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VER="${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VER" >> "$GITHUB_OUTPUT"
+          echo "new_tag=v${NEW_VER}" >> "$GITHUB_OUTPUT"
+          echo "Bump: $LATEST → v${NEW_VER} ($LEVEL)"
+
+      - name: Update __init__.py
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          NEW_VER="${{ steps.version.outputs.new_version }}"
+          sed -i "s/__version__ = .*/__version__ = \"${NEW_VER}\"/" \
+            visualize_accelerometry/__init__.py
+
+      - name: Update CHANGELOG.md
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          NEW_VER="${{ steps.version.outputs.new_version }}"
+          PREV_TAG="${{ steps.bump.outputs.latest_tag }}"
+          TODAY=$(date +%Y-%m-%d)
+
+          # Build changelog entry from commits
+          ENTRY="## [${NEW_VER}] - ${TODAY}\n"
+
+          # Categorize commits
+          FEATS=$(grep -iE '^feat(\(|:)' /tmp/commits.txt | sed 's/^feat[^:]*: *//' || true)
+          FIXES=$(grep -iE '^fix(\(|:)' /tmp/commits.txt | sed 's/^fix[^:]*: *//' || true)
+          OTHERS=$(grep -viE '^(feat|fix)(\(|:)' /tmp/commits.txt || true)
+
+          if [ -n "$FEATS" ]; then
+            ENTRY="${ENTRY}\n### Added\n"
+            while IFS= read -r line; do
+              [ -n "$line" ] && ENTRY="${ENTRY}- ${line}\n"
+            done <<< "$FEATS"
+          fi
+
+          if [ -n "$FIXES" ]; then
+            ENTRY="${ENTRY}\n### Fixed\n"
+            while IFS= read -r line; do
+              [ -n "$line" ] && ENTRY="${ENTRY}- ${line}\n"
+            done <<< "$FIXES"
+          fi
+
+          if [ -n "$OTHERS" ]; then
+            ENTRY="${ENTRY}\n### Changed\n"
+            while IFS= read -r line; do
+              [ -n "$line" ] && ENTRY="${ENTRY}- ${line}\n"
+            done <<< "$OTHERS"
+          fi
+
+          # Add comparison link
+          LINK="[${NEW_VER}]: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${NEW_VER}"
+
+          # Insert new entry after the "## [Unreleased]" or first "## [" line
+          # Uses awk to insert after the changelog header
+          awk -v entry="$ENTRY" -v link="$LINK" '
+            /^## \[/ && !inserted {
+              printf "%b\n", entry
+              inserted=1
+            }
+            { print }
+            END {
+              if (link != "") printf "\n%s\n", link
+            }
+          ' CHANGELOG.md > /tmp/changelog-new.md
+
+          mv /tmp/changelog-new.md CHANGELOG.md
+
+      - name: Commit and tag
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          NEW_VER="${{ steps.version.outputs.new_version }}"
+          NEW_TAG="${{ steps.version.outputs.new_tag }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add visualize_accelerometry/__init__.py CHANGELOG.md
+          git commit -m "release: ${NEW_TAG} [skip ci]"
+          git tag "$NEW_TAG"
+          git push origin desktop --follow-tags

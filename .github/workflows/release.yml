@@ -1,3 +1,8 @@
+# Create a GitHub Release when a version tag is pushed.
+#
+# Release notes are extracted from CHANGELOG.md for the tagged version.
+# Falls back to auto-generated notes if the version isn't found in CHANGELOG.md.
+
 name: Release
 
 on:
@@ -17,7 +22,39 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create GitHub Release
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Extract the section for this version from CHANGELOG.md.
+          # Matches from "## [VERSION]" up to (but excluding) the next "## [".
+          NOTES=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, "[" ver "]")) { found=1; next }
+            }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$NOTES" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            # Write multi-line notes to file for gh release
+            echo "$NOTES" > /tmp/release-notes.md
+          fi
+
+      - name: Create GitHub Release (with changelog notes)
+        if: steps.notes.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file /tmp/release-notes.md
+
+      - name: Create GitHub Release (auto-generated notes)
+        if: steps.notes.outputs.found != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

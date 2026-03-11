@@ -20,8 +20,8 @@ import pandas as pd
 # Constants
 # ---------------------------------------------------------------------------
 SAMPLING_HZ = 85
-DURATION_SECONDS = 3600  # 1 hour per file
-N_ROWS = SAMPLING_HZ * DURATION_SECONDS  # ~306 000
+DURATION_SECONDS = 600  # 10 minutes per file — keeps HDF5 under 10 MB (HF limit)
+N_ROWS = SAMPLING_HZ * DURATION_SECONDS  # ~51 000
 
 # Two synthetic files that follow the real naming convention:
 # <subject_id>-<YYYYMMDDHHmmss>.h5
@@ -41,25 +41,25 @@ FILE_SPECS = [
 # distinguishable in the annotation UI.
 ACTIVITIES = [
     # (label, duration_s, x_freq, y_freq, z_freq, x_amp, y_amp, z_amp)
-    ("sitting",   300, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("standing",   60, 0.2,  0.15, 0.1,  0.05, 0.05, 1.00),
-    ("walking",   180, 1.8,  0.9,  1.8,  0.30, 0.15, 0.40),
-    ("sitting",   120, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("chair_stand", 30, 0.5,  0.3,  0.8,  0.50, 0.20, 0.80),
-    ("sitting",    60, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("tug",        15, 1.5,  0.8,  1.5,  0.35, 0.18, 0.45),
-    ("sitting",    90, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("3m_walk",    20, 1.8,  0.9,  1.8,  0.28, 0.14, 0.38),
-    ("sitting",   120, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("6min_walk", 360, 1.6,  0.8,  1.6,  0.25, 0.12, 0.35),
-    ("sitting",   300, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("walking",   240, 1.7,  0.85, 1.7,  0.32, 0.16, 0.42),
-    ("sitting",   180, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
-    ("standing",  120, 0.2,  0.15, 0.1,  0.05, 0.05, 1.00),
-    ("walking",   120, 1.8,  0.9,  1.8,  0.30, 0.15, 0.40),
-    ("sitting",   260, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("sitting",      45, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("standing",     20, 0.2,  0.15, 0.1,  0.05, 0.05, 1.00),
+    ("walking",      60, 1.8,  0.9,  1.8,  0.30, 0.15, 0.40),
+    ("sitting",      30, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("chair_stand",  25, 0.5,  0.3,  0.8,  0.50, 0.20, 0.80),
+    ("sitting",      20, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("tug",          15, 1.5,  0.8,  1.5,  0.35, 0.18, 0.45),
+    ("sitting",      25, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("3m_walk",      20, 1.8,  0.9,  1.8,  0.28, 0.14, 0.38),
+    ("sitting",      30, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("6min_walk",    90, 1.6,  0.8,  1.6,  0.25, 0.12, 0.35),
+    ("sitting",      45, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("walking",      60, 1.7,  0.85, 1.7,  0.32, 0.16, 0.42),
+    ("sitting",      30, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
+    ("standing",     30, 0.2,  0.15, 0.1,  0.05, 0.05, 1.00),
+    ("walking",      30, 1.8,  0.9,  1.8,  0.30, 0.15, 0.40),
+    ("sitting",      25, 0.1,  0.1,  0.05, 0.02, 0.02, 1.00),
 ]
-# Total: sums to ~2580 s; the remainder to 3600 s is filled with sitting.
+# Total: sums to ~600 s (10 min); remainder filled with sitting.
 
 
 def _generate_signal(n_samples, freq, amplitude, noise_std=0.03):
@@ -130,7 +130,7 @@ def generate_file(spec, output_dir):
         key="readings",
         format="table",
         data_columns=["timestamp"],
-        complevel=5,
+        complevel=9,
         complib="zlib",
     )
     print(f"  wrote {filepath}  ({len(df):,} rows, {os.path.getsize(filepath) / 1e6:.1f} MB)")
