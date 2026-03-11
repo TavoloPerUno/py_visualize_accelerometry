@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.13] - 2026-03-11
+
+### Fixed
+- move CREDENTIALS_FILE to config module to fix import-order bug
+
 ## [1.2.12] - 2026-03-11
 
 ### Fixed
@@ -188,3 +193,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.11]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.10...v1.2.11
 
 [1.2.12]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.11...v1.2.12
+
+[1.2.13]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v1.2.12...v1.2.13
