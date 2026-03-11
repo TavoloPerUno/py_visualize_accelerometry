@@ -6,3 +6,4 @@ tables
 openpyxl
 jinja2
 lttbc  # optional: LTTB downsampling (strided fallback if missing)
+bcrypt  # password hashing for Panel basic-auth

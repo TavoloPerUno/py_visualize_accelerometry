@@ -41,7 +41,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install pandas numpy tables huggingface_hub
+        run: pip install pandas numpy tables huggingface_hub bcrypt
 
       - name: Generate synthetic demo data
         run: python scripts/generate_demo_data.py
