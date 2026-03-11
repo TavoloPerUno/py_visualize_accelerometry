@@ -44,7 +44,7 @@ The `connect.sh` script handles everything automatically:
 
 ```{mermaid}
 flowchart TD
-    A[User runs<br/>bash slurm/connect.sh] --> B[SSH into login node]
+    A[User runs<br/>bash hpc_utils/connect.sh] --> B[SSH into login node]
     B --> C{Panel server<br/>job running?}
     C -- Yes --> E[Read server_info.txt<br/>get NODE & PORT]
     C -- No --> D[Submit sbatch job]
@@ -55,10 +55,10 @@ flowchart TD
     E --> G[Return to<br/>local machine]
     G --> H{Local port<br/>available?}
     H -- Yes --> J[Create SSH tunnel]
-    H -- No --> I[Increment port<br/>and retry]
+    H -- "No (stale tunnel)" --> I[Kill stale SSH tunnel<br/>and reclaim port]
     I --> H
     J --> K{Tunnel<br/>connected?}
-    K -- Yes --> L["Open browser at<br/>localhost:PORT/visualize_accelerometry/app"]
+    K -- Yes --> L["Open browser at<br/>localhost:PORT/app"]
     K -- "No (10s timeout)" --> ERR2[Exit with error<br/>& show manual command]
     L --> M[Wait for Ctrl+C]
     M --> N[Close tunnel<br/>& exit]
@@ -77,7 +77,7 @@ flowchart TD
 
 ### 1. One-time setup
 
-Each user edits the variables at the top of `slurm/connect.sh`:
+Each user edits the variables at the top of `hpc_utils/connect.sh`:
 
 | Variable | Default | Description |
 |---|---|---|
@@ -89,7 +89,7 @@ Each user edits the variables at the top of `slurm/connect.sh`:
 ### 2. Run
 
 ```bash
-bash slurm/connect.sh
+bash hpc_utils/connect.sh
 ```
 
 The script will:
@@ -109,7 +109,7 @@ If the automated script does not work in your environment, first find the
 server info:
 
 ```bash
-ssh youruser@randi.cri.uchicago.edu "cat /path/to/project/slurm/server_info.txt"
+ssh youruser@randi.cri.uchicago.edu "cat /path/to/project/hpc_utils/server_info.txt"
 ```
 
 Then create the tunnel:
@@ -118,18 +118,18 @@ Then create the tunnel:
 ssh -N -L 7860:<compute_node>:7860 youruser@randi.cri.uchicago.edu
 ```
 
-Open <http://localhost:7860/visualize_accelerometry/app> in your browser.
+Open <http://localhost:7860/app> in your browser.
 
 ## Server Configuration
 
-The Slurm job is configured in `slurm/start_server.sh`:
+The Slurm job is configured in `hpc_utils/start_server.sh`:
 
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `7860` | Port the Panel server listens on. |
 | `CREDENTIALS` | `credentials.json` | Path to the credentials JSON file. |
 | `APP_PATH` | `visualize_accelerometry/app.py` | Path to the Panel application. |
-| `STATUS_FILE` | `slurm/server_info.txt` | Where connection details are written. |
+| `STATUS_FILE` | `hpc_utils/server_info.txt` | Where connection details are written. |
 
 Slurm resource directives (editable in the script):
 
@@ -141,10 +141,10 @@ Slurm resource directives (editable in the script):
 ## Stopping the Server
 
 ```bash
-bash slurm/stop_server.sh
+bash hpc_utils/stop_server.sh
 ```
 
-Reads `slurm/server_info.txt`, cancels the Slurm job with `scancel`, and
+Reads `hpc_utils/server_info.txt`, cancels the Slurm job with `scancel`, and
 removes the status file.
 
 ## Troubleshooting
@@ -152,7 +152,7 @@ removes the status file.
 | Problem | Solution |
 |---|---|
 | Job times out waiting to start | The cluster may be busy. Check queue status or adjust the partition in `start_server.sh`. |
-| Local port already in use | The script auto-increments. To force a specific port: `LOCAL_PORT=8080 bash slurm/connect.sh` |
+| Local port already in use | The script auto-increments. To force a specific port: `LOCAL_PORT=8080 bash hpc_utils/connect.sh` |
 | SSH tunnel did not come up | Verify you can SSH to the login node manually. The script prints the manual `ssh -N -L ...` command to try. |
 | Connection refused in browser | The tunnel may have dropped. Re-run `connect.sh`. Confirm the Slurm job is still running. |
-| Blank page after login | Server may be starting up — wait 10–15 seconds. Check `slurm/panel-server-<job_id>.log`. |
+| Blank page after login | Server may be starting up — wait 10–15 seconds. Check `hpc_utils/panel-server-<job_id>.log`. |

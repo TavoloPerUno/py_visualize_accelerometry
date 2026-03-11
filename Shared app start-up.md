@@ -4,11 +4,11 @@ Follow the instructions below to connect to the shared annotation server on the 
 
 1. Ensure the conda/Python environment with project dependencies is available on the cluster.
 2. Ensure `credentials.json` exists in the project root on the cluster with usernames and passwords for all team members.
-3. Each user should edit `slurm/connect.sh` to set their login info:
+3. Each user should edit `hpc_utils/connect.sh` to set their login info:
    - `SSH_USER` — your username on the HPC cluster (default: your local username)
    - `LOGIN_NODE` — your cluster's login/gateway hostname (default: `randi.cri.uchicago.edu`)
    - `REMOTE_DIR` — path to the project directory on the cluster
-4. (Optional) Edit `slurm/start_server.sh` to adjust:
+4. (Optional) Edit `hpc_utils/start_server.sh` to adjust:
    - `PORT` — default `7860`
    - `CREDENTIALS` — path to `credentials.json`
    - Slurm directives (`--time`, `--mem`, `--partition`, etc.)
@@ -18,7 +18,7 @@ Follow the instructions below to connect to the shared annotation server on the 
 Run the connect script from your local machine:
 
 ```
-bash slurm/connect.sh
+bash hpc_utils/connect.sh
 ```
 
 The script will:
@@ -53,7 +53,7 @@ Waiting for tunnel to establish...
 
 ==========================================
   Tunnel is active!
-  Open: http://localhost:7860/visualize_accelerometry/app
+  Open: http://localhost:7860/app
 ==========================================
 
 Press Ctrl+C to close the tunnel.
@@ -68,7 +68,7 @@ Log in with the credentials defined in `credentials.json`.
 If you prefer to set up the tunnel manually, first find the running job:
 
 ```
-ssh yourusername@randi.cri.uchicago.edu "cat /path/to/project/slurm/server_info.txt"
+ssh yourusername@randi.cri.uchicago.edu "cat /path/to/project/hpc_utils/server_info.txt"
 ```
 
 Then create the tunnel:
@@ -77,17 +77,17 @@ Then create the tunnel:
 ssh -N -f -L 7860:compute-node-01:7860 yourusername@randi.cri.uchicago.edu
 ```
 
-Then open: `http://localhost:7860/visualize_accelerometry/app`
+Then open: `http://localhost:7860/app`
 
 # Stopping the server
 
 When the team is done for the day, stop the server:
 
 ```
-bash slurm/stop_server.sh
+bash hpc_utils/stop_server.sh
 ```
 
-This cancels the Slurm job and removes `slurm/server_info.txt`.
+This cancels the Slurm job and removes `hpc_utils/server_info.txt`.
 
 Alternatively, cancel the job manually:
 
@@ -122,9 +122,9 @@ Then retry the SSH tunnel.
 ## Blank page or connection refused
 
 - The server may still be starting up. Wait 10–15 seconds and refresh.
-- Check the server log: `ssh yourusername@randi.cri.uchicago.edu "cat /path/to/project/slurm/panel-server-<job_id>.log"`
+- Check the server log: `ssh yourusername@randi.cri.uchicago.edu "cat /path/to/project/hpc_utils/panel-server-<job_id>.log"`
 
 ## Job times out waiting to start
 
 - The cluster may be busy. Check queue status: `ssh yourusername@randi.cri.uchicago.edu "squeue --me"`
-- Consider adjusting the partition or resource requests in `slurm/start_server.sh`
+- Consider adjusting the partition or resource requests in `hpc_utils/start_server.sh`

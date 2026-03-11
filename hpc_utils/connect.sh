@@ -13,13 +13,13 @@
 # No admin needed — any user can run this.
 #
 # Usage:
-#   bash slurm/connect.sh
+#   bash hpc_utils/connect.sh
 #
 # Overridable variables (export before running, or edit defaults below):
 #   SSH_USER      — Your username on the HPC cluster (default: current user)
 #   LOGIN_NODE    — SSH gateway / login node
 #   REMOTE_DIR    — Project directory on the HPC cluster
-#   JOB_NAME      — Slurm job name to search for (default: panel-server)
+#   JOB_NAME      — Slurm job name to search for (default: py_accel_viewer)
 #   LOCAL_PORT    — Preferred local port; auto-increments if busy (default: 7860)
 
 set -euo pipefail
@@ -30,9 +30,9 @@ set -euo pipefail
 SSH_USER="${SSH_USER:-$(whoami)}"
 LOGIN_NODE="${LOGIN_NODE:-randi.cri.uchicago.edu}"
 REMOTE_DIR="${REMOTE_DIR:-/gpfs/data/nshap-lab/users/mmurugesan/projects/accelerometry/codebase/py_visualize_accelerometry_panel/py_visualize_accelerometry}"
-JOB_NAME="${JOB_NAME:-panel-server}"
+JOB_NAME="${JOB_NAME:-py_accel_viewer}"
 LOCAL_PORT="${LOCAL_PORT:-7860}"
-STATUS_FILE="slurm/server_info.txt"
+STATUS_FILE="hpc_utils/server_info.txt"
 
 # ---------------------------------------------------------------------------
 # Helper: check if a local port is in use
@@ -94,7 +94,7 @@ if [[ -n "\${EXISTING_JOB}" ]]; then
 else
     # No existing job — submit one
     echo "NO_EXISTING_JOB: Submitting new server job..." >&2
-    JOB_ID=\$(sbatch --parsable slurm/start_server.sh)
+    JOB_ID=\$(sbatch --parsable hpc_utils/start_server.sh)
     echo "SUBMITTED_JOB=\${JOB_ID}" >&2
 fi
 
@@ -143,18 +143,28 @@ echo "  Remote port  : ${PORT}"
 echo "  Slurm job    : ${JOB_ID}"
 
 # ---------------------------------------------------------------------------
-# Step 3: Pick an available local port
+# Step 3: Reclaim local port from stale tunnel or fail if in use by other process
 # ---------------------------------------------------------------------------
-MAX_ATTEMPTS=100
-ATTEMPT=0
-while is_port_in_use "${LOCAL_PORT}"; do
-    ATTEMPT=$((ATTEMPT + 1))
-    if [[ "${ATTEMPT}" -ge "${MAX_ATTEMPTS}" ]]; then
-        echo "ERROR: Could not find a free local port after ${MAX_ATTEMPTS} attempts." >&2
+if is_port_in_use "${LOCAL_PORT}"; then
+    echo "  Port ${LOCAL_PORT} is in use. Looking for stale SSH tunnels..."
+    # Match our exact tunnel pattern: ssh -N -L PORT:NODE:PORT USER@HOST
+    STALE_PIDS=$(pgrep -f "ssh.*-L.*${LOCAL_PORT}.*${SSH_USER}@${LOGIN_NODE}" 2>/dev/null || true)
+    if [[ -n "${STALE_PIDS}" ]]; then
+        for PID in ${STALE_PIDS}; do
+            echo "  Force-killing stale SSH tunnel (PID ${PID})..."
+            kill -9 "${PID}" 2>/dev/null || true
+        done
+        sleep 2
+    fi
+    # Check again after cleanup
+    if is_port_in_use "${LOCAL_PORT}"; then
+        echo "ERROR: Port ${LOCAL_PORT} is still in use." >&2
+        echo "       Processes on this port:" >&2
+        lsof -i ":${LOCAL_PORT}" 2>/dev/null >&2 || true
         exit 1
     fi
-    LOCAL_PORT=$((LOCAL_PORT + 1))
-done
+    echo "  Port ${LOCAL_PORT} reclaimed."
+fi
 
 echo "  Local port   : ${LOCAL_PORT}"
 
@@ -202,7 +212,7 @@ if [[ "${TUNNEL_OK}" != "true" ]]; then
     exit 1
 fi
 
-URL="http://localhost:${LOCAL_PORT}/visualize_accelerometry/app"
+URL="http://localhost:${LOCAL_PORT}/app"
 echo ""
 echo "=========================================="
 echo "  Tunnel is active!"

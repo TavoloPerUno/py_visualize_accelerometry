@@ -3,14 +3,14 @@
 # stop_server.sh — Cancel the shared Panel server Slurm job and clean up.
 #
 # Usage:
-#   bash slurm/stop_server.sh
+#   bash hpc_utils/stop_server.sh
 #
 # Overridable variables:
-#   STATUS_FILE   — Path to server info file (default: slurm/server_info.txt)
+#   STATUS_FILE   — Path to server info file (default: hpc_utils/server_info.txt)
 
 set -euo pipefail
 
-STATUS_FILE="${STATUS_FILE:-slurm/server_info.txt}"
+STATUS_FILE="${STATUS_FILE:-hpc_utils/server_info.txt}"
 
 if [[ ! -f "${STATUS_FILE}" ]]; then
     echo "ERROR: ${STATUS_FILE} not found. Nothing to stop." >&2

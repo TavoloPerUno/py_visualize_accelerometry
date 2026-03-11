@@ -21,22 +21,15 @@ A publicly accessible demo is hosted on Hugging Face Spaces:
 
 For HPC environments, you can run a single shared instance via Slurm that all team members connect to through SSH tunneling.
 
-**Start the server** (run once by admin):
+**Connect** (each user — submits job automatically if not running):
 ```bash
-sbatch slurm/start_server.sh
-```
-
-**Connect** (each user):
-```bash
-bash slurm/connect.sh
+bash hpc_utils/connect.sh
 ```
 
 **Stop the server**:
 ```bash
-bash slurm/stop_server.sh
+bash hpc_utils/stop_server.sh
 ```
-
-See [slurm/](slurm/) for details and configuration options.
 
 ## What it does
 
@@ -114,11 +107,11 @@ panel serve visualize_accelerometry/app.py \
     --basic-login-template visualize_accelerometry/templates/login.html
 ```
 
-Then open http://localhost:5601/visualize_accelerometry/app in your browser.
+Then open http://localhost:5601/app in your browser.
 
 ### HPC (SLURM)
 
-See [App start-up on randi.md](App%20start-up%20on%20randi.md) for instructions on running the app on a university SLURM cluster via SSH tunneling.
+See [Shared app start-up.md](Shared%20app%20start-up.md) for the self-service shared server workflow, or [docs/slurm-deployment.md](docs/slurm-deployment.md) for the full deployment guide.
 
 ## Project structure
 
@@ -136,7 +129,11 @@ py_visualize_accelerometry/
 │   └── data/
 │       ├── readings/        # HDF5 accelerometry files
 │       └── output/          # Per-user annotation Excel files
-├── hpc_utils/               # SLURM job scripts
+├── hpc_utils/               # HPC deployment scripts (Slurm, SSH tunneling)
+│   ├── connect.sh           # Self-service connect script
+│   ├── start_server.sh      # Slurm job script
+│   ├── stop_server.sh       # Stop running server
+│   └── logs/                # Job and server logs
 ├── requirements.txt
 └── credentials.json         # Auth credentials (not in repo)
 ```

@@ -66,12 +66,10 @@ Open [http://localhost:5601/visualize_accelerometry/app](http://localhost:5601/v
 
 ### HPC (SLURM cluster)
 
-For running on a university SLURM cluster (e.g., Randi at UChicago):
+For running on a university SLURM cluster (e.g., Randi at UChicago), use the self-service connect script. It checks for an existing server, starts one if needed, and creates the SSH tunnel automatically:
 
-1. Copy `hpc_utils/start_app_on_randi.pbs` to your user folder
-2. Update log paths and project directory in the script
-3. Submit: `sbatch start_app_on_randi.pbs`
-4. Create an SSH tunnel: `ssh -N -f -L 5601:nodename:5601 user@randi.cri.uchicago.edu`
-5. Open `http://localhost:5601/visualize_accelerometry/app`
+```bash
+bash hpc_utils/connect.sh
+```
 
-See `App start-up on randi.md` in the repository for detailed instructions.
+See [Shared app start-up.md](../Shared%20app%20start-up.md) for detailed instructions and [docs/slurm-deployment.md](slurm-deployment.md) for the full deployment guide.

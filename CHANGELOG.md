@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-11
+
+### Added
+- Self-service `connect.sh` — auto-detects running jobs, submits new ones if needed, creates SSH tunnel, and opens browser
+- Stale SSH tunnel detection and cleanup on reconnect
+- Proper HPC environment setup in `start_server.sh` (module loads, conda activation)
+- Persistent Slurm jobs using `nohup` + `sleep.py`
+- Organized log output in `hpc_utils/logs/`
+
+### Changed
+- Consolidated `slurm/` into `hpc_utils/` — single folder for all HPC deployment scripts
+- App URL changed from `/visualize_accelerometry/app` to `/app`
+- Updated all documentation to reflect the new self-service workflow
+
+### Removed
+- Per-user job submission model (replaced by shared server with auto-detection)
+
 ## [2.2.1] - 2026-03-11
 
 ### Fixed
@@ -69,3 +86,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [2.2.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.1.1...v2.2.0
 
 [2.2.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.2.0...v2.2.1
+
+[3.0.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.2.1...v3.0.0

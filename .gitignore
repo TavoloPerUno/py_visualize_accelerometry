@@ -10,5 +10,8 @@ __pycache__/
 scratch_books/
 dask-worker-space/
 logs/
+hpc_utils/logs/*
+!hpc_utils/logs/.gitkeep
+hpc_utils/server_info.txt
 docs/_build/
 credentials.json
