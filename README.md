@@ -118,6 +118,26 @@ make html
 open _build/html/index.html
 ```
 
+## Versioning and releases
+
+This project uses [Semantic Versioning](https://semver.org/). The canonical version lives in `visualize_accelerometry/__init__.py` as `__version__`.
+
+### Cutting a release
+
+1. Update `__version__` in `visualize_accelerometry/__init__.py`
+2. Update `CHANGELOG.md` with the new version's changes
+3. Commit the changes:
+   ```bash
+   git add visualize_accelerometry/__init__.py CHANGELOG.md
+   git commit -m "release: v<VERSION>"
+   ```
+4. Create and push the tag:
+   ```bash
+   git tag v<VERSION>
+   git push git v<VERSION>
+   ```
+5. The `release.yml` GitHub Actions workflow will automatically create a GitHub Release with auto-generated notes from commits since the last tag.
+
 ## License
 
 This project is developed by the [National Social Life, Health, and Aging Project (NSHAP)](https://www.norc.org/research/projects/national-social-life-health-and-aging-project.html) lab at the University of Chicago.
