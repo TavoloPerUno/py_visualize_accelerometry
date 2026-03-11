@@ -27,6 +27,7 @@ EXPOSE 7860
 CMD ["panel", "serve", "demo/app_demo.py", \
      "--port", "7860", \
      "--address", "0.0.0.0", \
+     "--prefix", "/", \
      "--basic-auth", "demo/credentials.json", \
      "--cookie-secret", "demo-cookie-secret-not-for-production", \
      "--allow-websocket-origin", "*", \
