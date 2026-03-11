@@ -23,14 +23,14 @@ RUN python scripts/generate_demo_data.py
 # Hugging Face Spaces expects port 7860
 EXPOSE 7860
 
-# Run Panel with demo entrypoint
-CMD ["panel", "serve", "demo/app_demo.py", \
-     "--port", "7860", \
+# --index app_demo: serve the app at / (root) so HF Spaces proxy works
+CMD ["panel", "serve", "/app/demo/app_demo.py", \
      "--address", "0.0.0.0", \
-     "--prefix", "/", \
-     "--basic-auth", "demo/credentials.json", \
+     "--port", "7860", \
+     "--basic-auth", "/app/demo/credentials.json", \
      "--cookie-secret", "demo-cookie-secret-not-for-production", \
      "--allow-websocket-origin", "*", \
-     "--basic-login-template", "visualize_accelerometry/templates/login.html", \
+     "--basic-login-template", "/app/visualize_accelerometry/templates/login.html", \
      "--num-procs", "1", \
+     "--index", "app_demo", \
      "--warm"]
