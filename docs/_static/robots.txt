@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tavoloperuno.github.io/py_visualize_accelerometry/sitemap.xml

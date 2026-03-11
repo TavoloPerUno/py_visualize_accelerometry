@@ -15,6 +15,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinx_sitemap",
+    "sphinxext.opengraph",
 ]
 
 # MyST allows us to use Markdown (.md) files alongside reStructuredText
@@ -28,6 +30,33 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+
+# --- Sitemap ---
+html_baseurl = "https://tavoloperuno.github.io/py_visualize_accelerometry/"
+
+# --- robots.txt ---
+html_extra_path = ["_static/robots.txt"]
+
+# --- SEO meta tags ---
+html_meta = {
+    "description": (
+        "Accelerometry Annotation Tool — an interactive application for "
+        "annotating wrist-worn accelerometer data from physical performance "
+        "tests including chair stand, TUG, and 6-minute walk test in the "
+        "NSHAP aging-research study."
+    ),
+    "keywords": (
+        "accelerometry, annotation tool, physical performance tests, "
+        "wrist-worn accelerometer, chair stand, TUG, timed up and go, "
+        "6-minute walk test, NSHAP, aging research, actigraphy"
+    ),
+}
+
+# --- Open Graph (social sharing) ---
+ogp_site_url = "https://tavoloperuno.github.io/py_visualize_accelerometry/"
+ogp_site_name = "Accelerometry Annotation Tool"
+ogp_description_length = 200
+ogp_type = "website"
 
 # Napoleon settings for numpy-style docstrings
 napoleon_google_docstring = False
