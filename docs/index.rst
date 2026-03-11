@@ -11,6 +11,7 @@ data from physical performance assessments.
    getting-started
    usage
    architecture
+   slurm-deployment
    tests-overview
    api
 
