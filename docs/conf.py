@@ -17,6 +17,7 @@ extensions = [
     "myst_parser",
     "sphinx_sitemap",
     "sphinxext.opengraph",
+    "sphinxcontrib.mermaid",
 ]
 
 # MyST allows us to use Markdown (.md) files alongside reStructuredText
