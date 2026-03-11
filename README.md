@@ -17,6 +17,27 @@ A publicly accessible demo is hosted on Hugging Face Spaces:
 > and noise. It does not contain real participant recordings. File sizes are
 > small (~1 hour at 85 Hz) to keep the free deployment responsive.
 
+## Shared Server Deployment (HPC / Slurm)
+
+For HPC environments, you can run a single shared instance via Slurm that all team members connect to through SSH tunneling.
+
+**Start the server** (run once by admin):
+```bash
+sbatch slurm/start_server.sh
+```
+
+**Connect** (each user):
+```bash
+bash slurm/connect.sh
+```
+
+**Stop the server**:
+```bash
+bash slurm/stop_server.sh
+```
+
+See [slurm/](slurm/) for details and configuration options.
+
 ## What it does
 
 Researchers collect tri-axial accelerometry signals (x, y, z) during standardized physical performance tests. This tool lets annotators visually inspect those signals and mark the time boundaries of each test:
