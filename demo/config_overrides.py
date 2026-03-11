@@ -29,8 +29,8 @@ def apply():
     # Ensure output directory exists
     os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
 
-    # Point CREDENTIALS_FILE at the demo credentials (the default resolves
-    # to a path outside the Docker container because credentials.json is
-    # in .gitignore and never copied into the image).
-    from visualize_accelerometry import app as _app_module
-    _app_module.CREDENTIALS_FILE = os.path.join(demo_dir, "credentials.json")
+    # Point CREDENTIALS_FILE at the demo credentials.  This must be patched
+    # on the *config* module (not on app) because app.py reads the value
+    # via ``_config.CREDENTIALS_FILE`` at call-time and ``app.py`` hasn't
+    # been imported yet at this point.
+    config.CREDENTIALS_FILE = os.path.join(demo_dir, "credentials.json")

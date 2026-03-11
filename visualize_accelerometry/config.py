@@ -33,6 +33,12 @@ READINGS_FOLDER = os.path.join(DATA_FOLDER, "readings")
 OUTPUT_FOLDER = os.path.join(DATA_FOLDER, "output")
 # Glob pattern for per-user annotation Excel files (the * is replaced by username)
 ANNOTATIONS_GLOB = os.path.join(OUTPUT_FOLDER, "annotations_*.xlsx")
+# Path to the JSON credentials file used by the admin panel to add/remove users.
+# Overridden by demo/config_overrides.py for demo deployments.
+CREDENTIALS_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "credentials.json",
+)
 
 # ---------------------------------------------------------------------------
 # User lists

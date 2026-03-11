@@ -186,6 +186,9 @@ def apply():
 
     # Ensure output directory exists
     os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+
+    # Point CREDENTIALS_FILE at the demo credentials.
+    config.CREDENTIALS_FILE = os.path.join(demo_dir, "credentials.json")
 '''
     with open(path, "w") as f:
         f.write(content)

@@ -45,6 +45,7 @@ from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.models import Div
 
 from visualize_accelerometry.callbacks import CallbackManager, build_summary_html
+from visualize_accelerometry import config as _config
 from visualize_accelerometry.config import (
     ADMIN_USERS, ANNOTATOR_USERS, ARTIFACT_COLORS,
     KNOWN_USERS, LST_COLORS, UCHICAGO_MAROON,
@@ -77,19 +78,14 @@ if os.path.exists(_logout_template_path):
 
 ACCENT_COLOR = UCHICAGO_MAROON
 
-CREDENTIALS_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "credentials.json",
-)
-
 
 def _load_credentials():
-    with open(CREDENTIALS_FILE, "r") as f:
+    with open(_config.CREDENTIALS_FILE, "r") as f:
         return json.load(f)
 
 
 def _save_credentials(creds):
-    with open(CREDENTIALS_FILE, "w") as f:
+    with open(_config.CREDENTIALS_FILE, "w") as f:
         json.dump(creds, f, indent=4)
 
 
