@@ -29,7 +29,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 SSH_USER="${SSH_USER:-$(whoami)}"
 LOGIN_NODE="${LOGIN_NODE:-randi.cri.uchicago.edu}"
-REMOTE_DIR="${REMOTE_DIR:-/gpfs/data/nshap-lab/users/mmurugesan/projects/accelerometry/codebase/py_visualize_accelerometry}"
+REMOTE_DIR="${REMOTE_DIR:-/gpfs/data/nshap-lab/users/mmurugesan/projects/accelerometry/codebase/py_visualize_accelerometry_panel/py_visualize_accelerometry}"
 JOB_NAME="${JOB_NAME:-panel-server}"
 LOCAL_PORT="${LOCAL_PORT:-7860}"
 STATUS_FILE="slurm/server_info.txt"
