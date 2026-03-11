@@ -139,28 +139,13 @@ def generate_file(spec, output_dir):
 def create_demo_credentials(demo_dir):
     """Write demo/credentials.json with demo users.
 
-    Passwords are stored as plain text for simplicity. Panel accepts
-    both plain text and bcrypt-hashed passwords in credentials files.
-    If the installed Panel version rejects plain text, install bcrypt
-    and hash them here instead.
+    Panel basic-auth compares passwords as plain strings, so
+    credentials are stored in plain text.
     """
-    try:
-        import bcrypt
-        # Newer Panel versions may require hashed passwords
-        creds = {
-            "demo_admin": bcrypt.hashpw(
-                b"demo", bcrypt.gensalt()
-            ).decode(),
-            "demo_user": bcrypt.hashpw(
-                b"demo", bcrypt.gensalt()
-            ).decode(),
-        }
-    except ImportError:
-        # Fall back to plain text if bcrypt is not installed
-        creds = {
-            "demo_admin": "demo",
-            "demo_user": "demo",
-        }
+    creds = {
+        "demo_admin": "demo",
+        "demo_user": "demo",
+    }
     path = os.path.join(demo_dir, "credentials.json")
     with open(path, "w") as f:
         json.dump(creds, f, indent=4)
