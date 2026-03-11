@@ -35,7 +35,7 @@ html_static_path = ["_static"]
 html_baseurl = "https://tavoloperuno.github.io/py_visualize_accelerometry/"
 
 # --- robots.txt ---
-html_extra_path = ["_static/robots.txt"]
+html_extra_path = ["_static/robots.txt", "_static/googlef63886eaa754b15d.html"]
 
 # --- SEO meta tags ---
 html_meta = {
