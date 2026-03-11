@@ -2,9 +2,10 @@ name: Build and Deploy Docs
 
 on:
   push:
-    branches: [feature/panel-oauth, master]
+    branches: [feature/panel-oauth, master, desktop]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
