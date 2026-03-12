@@ -30,10 +30,11 @@ def get_filenames():
         uses a fixed random seed so every server restart produces the
         same mapping, distributing files evenly across annotators.
     """
-    # Fixed seed ensures the same user-to-file assignment across restarts
-    np.random.seed(2020)
+    # Fixed seed ensures the same user-to-file assignment across restarts.
+    # Use a local Generator to avoid polluting global NumPy random state.
+    rng = np.random.default_rng(2020)
     users_to_assign = list(ANNOTATOR_USERS)
-    np.random.shuffle(users_to_assign)
+    rng.shuffle(users_to_assign)
     users_cycle = cycle(users_to_assign)
     lst_files = sorted(
         next(users_cycle) + "--" + os.path.splitext(f)[0]
@@ -70,7 +71,9 @@ def get_filedata(fname, anchor_timestamp, windowsize):
     if anchor_timestamp is None:
         # First load: read the first and last rows to determine file bounds
         first_row = pd.read_hdf(file_path, "readings", start=0, stop=1)
-        last_row = pd.read_hdf(file_path, "readings", start=-1)
+        with pd.HDFStore(file_path, mode="r") as store:
+            nrows = store.get_storer("readings").nrows
+        last_row = pd.read_hdf(file_path, "readings", start=nrows - 1, stop=nrows)
         anchor_timestamp = first_row["timestamp"].dt.strftime(TIME_FMT).values[0]
         file_start = first_row["timestamp"].dt.strftime(TIME_FMT).values[0]
         file_end = last_row["timestamp"].dt.strftime(TIME_FMT).values[0]

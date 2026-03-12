@@ -48,6 +48,7 @@ dependencies = [
 
 [project.optional-dependencies]
 lttb = ["lttbc"]
+test = ["pytest>=7.0"]
 
 [project.urls]
 Homepage = "https://github.com/TavoloPerUno/py_visualize_accelerometry"
