@@ -62,7 +62,7 @@ panel serve visualize_accelerometry/app.py \
     --basic-login-template visualize_accelerometry/templates/login.html
 ```
 
-Open [http://localhost:5601/visualize_accelerometry/app](http://localhost:5601/visualize_accelerometry/app) in your browser.
+Open [http://localhost:5601/app](http://localhost:5601/app) in your browser.
 
 ### HPC (SLURM cluster)
 

@@ -31,7 +31,7 @@ Open a new terminal and create an SSH tunnel to the compute node on port 5601:
 ssh -N -f -L 5601:nodename:5601 yourusername@randi.cri.uchicago.edu
 ```
 
-Open an internet browser on your local computer and go to: `http://localhost:5601/visualize_accelerometry/app`
+Open an internet browser on your local computer and go to: `http://localhost:5601/app`
 
 You will be prompted to log in. Use the credentials defined in `credentials.json` in the project root.
 
