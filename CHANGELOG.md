@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-03-12
+
+### Added
+- Demo now uses real accelerometer data from the UCI Accelerometer & Gyro Mobile Phone Dataset (CC BY 4.0)
+- Pre-populated example annotations for both demo users showcasing all activity types, flags, and inter-annotator variability
+- Port auto-increment fallback in `connect.sh` when preferred local port is unavailable
+- `--synthetic` flag for `demo/generate_data.py` to force synthetic data generation
+
+### Changed
+- Renamed `scripts/` to `devops/` for dev/CI tooling
+- Moved `generate_demo_data.py` into `demo/generate_data.py` (co-located with demo deployment)
+- Moved startup guides from repo root into `docs/` with kebab-case filenames
+- Updated all downstream references (Dockerfile, CI workflow, README, docs)
+
+### Removed
+- Tracked `hpc_utils/dask.log` (now gitignored)
+
 ## [3.0.0] - 2026-03-11
 
 ### Added
@@ -86,5 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [2.2.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.1.1...v2.2.0
 
 [2.2.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.2.0...v2.2.1
+
+[3.1.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.0.0...v3.1.0
 
 [3.0.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.2.1...v3.0.0
