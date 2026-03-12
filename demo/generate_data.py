@@ -618,10 +618,18 @@ def main():
     generate_annotations(output_dir)
 
     # --- Generate demo configuration files ---
+    # Only write config files if they don't already exist, so that manual
+    # edits to demo/app.py or demo/config_overrides.py are preserved.
     print("\nCreating demo configuration files...")
     create_demo_credentials(demo_dir)
-    create_config_overrides(demo_dir)
-    create_demo_entrypoint(demo_dir)
+    if not os.path.exists(os.path.join(demo_dir, "config_overrides.py")):
+        create_config_overrides(demo_dir)
+    else:
+        print(f"  skipped {os.path.join(demo_dir, 'config_overrides.py')} (already exists)")
+    if not os.path.exists(os.path.join(demo_dir, "app.py")):
+        create_demo_entrypoint(demo_dir)
+    else:
+        print(f"  skipped {os.path.join(demo_dir, 'app.py')} (already exists)")
 
     print("\nDone. To run the demo locally:")
     print("  panel serve demo/app.py \\")

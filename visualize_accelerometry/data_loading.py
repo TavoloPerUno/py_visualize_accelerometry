@@ -15,7 +15,6 @@ import pandas as pd
 from . import config as _config
 from .config import (
     ANNOTATION_COLUMNS,
-    ANNOTATOR_USERS,
     TIME_FMT,
 )
 
@@ -33,7 +32,7 @@ def get_filenames():
     # Fixed seed ensures the same user-to-file assignment across restarts.
     # Use a local Generator to avoid polluting global NumPy random state.
     rng = np.random.default_rng(2020)
-    users_to_assign = list(ANNOTATOR_USERS)
+    users_to_assign = list(_config.ANNOTATOR_USERS)
     rng.shuffle(users_to_assign)
     users_cycle = cycle(users_to_assign)
     lst_files = sorted(
