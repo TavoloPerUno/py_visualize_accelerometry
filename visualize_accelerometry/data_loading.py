@@ -12,11 +12,10 @@ from itertools import cycle
 import numpy as np
 import pandas as pd
 
+from . import config as _config
 from .config import (
     ANNOTATION_COLUMNS,
-    ANNOTATIONS_GLOB,
     ANNOTATOR_USERS,
-    READINGS_FOLDER,
     TIME_FMT,
 )
 
@@ -38,7 +37,7 @@ def get_filenames():
     users_cycle = cycle(users_to_assign)
     lst_files = sorted(
         next(users_cycle) + "--" + os.path.splitext(f)[0]
-        for f in os.listdir(READINGS_FOLDER)
+        for f in os.listdir(_config.READINGS_FOLDER)
         if os.path.splitext(f)[1].lower() == ".h5"
     )
     return lst_files
@@ -144,7 +143,7 @@ def get_annotations_from_files(pattern=None):
         Combined annotations (unsorted, not yet cleaned).
     """
     if pattern is None:
-        pattern = ANNOTATIONS_GLOB
+        pattern = _config.ANNOTATIONS_GLOB
     files = [n for n in glob.glob(pattern) if os.path.isfile(n)]
     if files:
         return pd.concat([pd.read_excel(n, engine="openpyxl") for n in files])
@@ -209,7 +208,7 @@ def save_annotations(pdf_annotations, uname, fname):
     DataFrame
         Freshly-reloaded annotations from *all* users' files on disk.
     """
-    annotations_file = ANNOTATIONS_GLOB.replace("*", uname)
+    annotations_file = _config.ANNOTATIONS_GLOB.replace("*", uname)
     pdf_old = pd.DataFrame(columns=ANNOTATION_COLUMNS)
     if os.path.exists(annotations_file):
         pdf_old = pd.read_excel(annotations_file, engine="openpyxl")

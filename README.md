@@ -20,7 +20,7 @@ A publicly accessible demo is hosted on Hugging Face Spaces:
 > not contain real participant recordings. Example annotations are
 > pre-populated to showcase labeling, flags, and inter-annotator variability.
 >
-> Alharbi, F. (2022). *Accelerometer Gyro Mobile Phone Dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5PW3V
+> Alharbi, F. (2022). *Accelerometer Gyro Mobile Phone Dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.3390/s22176513
 
 ## Shared Server Deployment (HPC / Slurm)
 

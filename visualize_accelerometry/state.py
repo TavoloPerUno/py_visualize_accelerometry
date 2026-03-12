@@ -13,10 +13,10 @@ import os
 import pandas as pd
 from bokeh.models import ColumnDataSource
 
+from . import config as _config
 from .config import (
     DEFAULT_WINDOW_SIZE,
     DISPLAYED_ANNOTATION_COLUMNS,
-    READINGS_FOLDER,
     TIME_FMT,
 )
 from .data_loading import (
@@ -48,7 +48,7 @@ class AppState:
     def __init__(self, username):
         self.username = username
         self.lst_fnames = get_filenames()
-        self.fname = os.path.join(READINGS_FOLDER, self.lst_fnames[0].split("--")[1])
+        self.fname = os.path.join(_config.READINGS_FOLDER, self.lst_fnames[0].split("--")[1])
         self.anchor_timestamp = None
         self.file_start_timestamp = None
         self.file_end_timestamp = None
