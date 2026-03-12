@@ -111,7 +111,7 @@ Then open http://localhost:5601/app in your browser.
 
 ### HPC (SLURM)
 
-See [Shared app start-up.md](Shared%20app%20start-up.md) for the self-service shared server workflow, or [docs/slurm-deployment.md](docs/slurm-deployment.md) for the full deployment guide.
+See [Shared server startup](docs/shared-server-startup.md) for the self-service shared server workflow, or [Slurm deployment guide](docs/slurm-deployment.md) for the full deployment guide.
 
 ## Project structure
 

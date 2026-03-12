@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 # Generate synthetic demo data
-RUN python scripts/generate_demo_data.py
+RUN python demo/generate_data.py
 
 # Hugging Face Spaces expects port 7860
 EXPOSE 7860

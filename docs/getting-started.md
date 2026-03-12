@@ -72,4 +72,4 @@ For running on a university SLURM cluster (e.g., Randi at UChicago), use the sel
 bash hpc_utils/connect.sh
 ```
 
-See [Shared app start-up.md](../Shared%20app%20start-up.md) for detailed instructions and [docs/slurm-deployment.md](slurm-deployment.md) for the full deployment guide.
+See [Shared server startup](shared-server-startup.md) for detailed instructions and [Slurm deployment guide](slurm-deployment.md) for the full deployment guide.

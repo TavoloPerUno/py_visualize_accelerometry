@@ -156,14 +156,26 @@ if is_port_in_use "${LOCAL_PORT}"; then
         done
         sleep 2
     fi
-    # Check again after cleanup
+    # Check again after cleanup — if still busy, try next ports
     if is_port_in_use "${LOCAL_PORT}"; then
-        echo "ERROR: Port ${LOCAL_PORT} is still in use." >&2
-        echo "       Processes on this port:" >&2
-        lsof -i ":${LOCAL_PORT}" 2>/dev/null >&2 || true
-        exit 1
+        echo "  Port ${LOCAL_PORT} is still in use by another process. Searching for a free port..."
+        FOUND_FREE=false
+        for OFFSET in $(seq 1 20); do
+            CANDIDATE=$((LOCAL_PORT + OFFSET))
+            if ! is_port_in_use "${CANDIDATE}"; then
+                echo "  Using port ${CANDIDATE} instead."
+                LOCAL_PORT="${CANDIDATE}"
+                FOUND_FREE=true
+                break
+            fi
+        done
+        if [[ "${FOUND_FREE}" != "true" ]]; then
+            echo "ERROR: Could not find a free port in range ${LOCAL_PORT}–$((LOCAL_PORT + 20))." >&2
+            exit 1
+        fi
+    else
+        echo "  Port ${LOCAL_PORT} reclaimed."
     fi
-    echo "  Port ${LOCAL_PORT} reclaimed."
 fi
 
 echo "  Local port   : ${LOCAL_PORT}"

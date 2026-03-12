@@ -5,8 +5,8 @@ Creates small but realistic-looking data that exercises every feature of the
 annotation UI without requiring access to real participant recordings.
 
 Usage:
-    python scripts/generate_demo_data.py            # writes to demo/data/readings/
-    python scripts/generate_demo_data.py /tmp/out    # writes to custom directory
+    python demo/generate_data.py            # writes to demo/data/readings/
+    python demo/generate_data.py /tmp/out   # writes to custom directory
 """
 
 import json

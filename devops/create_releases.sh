@@ -4,7 +4,7 @@
 # Prerequisites: gh CLI authenticated (run `gh auth login` first)
 #
 # Usage:
-#     bash scripts/create_releases.sh
+#     bash devops/create_releases.sh
 
 set -euo pipefail
 

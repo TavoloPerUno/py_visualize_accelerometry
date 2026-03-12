@@ -1,4 +1,4 @@
-> **Note:** This documents the legacy per-user PBS workflow. For the recommended shared server approach, see [Shared app start-up.md](Shared%20app%20start-up.md) — just run `bash hpc_utils/connect.sh`.
+> **Note:** This documents the legacy per-user PBS workflow. For the recommended shared server approach, see [Shared server startup](shared-server-startup.md) — just run `bash hpc_utils/connect.sh`.
 
 Follow the instructions below to submit a job on Randi to start the visualization app and terminate it after use.
 
