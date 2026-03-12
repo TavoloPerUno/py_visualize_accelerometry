@@ -41,9 +41,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install pandas numpy tables huggingface_hub
+        run: pip install pandas numpy tables openpyxl huggingface_hub
 
-      - name: Generate synthetic demo data
+      - name: Generate demo data (downloads PAMAP2 real accelerometry data)
         run: python demo/generate_data.py
 
       - name: Prepare deployment directory

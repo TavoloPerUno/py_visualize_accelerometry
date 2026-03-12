@@ -13,9 +13,12 @@ A publicly accessible demo is hosted on Hugging Face Spaces:
 | `demo_admin` | `demo` | Admin (can manage users, impersonate) |
 | `demo_user` | `demo` | Annotator |
 
-> **Note:** The demo uses synthetic accelerometry data generated from sine waves
-> and noise. It does not contain real participant recordings. File sizes are
-> small (~1 hour at 85 Hz) to keep the free deployment responsive.
+> **Note:** The demo uses real accelerometer data from the dataset below,
+> resampled and composed into short recordings (~10 min at 85 Hz). It does
+> not contain real participant recordings. Example annotations are
+> pre-populated to showcase labeling, flags, and inter-annotator variability.
+>
+> Alharbi, F. (2022). *Accelerometer Gyro Mobile Phone Dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5PW3V
 
 ## Shared Server Deployment (HPC / Slurm)
 
