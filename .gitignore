@@ -19,3 +19,5 @@ credentials.json
 dist/
 *.egg-info/
 build/
+paper.md
+paper.bib
