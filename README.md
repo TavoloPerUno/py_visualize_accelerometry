@@ -2,6 +2,8 @@
 
 A web-based application for visualizing and annotating wrist-worn accelerometry data from physical performance assessments. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/), it enables research teams to collaboratively label activity segments in large time-series recordings.
 
+![Full application view](docs/images/full_app.png)
+
 ## Live Demo
 
 A publicly accessible demo is hosted on Hugging Face Spaces:
@@ -53,6 +55,10 @@ Researchers collect tri-axial accelerometry signals (x, y, z) during standardize
 - **Multi-user collaboration** — Each annotator sees their own file assignments; admins can impersonate users and manage accounts
 - **Authentication** — Built-in basic auth (or OAuth for production deployments)
 - **Auto-save to Excel** — Per-user annotation files for easy downstream analysis
+
+| Annotation toolbar | Login page |
+|---|---|
+| ![Annotation toolbar](docs/images/annotation_toolbar.png) | ![Login page](docs/images/login_page.png) |
 
 ## Installation
 
