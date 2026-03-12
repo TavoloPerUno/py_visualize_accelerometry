@@ -23,7 +23,7 @@ RUN python demo/generate_data.py
 # Hugging Face Spaces expects port 7860
 EXPOSE 7860
 
-CMD ["panel", "serve", "/app/demo/app_demo.py", \
+CMD ["panel", "serve", "/app/demo/app.py", \
      "--address", "0.0.0.0", \
      "--port", "7860", \
      "--basic-auth", "/app/demo/credentials.json", \

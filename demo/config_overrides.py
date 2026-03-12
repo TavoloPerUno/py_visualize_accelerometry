@@ -2,7 +2,7 @@
 Demo-mode configuration overrides.
 
 When DEMO_MODE=1 is set in the environment, the app entrypoint
-(demo/app_demo.py) imports this module to patch config values
+(demo/app.py) imports this module to patch config values
 before the UI is built.
 """
 

@@ -5,7 +5,7 @@ This script applies demo configuration overrides (demo users, demo data paths)
 and then loads the real app module so Panel picks up the servable objects.
 
 Usage:
-    panel serve demo/app_demo.py --basic-auth demo/credentials.json ...
+    panel serve demo/app.py --basic-auth demo/credentials.json ...
 """
 
 import os

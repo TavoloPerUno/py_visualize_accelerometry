@@ -493,7 +493,7 @@ def create_config_overrides(demo_dir):
 Demo-mode configuration overrides.
 
 When DEMO_MODE=1 is set in the environment, the app entrypoint
-(demo/app_demo.py) imports this module to patch config values
+(demo/app.py) imports this module to patch config values
 before the UI is built.
 """
 
@@ -529,8 +529,8 @@ def apply():
 
 
 def create_demo_entrypoint(demo_dir):
-    """Write demo/app_demo.py — the Panel entrypoint for demo mode."""
-    path = os.path.join(demo_dir, "app_demo.py")
+    """Write demo/app.py — the Panel entrypoint for demo mode."""
+    path = os.path.join(demo_dir, "app.py")
     content = '''\
 """
 Demo-mode entrypoint for panel serve.
@@ -539,7 +539,7 @@ This script applies demo configuration overrides (demo users, demo data paths)
 and then loads the real app module so Panel picks up the servable objects.
 
 Usage:
-    panel serve demo/app_demo.py --basic-auth demo/credentials.json ...
+    panel serve demo/app.py --basic-auth demo/credentials.json ...
 """
 
 import os
@@ -624,7 +624,7 @@ def main():
     create_demo_entrypoint(demo_dir)
 
     print("\nDone. To run the demo locally:")
-    print("  panel serve demo/app_demo.py \\")
+    print("  panel serve demo/app.py \\")
     print("    --basic-auth demo/credentials.json \\")
     print('    --cookie-secret $(python -c "import secrets; print(secrets.token_hex(32))") \\')
     print("    --allow-websocket-origin localhost:5006")
