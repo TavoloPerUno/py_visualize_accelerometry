@@ -16,3 +16,6 @@ hpc_utils/server_info.txt
 hpc_utils/dask.log
 docs/_build/
 credentials.json
+dist/
+*.egg-info/
+build/

@@ -1,0 +1,58 @@
+# Publish to PyPI when a GitHub Release is published.
+#
+# Required setup (one-time):
+#   1. Create a PyPI account at https://pypi.org/account/register/
+#   2. Create a Trusted Publisher for this repo at:
+#      https://pypi.org/manage/account/publishing/
+#      - PyPI project name: accelerometry-annotator
+#      - Owner: TavoloPerUno
+#      - Repository: py_visualize_accelerometry
+#      - Workflow name: publish-pypi.yml
+#      - Environment: pypi
+#
+# Uses Trusted Publishers (OIDC) — no API token needed.
+
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

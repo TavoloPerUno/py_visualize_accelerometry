@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "accelerometry-annotator"
+dynamic = ["version"]
+description = "Web-based tool for visualizing and annotating wrist-worn accelerometry data from physical performance assessments."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    { name = "Manu Murugesan", email = "manorathan@uchicago.edu" },
+]
+keywords = [
+    "accelerometry",
+    "annotation",
+    "wearable-sensors",
+    "gait-analysis",
+    "physical-performance",
+    "time-series",
+    "data-visualization",
+    "bokeh",
+    "panel",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "bokeh>=3.3,<3.4",
+    "panel>=1.3,<1.4",
+    "pandas",
+    "numpy",
+    "tables",
+    "openpyxl",
+    "jinja2",
+]
+
+[project.optional-dependencies]
+lttb = ["lttbc"]
+
+[project.urls]
+Homepage = "https://github.com/TavoloPerUno/py_visualize_accelerometry"
+Documentation = "https://tavoloperuno.github.io/py_visualize_accelerometry/"
+Demo = "https://tavoloperuno-accelerometry-viewer-demo.hf.space/"
+Repository = "https://github.com/TavoloPerUno/py_visualize_accelerometry"
+Issues = "https://github.com/TavoloPerUno/py_visualize_accelerometry/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "visualize_accelerometry.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["visualize_accelerometry*"]
+
+[tool.setuptools.package-data]
+visualize_accelerometry = [
+    "templates/*.html",
+    "static/*",
+    "js/*.js",
+]
