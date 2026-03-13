@@ -79,7 +79,7 @@ The color key strip below the toolbar explains what each color and pattern means
 
 - **Signals** — The three accelerometry axes are shown as colored lines: X (maroon), Y (teal), Z (gray)
 - **Activities** — Annotated regions appear as colored overlays: chair stand (cyan), 3m walk (magenta), 6min walk (green), TUG (yellow)
-- **Flags** — Overlay patterns indicate flags: diagonal stripes (segment), dots (scoring), checkerboard (review)
+- **Flags** — Overlay patterns indicate flags: cross hatch (segment), dots (scoring), spiral (review)
 
 ### Downsampling and performance
 

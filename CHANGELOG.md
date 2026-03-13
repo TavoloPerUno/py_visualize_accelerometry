@@ -122,16 +122,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - docs: add shared app start-up guide
 - docs: add Slurm shared server deployment guide
-
-## [2.1.2] - 2026-03-11
+- docs: add Google Search Console verification file
 
 ### Fixed
 - include Google verification file in html_extra_path
-
-## [2.1.1] - 2026-03-11
-
-### Changed
-- docs: add Google Search Console verification file
 
 ## [2.1.0] - 2026-03-11
 
@@ -150,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Free-text notes on annotations
 - Multi-user file assignment with even splitting across annotators
 - Auto-save annotations to per-user Excel files
-- WebGL rendering for performance
+- Canvas rendering with LTTB downsampling for performance
 - Responsive toolbar layout for different screen sizes
 - Sphinx documentation with GitHub Pages CI
 - Live demo hosted on Hugging Face Spaces with auto-deploy
@@ -161,10 +155,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [2.0.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/releases/tag/v2.0.0
 
 [2.1.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.0.0...v2.1.0
-
-[2.1.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.1.0...v2.1.1
-
-[2.1.2]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.1.1...v2.1.2
 
 [2.1.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v2.1.0...v2.1.1
 

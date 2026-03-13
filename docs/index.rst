@@ -12,6 +12,8 @@ data from physical performance assessments.
    usage
    architecture
    slurm-deployment
+   shared-server-startup
+   legacy-pbs-startup
    tests-overview
    api
 

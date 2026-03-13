@@ -17,7 +17,7 @@ Usage:
     python demo/generate_data.py /tmp/out     # custom output directory
 
 Dataset citation:
-    Alharbi, F. (2022). Accelerometer Gyro Mobile Phone Dataset.
+    AlSahly, A. (2022). Accelerometer Gyro Mobile Phone Dataset.
     UCI Machine Learning Repository.
     https://archive.ics.uci.edu/dataset/755/accelerometer+gyro+mobile+phone+dataset
     License: CC BY 4.0

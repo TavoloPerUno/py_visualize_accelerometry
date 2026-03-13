@@ -133,9 +133,9 @@ The Slurm job is configured in `hpc_utils/start_server.sh`:
 
 Slurm resource directives (editable in the script):
 
-- **Time limit** — `--time=7-00:00:00` (7 days)
-- **Memory** — `--mem=4G`
-- **CPUs** — `--cpus-per-task=1`
+- **Time limit** — `--time=36:00:00` (36 hours)
+- **Memory** — `--mem-per-cpu=1500` (1500 MB per CPU)
+- **CPUs** — `--ntasks-per-node=16`
 - **Partition** — not set by default (uses cluster default)
 
 ## Stopping the Server
@@ -155,4 +155,4 @@ removes the status file.
 | Local port already in use | The script auto-increments. To force a specific port: `LOCAL_PORT=8080 bash hpc_utils/connect.sh` |
 | SSH tunnel did not come up | Verify you can SSH to the login node manually. The script prints the manual `ssh -N -L ...` command to try. |
 | Connection refused in browser | The tunnel may have dropped. Re-run `connect.sh`. Confirm the Slurm job is still running. |
-| Blank page after login | Server may be starting up — wait 10–15 seconds. Check `hpc_utils/panel-server-<job_id>.log`. |
+| Blank page after login | Server may be starting up — wait 10–15 seconds. Check `hpc_utils/logs/panel-server-<job_id>.log`. |

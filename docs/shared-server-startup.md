@@ -122,7 +122,7 @@ Then retry the SSH tunnel.
 ## Blank page or connection refused
 
 - The server may still be starting up. Wait 10–15 seconds and refresh.
-- Check the server log: `ssh yourusername@randi.cri.uchicago.edu "cat /path/to/project/hpc_utils/panel-server-<job_id>.log"`
+- Check the server log: `ssh yourusername@randi.cri.uchicago.edu "cat /path/to/project/hpc_utils/logs/panel-server-<job_id>.log"`
 
 ## Job times out waiting to start
 

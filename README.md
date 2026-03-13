@@ -26,7 +26,7 @@ A publicly accessible demo is hosted on Hugging Face Spaces:
 > not contain real participant recordings. Example annotations are
 > pre-populated to showcase labeling, flags, and inter-annotator variability.
 >
-> Alharbi, F. (2022). *Accelerometer Gyro Mobile Phone Dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.3390/s22176513
+> AlSahly, A. (2022). *Accelerometer Gyro Mobile Phone Dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.3390/s22176513
 
 ## Shared Server Deployment (HPC / Slurm)
 
@@ -53,7 +53,7 @@ Researchers collect tri-axial accelerometry signals (x, y, z) during standardize
 
 ## Features
 
-- **LTTB downsampling** — Renders 500K+ data points smoothly by reducing to ~5,000 visually representative points using the Largest Triangle Three Buckets algorithm
+- **LTTB downsampling** — Renders 500K+ data points smoothly by reducing to ~10,000 visually representative points using the Largest Triangle Three Buckets algorithm
 - **Range selector** — Minimap for navigating long recordings without losing context
 - **Box-select annotation** — Select a time range and label it with one click
 - **Segment, scoring, and review flags** — Mark annotations for segmentation, scoring, or review with distinct hatch-pattern overlays
@@ -178,10 +178,10 @@ This project uses [Semantic Versioning](https://semver.org/). The canonical vers
 4. Create and push the tag:
    ```bash
    git tag v<VERSION>
-   git push git v<VERSION>
+   git push origin v<VERSION>
    ```
 5. The `release.yml` GitHub Actions workflow will automatically create a GitHub Release with auto-generated notes from commits since the last tag.
 
 ## License
 
-This project is developed by the [National Social Life, Health, and Aging Project (NSHAP)](https://www.norc.org/research/projects/national-social-life-health-and-aging-project.html) lab at the University of Chicago.
+MIT License. This project is developed by the [National Social Life, Health, and Aging Project (NSHAP)](https://www.norc.org/research/projects/national-social-life-health-and-aging-project.html) lab at the University of Chicago.

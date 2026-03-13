@@ -42,7 +42,7 @@ The plot uses `Range1d` (not `DataRange1d`) for the y-axis. This is because `Dat
 
 ### Canvas rendering (not WebGL)
 
-Despite having 5,000+ points, the app uses the default canvas backend instead of WebGL. This is because:
+Despite having up to 10,000 points per axis, the app uses the default canvas backend instead of WebGL. This is because:
 - WebGL doesn't support hatch patterns (used for segment/scoring/review overlays)
 - WebGL has rendering glitches when updating CDS data in-place
 - With LTTB downsampling, canvas performance is more than adequate
