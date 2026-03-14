@@ -131,7 +131,7 @@ After creating an annotation, you can add flags to provide additional classifica
 | **Scoring** | Scoring selection | Dot pattern | Indicates the segment selected for frailty assessment scoring |
 | **Review** | Review needed | Checkerboard | Flags the annotation for review by another annotator when the signal is difficult to interpret |
 
-**Segment flag.** Many physical performance tests consist of multiple repetitions within a single episode. The segment flag is used to mark each individual repetition. For example, a Chair Stand Test episode may contain five sit-to-stand cycles; each cycle should be marked with its own segment box inside the larger activity annotation. Activities like TUG, which are performed as a single continuous movement, typically have only one segment.
+**Segment flag.** Some activities consist of multiple repetitions within a single episode. The segment flag is used to mark each individual repetition. For example, a Chair Stand Test episode may contain five sit-to-stand cycles; each cycle should be marked with its own segment box inside the larger activity annotation. Activities like TUG, which are performed as a single continuous movement, typically have only one segment.
 
 **Scoring flag.** After segmenting an episode into individual repetitions, the annotator uses their judgement to select the one segment that best represents the activity for frailty assessment scoring. Only one segment per episode should carry the scoring flag. The chosen segment should be the most clearly executed and representative repetition — avoid segments where the participant paused, used their hands for support, or where the signal is ambiguous.
 

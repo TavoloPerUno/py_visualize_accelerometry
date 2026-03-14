@@ -1,9 +1,10 @@
 Accelerometry Annotation Tool
 =============================
 
-A web-based application for annotating accelerometry data from
-physical performance tests, built with `Panel <https://panel.holoviz.org/>`_ and
-`Bokeh <https://bokeh.org/>`_. Developed by the
+A web-based application for visualizing and annotating accelerometry data,
+built with `Panel <https://panel.holoviz.org/>`_ and
+`Bokeh <https://bokeh.org/>`_. The app is sensor-agnostic — it works with any
+tri-axial accelerometry data stored in HDF5 format. Developed by the
 `NSHAP Lab <https://www.norc.org/research/projects/national-social-life-health-and-aging-project.html>`_
 at the University of Chicago.
 
@@ -13,10 +14,9 @@ Key features
 - **LTTB downsampling** — renders 500K+ data points per axis as ~10,000 visually
   representative points using the Largest Triangle Three Buckets algorithm
 - **Box-select annotation** — click and drag on the signal plot to annotate
-  activity episodes (Chair Stand, TUG, 3-Meter Walk, 6-Minute Walk)
+  activity episodes with configurable labels
 - **Segment / Scoring / Review flags** — mark individual repetitions, select the
-  best segment for frailty assessment scoring, and flag ambiguous signals for
-  peer review
+  best segment for scoring, and flag ambiguous signals for peer review
 - **Multi-user collaboration** — deterministic file assignment, per-user
   annotation files, admin impersonation, and role management
 - **Auto-save to Excel** — one-click export to per-user Excel files in

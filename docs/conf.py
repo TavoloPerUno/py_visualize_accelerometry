@@ -92,14 +92,14 @@ html_extra_path = ["_static/robots.txt", "_static/googlef63886eaa754b15d.html"]
 html_meta = {
     "description": (
         "Accelerometry Annotation Tool — an interactive application for "
-        "annotating accelerometer data from physical performance "
-        "tests including chair stand, TUG, and 6-minute walk test in the "
-        "NSHAP aging-research study."
+        "visualizing and annotating tri-axial accelerometer data. "
+        "Supports collaborative labeling of activity segments in large "
+        "time-series recordings."
     ),
     "keywords": (
-        "accelerometry, annotation tool, physical performance tests, "
-        "accelerometer, chair stand, TUG, timed up and go, "
-        "6-minute walk test, NSHAP, aging research, actigraphy"
+        "accelerometry, annotation tool, accelerometer, "
+        "time series, activity recognition, signal visualization, "
+        "NSHAP, aging research, actigraphy"
     ),
 }
 

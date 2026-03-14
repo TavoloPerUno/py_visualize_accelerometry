@@ -7,7 +7,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19023756.svg)](https://doi.org/10.5281/zenodo.19023756)
 
-A web-based application for visualizing and annotating accelerometry data from physical performance assessments. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/), it enables research teams to collaboratively label activity segments in large time-series recordings.
+A web-based application for visualizing and annotating accelerometry data. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/), it enables research teams to collaboratively label activity segments in large time-series recordings. The app is sensor-agnostic — it works with any tri-axial accelerometry data stored in HDF5 format.
 
 ![Full application view](docs/images/demo_full_app.png)
 
@@ -45,12 +45,14 @@ bash hpc_utils/stop_server.sh
 
 ## What it does
 
-Researchers collect tri-axial accelerometry signals (x, y, z) during standardized physical performance tests. This tool lets annotators visually inspect those signals and mark the time boundaries of each test:
+Researchers collect tri-axial accelerometry signals (x, y, z) and need to identify and label activity segments within those recordings. This tool lets annotators visually inspect signals and mark the time boundaries of activities of interest.
 
-- **Chair Stand Test** — Measures lower-extremity strength by timing repeated sit-to-stand cycles from a standard chair. A key indicator of fall risk and functional independence in older adults.
-- **Timed Up and Go (TUG)** — Assesses functional mobility: the participant rises from a chair, walks 3 meters, turns, walks back, and sits down. Taking 12+ seconds indicates increased fall risk (CDC STEADI).
-- **3-Meter Walk Test** — Measures gait speed over a short distance as a proxy for mobility and physical function. Gait speed is widely regarded as "the sixth vital sign" for predicting disability and mortality.
-- **6-Minute Walk Test** — A submaximal endurance test where the participant walks as far as possible in 6 minutes. Used to evaluate aerobic capacity in cardiac and pulmonary research.
+The built-in activity labels are configured for standardized physical performance tests, but the app can load and visualize accelerometry data from any setting:
+
+- **Chair Stand Test** — Repeated sit-to-stand cycles measuring lower-extremity strength
+- **Timed Up and Go (TUG)** — Rise, walk 3 m, turn, walk back, sit — assesses functional mobility
+- **3-Meter Walk Test** — Short-distance gait speed as a proxy for mobility and physical function
+- **6-Minute Walk Test** — Submaximal endurance test for aerobic capacity
 
 ## Features
 

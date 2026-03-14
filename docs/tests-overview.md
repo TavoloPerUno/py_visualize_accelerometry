@@ -1,6 +1,6 @@
 # Physical Performance Tests
 
-This tool is designed for annotating accelerometry recordings of four standardized physical performance tests commonly used in aging and clinical research.
+The app ships with built-in activity labels for four standardized physical performance tests commonly used in aging and clinical research. These labels serve as the default annotation categories, but the app itself is sensor-agnostic and can visualize accelerometry data from any context.
 
 ## Chair Stand Test
 

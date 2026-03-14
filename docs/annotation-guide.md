@@ -2,9 +2,9 @@
 
 ## Overview
 
-Annotations in this tool represent **time boundaries of physical performance test activities** within continuous accelerometry recordings. Each annotation marks when a specific activity (e.g., a Chair Stand Test) began and ended, along with metadata about individual repetitions, scoring selections, and review status.
+Annotations in this tool represent **time boundaries of activities** within continuous accelerometry recordings. Each annotation marks when a specific activity began and ended, along with metadata about individual repetitions, scoring selections, and review status.
 
-The goal is to produce a structured dataset that links raw accelerometry signals to clinically meaningful physical performance events for frailty assessment research.
+The goal is to produce a structured dataset that links raw accelerometry signals to labeled activity segments for downstream analysis. The built-in activity labels are configured for physical performance tests (Chair Stand, TUG, 3-Meter Walk, 6-Minute Walk), but the app can visualize and annotate accelerometry data from any setting.
 
 ## Activity types and colors
 
@@ -27,7 +27,7 @@ After marking an activity episode, annotators use three flags to add structured 
 
 **Visual pattern:** diagonal stripes
 
-The segment flag marks **individual repetitions within an activity episode**. Many physical performance tests consist of multiple discrete movements within a single episode. For example, a Chair Stand Test episode contains five sit-to-stand cycles — each cycle is one segment.
+The segment flag marks **individual repetitions within an activity episode**. Some activities consist of multiple discrete movements within a single episode. For example, a Chair Stand Test episode contains five sit-to-stand cycles — each cycle is one segment.
 
 - **Chair Stand**: mark each sit-to-stand-to-sit cycle as a separate segment (typically 5 segments per episode)
 - **TUG**: usually a single segment covering the entire movement sequence
