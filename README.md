@@ -5,6 +5,7 @@
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://tavoloperuno-accelerometry-viewer-demo.hf.space/)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://tavoloperuno.github.io/py_visualize_accelerometry/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19023756.svg)](https://doi.org/10.5281/zenodo.19023756)
 
 A web-based application for visualizing and annotating accelerometry data from physical performance assessments. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/), it enables research teams to collaboratively label activity segments in large time-series recordings.
 
