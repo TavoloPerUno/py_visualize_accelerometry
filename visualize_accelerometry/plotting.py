@@ -192,13 +192,16 @@ def make_plot(pdf, annotation_cds):
         )
 
     # --- Range selector (minimap) ---
-    # Uses fewer points than the main plot since it's smaller
-    range_data = {"timestamp": None}
-    for col in ["x", "y", "z"]:
-        r_ts, r_vals = _downsample(ts_raw, pdf[col].values, 2000)
-        if range_data["timestamp"] is None:
-            range_data["timestamp"] = r_ts
-        range_data[col] = r_vals
+    # Subsample from the already-downsampled main data (10K → 2K)
+    # instead of re-running LTTB on the full raw signal.
+    n_main = len(ds_data["timestamp"])
+    step = max(1, n_main // 2000)
+    range_data = {
+        "timestamp": ds_data["timestamp"][::step],
+        "x": ds_data["x"][::step],
+        "y": ds_data["y"][::step],
+        "z": ds_data["z"][::step],
+    }
     range_source = ColumnDataSource(data=range_data)
 
     range_fig = figure(

@@ -1064,8 +1064,37 @@ def create_app():
         styles={"display": "flex", "align-items": "center"},
     )
 
+    # Network latency indicator — measures round-trip time via HEAD request
+    latency_html = (
+        "<span id='latency-display' style='font-size:10px;"
+        " font-family:Montserrat,monospace; color:rgba(255,255,255,0.7);"
+        " white-space:nowrap;' title='Network round-trip latency'>-- ms</span>"
+        "<script>"
+        "(function(){"
+        "  function ping(){"
+        "    var s=performance.now();"
+        "    fetch(window.location.pathname,{method:'HEAD',cache:'no-store'})"
+        "    .then(function(){"
+        "      var ms=Math.round(performance.now()-s);"
+        "      var el=document.getElementById('latency-display');"
+        "      if(!el)return;"
+        "      el.textContent=ms+' ms';"
+        "      el.style.color=ms<100?'#7EBEC5':ms<300?'#ffa726':'#ef5350';"
+        "    }).catch(function(){});"
+        "  }"
+        "  ping();"
+        "  setInterval(ping,10000);"
+        "})();"
+        "</script>"
+    )
+    latency_indicator = pn.pane.HTML(
+        latency_html, sizing_mode="fixed", width=55, align="center",
+        margin=(0, 6),
+    )
+
     header_row = pn.Row(
         pn.Spacer(),
+        latency_indicator,
         header_user_label,
         impersonate_select,
         help_link,

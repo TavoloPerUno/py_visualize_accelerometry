@@ -86,13 +86,19 @@ def get_filedata(fname, anchor_timestamp, windowsize):
     start_dt = anchor_dt - half_window
     end_dt = anchor_dt + half_window
 
-    # Read full data and filter in memory — more reliable across
-    # pandas/PyTables versions than where-clause string interpolation
     ts_start = pd.Timestamp(start_dt)
     ts_end = pd.Timestamp(end_dt)
 
-    pdf = pd.read_hdf(file_path, "readings")
-    pdf = pdf.loc[(pdf["timestamp"] >= ts_start) & (pdf["timestamp"] <= ts_end)]
+    try:
+        pdf = pd.read_hdf(
+            file_path,
+            "readings",
+            where="timestamp >= ts_start & timestamp <= ts_end",
+        )
+    except Exception:
+        # Fallback for fixed-format files or incompatible PyTables versions
+        pdf = pd.read_hdf(file_path, "readings")
+        pdf = pdf.loc[(pdf["timestamp"] >= ts_start) & (pdf["timestamp"] <= ts_end)]
 
     return anchor_timestamp, file_start, file_end, pdf
 

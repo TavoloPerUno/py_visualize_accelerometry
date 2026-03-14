@@ -272,7 +272,21 @@ fi
 # The SSH slave process may exit immediately when multiplexed through the
 # ControlMaster, but the port forwarding stays alive through the master.
 # Always poll the port so we don't exit prematurely.
+# Print network latency every 30 seconds.
+PING_INTERVAL=30
+ELAPSED=0
 while is_port_in_use "${LOCAL_PORT}"; do
     sleep 5
+    ELAPSED=$((ELAPSED + 5))
+    if [[ $((ELAPSED % PING_INTERVAL)) -eq 0 ]]; then
+        LATENCY=$(curl -s -o /dev/null -w "%{time_total}" \
+            --max-time 5 "http://localhost:${LOCAL_PORT}/app" 2>/dev/null || echo "timeout")
+        if [[ "${LATENCY}" == "timeout" ]]; then
+            echo "  [$(date +%H:%M:%S)] latency: timeout"
+        else
+            MS=$(echo "${LATENCY}" | awk '{printf "%.0f", $1 * 1000}')
+            echo "  [$(date +%H:%M:%S)] latency: ${MS} ms"
+        fi
+    fi
 done
 echo "Tunnel port ${LOCAL_PORT} is no longer active."
