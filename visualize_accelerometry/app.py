@@ -42,7 +42,6 @@ if _project_root not in sys.path:
 
 import panel as pn
 from bokeh.models.widgets import DataTable, TableColumn
-from bokeh.models import Div
 
 from visualize_accelerometry.callbacks import CallbackManager, build_summary_html
 from visualize_accelerometry import config as _config
@@ -622,8 +621,10 @@ def create_app():
         stylesheets=_row_wrap_css,
     )
 
-    # Tables are still Bokeh DataTables (lightweight, few rows)
+    # Tables use Bokeh layout (bk_row/bk_column) to keep DataTable
+    # styling isolated from the global Panel CSS.
     from bokeh.layouts import column as bk_column, row as bk_row
+    from bokeh.models import Div
 
     _tbl_title_css = (
         "font-size:12px; font-family:Montserrat,sans-serif;"
@@ -1064,31 +1065,12 @@ def create_app():
         styles={"display": "flex", "align-items": "center"},
     )
 
-    # Network latency indicator — measures round-trip time via HEAD request
-    latency_html = (
+    # Network latency indicator — display element only; script injected below
+    latency_indicator = pn.pane.HTML(
         "<span id='latency-display' style='font-size:10px;"
         " font-family:Montserrat,monospace; color:rgba(255,255,255,0.7);"
-        " white-space:nowrap;' title='Network round-trip latency'>-- ms</span>"
-        "<script>"
-        "(function(){"
-        "  function ping(){"
-        "    var s=performance.now();"
-        "    fetch(window.location.pathname,{method:'HEAD',cache:'no-store'})"
-        "    .then(function(){"
-        "      var ms=Math.round(performance.now()-s);"
-        "      var el=document.getElementById('latency-display');"
-        "      if(!el)return;"
-        "      el.textContent=ms+' ms';"
-        "      el.style.color=ms<100?'#7EBEC5':ms<300?'#ffa726':'#ef5350';"
-        "    }).catch(function(){});"
-        "  }"
-        "  ping();"
-        "  setInterval(ping,10000);"
-        "})();"
-        "</script>"
-    )
-    latency_indicator = pn.pane.HTML(
-        latency_html, sizing_mode="fixed", width=55, align="center",
+        " white-space:nowrap;' title='Network round-trip latency'>-- ms</span>",
+        sizing_mode="fixed", width=55, align="center",
         margin=(0, 6),
     )
 
@@ -1163,6 +1145,23 @@ def create_app():
     sidebar_toggle_js = """
     <script>
     (function() {
+        // --- Latency ping ---
+        function pingLatency() {
+            var s = performance.now();
+            fetch(window.location.pathname + '?_ping=' + Date.now(), {
+                cache: 'no-store', credentials: 'same-origin'
+            }).then(function() {
+                var ms = Math.round(performance.now() - s);
+                var el = document.getElementById('latency-display');
+                if (!el) return;
+                el.textContent = ms + ' ms';
+                el.style.color = ms < 100 ? '#7EBEC5' : ms < 300 ? '#ffa726' : '#ef5350';
+            }).catch(function() {});
+        }
+        pingLatency();
+        setInterval(pingLatency, 10000);
+
+        // --- Sidebar toggle ---
         function setup() {
             var sidebar = document.getElementById('sidebar');
             if (!sidebar) { setTimeout(setup, 200); return; }
