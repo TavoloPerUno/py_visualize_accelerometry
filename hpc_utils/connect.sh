@@ -217,8 +217,21 @@ trap cleanup EXIT INT TERM
 echo ""
 echo "Opening SSH tunnel: localhost:${LOCAL_PORT} -> ${NODE}:${PORT} via ${SSH_DEST}..."
 
-ssh "${SSH_OPTS[@]}" -o "ControlMaster=no" -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
+# Note: deliberately NOT using SSH_OPTS here — the tunnel must be a standalone
+# connection so its process stays alive. The ControlMaster only handles the
+# remote command in Step 1. The user will not be prompted again because the
+# ControlMaster socket is still active and SSH discovers it automatically.
+ssh -o "ControlPath=${SSH_CONTROL_PATH}" -o "ControlMaster=no" \
+    -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
 SSH_PID=$!
+
+# Give it a moment — if the process exits immediately, fall back to keeping
+# the script alive as long as the port forwarding is working (the ControlMaster
+# may be managing the tunnel even after the slave process exits).
+sleep 1
+if ! kill -0 "${SSH_PID}" 2>/dev/null; then
+    SSH_PID=""
+fi
 
 # ---------------------------------------------------------------------------
 # Step 6: Verify the tunnel comes up
@@ -256,5 +269,14 @@ elif command -v xdg-open &>/dev/null; then
     xdg-open "${URL}"
 fi
 
-# Keep the script alive until the user kills it
-wait "${SSH_PID}"
+# Keep the script alive until the user presses Ctrl+C
+if [[ -n "${SSH_PID}" ]]; then
+    # Tunnel has its own process — wait for it
+    wait "${SSH_PID}"
+else
+    # Tunnel is managed by the ControlMaster — stay alive while port is forwarded
+    echo "(Tunnel managed by SSH multiplexing — press Ctrl+C to disconnect)"
+    while is_port_in_use "${LOCAL_PORT}"; do
+        sleep 5
+    done
+fi
