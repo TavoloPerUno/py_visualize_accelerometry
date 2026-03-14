@@ -1,0 +1,20 @@
+/* UChicago-branded Furo overrides */
+
+/* Announcement banner */
+.announcement {
+    background-color: #800000 !important;
+    color: #fff !important;
+}
+.announcement a {
+    color: #7EBEC5 !important;
+}
+
+/* Sidebar active link */
+.sidebar-tree .current-page > .reference {
+    font-weight: 700;
+}
+
+/* Code block styling */
+.highlight pre {
+    border-radius: 6px;
+}
