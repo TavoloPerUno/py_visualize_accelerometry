@@ -79,7 +79,7 @@ The color key strip below the toolbar explains what each color and pattern means
 
 - **Signals** — The three accelerometry axes are shown as colored lines: X (maroon), Y (teal), Z (gray)
 - **Activities** — Annotated regions appear as colored overlays: chair stand (cyan), 3m walk (magenta), 6min walk (green), TUG (yellow)
-- **Flags** — Overlay patterns indicate flags: cross hatch (segment), dots (scoring), spiral (review)
+- **Flags** — Overlay patterns indicate flags: diagonal stripes (segment — marks individual repetitions), dots (scoring — the segment selected for frailty scoring), checkerboard (review — flagged for a second opinion)
 
 ### Downsampling and performance
 
@@ -125,11 +125,25 @@ After creating an annotation, you can add flags to provide additional classifica
 
 | Button | Flag | Visual pattern | Purpose |
 |--------|------|---------------|---------|
-| **Segment** | Segment boundary | Diagonal stripes | Marks where an activity segment starts or ends |
-| **Scoring** | Scoring marker | Dot pattern | Indicates the annotation has been scored/evaluated |
-| **Review** | Review needed | Checkerboard | Flags the annotation for review by another annotator or admin |
+| **Segment** | Segment marker | Diagonal stripes | Marks an individual repetition within an activity episode |
+| **Scoring** | Scoring selection | Dot pattern | Indicates the segment selected for frailty assessment scoring |
+| **Review** | Review needed | Checkerboard | Flags the annotation for review by another annotator when the signal is difficult to interpret |
 
-Flags are **toggles** — clicking the same flag button again removes the flag from the selected annotations. Multiple flags can be applied to the same annotation simultaneously (e.g., an annotation can be both "scored" and "flagged for review").
+**Segment flag.** Many physical performance tests consist of multiple repetitions within a single episode. The segment flag is used to mark each individual repetition. For example, a Chair Stand Test episode may contain five sit-to-stand cycles; each cycle should be marked with its own segment box inside the larger activity annotation. Activities like TUG, which are performed as a single continuous movement, typically have only one segment.
+
+**Scoring flag.** After segmenting an episode into individual repetitions, the annotator uses their judgement to select the one segment that best represents the activity for frailty assessment scoring. Only one segment per episode should carry the scoring flag. The chosen segment should be the most clearly executed and representative repetition — avoid segments where the participant paused, used their hands for support, or where the signal is ambiguous.
+
+**Review flag.** When accelerometry signals are noisy, ambiguous, or otherwise difficult to interpret with confidence, the annotator should apply the review flag and add a note explaining the concern. This flags the annotation for a second opinion from another annotator or admin. Common reasons to flag for review include overlapping activities, sensor artifacts, or uncertainty about segment boundaries.
+
+Flags are **toggles** — clicking the same flag button again removes the flag from the selected annotations. Multiple flags can be applied to the same annotation simultaneously (e.g., a segment can be both the scoring selection and flagged for review if the annotator is unsure).
+
+#### Example workflow: annotating a Chair Stand Test
+
+1. **Mark the full episode.** Box-select the entire time range covering all five chair stands and click **Chairstand** to create the activity annotation.
+2. **Segment each repetition.** Zoom in (reduce window size) so individual sit-to-stand cycles are visible. Box-select each cycle and click **Segment**. You should end up with five segment boxes inside the activity overlay.
+3. **Select one segment for scoring.** Identify the cleanest, most representative repetition — for example, the third stand where the participant's movement was smooth and the signal is unambiguous. Select that segment and click **Scoring**.
+4. **Flag anything unclear.** If one of the repetitions has a noisy signal or the participant appears to have paused mid-stand, select that segment, click **Review**, and add a note (e.g., "possible pause at top of stand — unclear if completed"). Another annotator can then revisit this segment.
+5. **Export** when finished.
 
 ### Step 4: Add notes (optional)
 

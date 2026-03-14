@@ -10,6 +10,8 @@ The ability to rise from a seated position is a prerequisite for functional inde
 
 **In accelerometry data**, chair stands produce distinctive periodic spikes in the vertical axis as the participant transitions between sitting and standing.
 
+**Annotation segments.** The Chair Stand Test is the primary example of an activity with multiple segments. Each individual sit-to-stand-to-sit cycle is one segment. A Five Times Sit-to-Stand episode should contain five segment annotations; a 30-Second Chair Stand episode may contain a variable number depending on the participant's ability. The annotator should mark the full episode as a single Chairstand activity, then create a segment box for each repetition within it.
+
 ### References
 
 - Jones, C. J., Rikli, R. E., & Beam, W. C. (1999). A 30-s chair-stand test as a measure of lower body strength in community-residing older adults. *Research Quarterly for Exercise and Sport*, 70(2), 113–119. [doi:10.1080/02701367.1999.10608028](https://doi.org/10.1080/02701367.1999.10608028)
@@ -22,6 +24,8 @@ The TUG test assesses functional mobility, dynamic balance, and fall risk. The p
 Per CDC STEADI guidelines, an older adult who takes 12 seconds or longer to complete the TUG is considered at increased risk for falling.
 
 **In accelerometry data**, TUG shows a sit-to-stand transition, a walking segment with rhythmic gait patterns, a turn (brief deceleration/acceleration), another walking segment, and a stand-to-sit transition.
+
+**Annotation segments.** The TUG is performed as a single continuous movement, so it typically has only one segment covering the entire episode. The segment and scoring flags can both be applied to this single segment.
 
 ### References
 
@@ -37,6 +41,8 @@ It is commonly used when space is limited (e.g., home-based assessments) and ser
 
 **In accelerometry data**, the 3-meter walk produces a short burst of rhythmic tri-axial oscillations corresponding to gait cycles.
 
+**Annotation segments.** The 3-Meter Walk is typically annotated as a single segment covering the full walk. In some protocols the participant may perform multiple trials; in that case, each trial is a separate segment within the activity episode, and the annotator selects the most representative trial for scoring.
+
 ### References
 
 - Studenski, S., Perera, S., Patel, K., et al. (2011). Gait speed and survival in older adults. *JAMA*, 305(1), 50–58. [doi:10.1001/jama.2010.1923](https://doi.org/10.1001/jama.2010.1923)
@@ -50,6 +56,8 @@ The 6-Minute Walk Test is a submaximal exercise test that measures aerobic capac
 It is widely used in clinical and research settings to evaluate patients with cardiac and pulmonary conditions (e.g., heart failure, COPD) and does not require specialized equipment.
 
 **In accelerometry data**, the 6MWT appears as a sustained period (up to 6 minutes) of rhythmic gait-pattern oscillations, often with gradual changes in amplitude or frequency as fatigue sets in.
+
+**Annotation segments.** The 6MWT is generally annotated as a single segment for the entire walk. If the participant takes rest breaks or the protocol involves turn-arounds at corridor ends, annotators may optionally mark start/stop or turn segments, but this is not required. A single segment with the scoring flag is sufficient for most use cases.
 
 ### References
 
