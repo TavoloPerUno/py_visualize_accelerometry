@@ -35,6 +35,21 @@ LOCAL_PORT="${LOCAL_PORT:-7860}"
 STATUS_FILE="hpc_utils/server_info.txt"
 
 # ---------------------------------------------------------------------------
+# SSH connection multiplexing — authenticate once, reuse for all SSH calls
+# ---------------------------------------------------------------------------
+SSH_DEST="${SSH_USER}@${LOGIN_NODE}"
+SSH_CONTROL_DIR=$(mktemp -d)
+SSH_CONTROL_PATH="${SSH_CONTROL_DIR}/ctrl-%r@%h:%p"
+SSH_OPTS=(-o "ControlPath=${SSH_CONTROL_PATH}")
+
+# Open a persistent control connection (user authenticates here — once)
+echo "Authenticating to ${SSH_DEST}..."
+ssh -fNM -o "ControlMaster=yes" -o "ControlPath=${SSH_CONTROL_PATH}" -o "ControlPersist=10m" "${SSH_DEST}"
+
+# Note: cleanup of the control connection is handled by the main cleanup()
+# trap set in Step 4 below.
+
+# ---------------------------------------------------------------------------
 # Helper: check if a local port is in use
 # ---------------------------------------------------------------------------
 is_port_in_use() {
@@ -59,14 +74,13 @@ except OSError:
 # ---------------------------------------------------------------------------
 # Step 1: SSH to login node and check for / start the server
 # ---------------------------------------------------------------------------
-SSH_DEST="${SSH_USER}@${LOGIN_NODE}"
-echo "Connecting to ${SSH_DEST}..."
+echo "Checking for running server on ${SSH_DEST}..."
 
 # Run a remote script that:
 #   - Checks if a panel-server job is already running
 #   - If not, submits one and waits for it to start
 #   - Outputs NODE=... PORT=... JOB_ID=... for us to parse
-REMOTE_OUTPUT=$(ssh "${SSH_DEST}" bash -s <<REMOTE_SCRIPT
+REMOTE_OUTPUT=$(ssh "${SSH_OPTS[@]}" "${SSH_DEST}" bash -s <<REMOTE_SCRIPT
 set -euo pipefail
 
 cd "${REMOTE_DIR}" || { echo "REMOTE_ERROR: Cannot cd to ${REMOTE_DIR}" >&2; exit 1; }
@@ -181,7 +195,7 @@ fi
 echo "  Local port   : ${LOCAL_PORT}"
 
 # ---------------------------------------------------------------------------
-# Step 4: Graceful cleanup on exit
+# Step 4: Graceful cleanup on exit (tunnel + control connection)
 # ---------------------------------------------------------------------------
 SSH_PID=""
 cleanup() {
@@ -191,6 +205,9 @@ cleanup() {
         kill "${SSH_PID}" 2>/dev/null || true
         wait "${SSH_PID}" 2>/dev/null || true
     fi
+    # Close the ControlMaster connection
+    ssh -O exit -o "ControlPath=${SSH_CONTROL_PATH}" "${SSH_DEST}" 2>/dev/null || true
+    rm -rf "${SSH_CONTROL_DIR}"
     echo "Tunnel closed."
 }
 trap cleanup EXIT INT TERM
@@ -201,7 +218,7 @@ trap cleanup EXIT INT TERM
 echo ""
 echo "Opening SSH tunnel: localhost:${LOCAL_PORT} -> ${NODE}:${PORT} via ${SSH_DEST}..."
 
-ssh -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
+ssh "${SSH_OPTS[@]}" -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
 SSH_PID=$!
 
 # ---------------------------------------------------------------------------
