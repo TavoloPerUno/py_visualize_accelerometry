@@ -86,17 +86,13 @@ def get_filedata(fname, anchor_timestamp, windowsize):
     start_dt = anchor_dt - half_window
     end_dt = anchor_dt + half_window
 
-    # Use ISO format for HDF5 where-clause — TIME_FMT may not be parseable
-    # by PyTables/pandas Timestamp() in all versions
-    start_iso = start_dt.strftime("%Y-%m-%d %H:%M:%S")
-    end_iso = end_dt.strftime("%Y-%m-%d %H:%M:%S")
+    # Read full data and filter in memory — more reliable across
+    # pandas/PyTables versions than where-clause string interpolation
+    ts_start = pd.Timestamp(start_dt)
+    ts_end = pd.Timestamp(end_dt)
 
-    # HDF5 where-clause pushes filtering to the storage layer for speed
-    pdf = pd.read_hdf(
-        file_path,
-        "readings",
-        where=f"(timestamp >= '{start_iso}') & (timestamp <= '{end_iso}')",
-    )
+    pdf = pd.read_hdf(file_path, "readings")
+    pdf = pdf.loc[(pdf["timestamp"] >= ts_start) & (pdf["timestamp"] <= ts_end)]
 
     return anchor_timestamp, file_start, file_end, pdf
 
