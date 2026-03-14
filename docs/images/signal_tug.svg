@@ -31,11 +31,17 @@
   <text x="380" y="38" class="phase-label">Turn</text>
   <text x="470" y="38" class="phase-label">Walk back</text>
   <text x="610" y="38" class="phase-label">Sit</text>
-  <!-- Signal paths -->
+  <!-- Signal traces -->
   <g clip-path="url(#plotArea)">
-    <path id="pathX" fill="none" stroke="#800000" stroke-width="1.2" opacity="0.85"/>
-    <path id="pathY" fill="none" stroke="#7EBEC5" stroke-width="1.2" opacity="0.85"/>
-    <path id="pathZ" fill="none" stroke="#58595b" stroke-width="1.2" opacity="0.85"/>
+    <!-- X axis signal (maroon) -->
+    <polyline fill="none" stroke="#800000" stroke-width="1.2" opacity="0.85" stroke-linejoin="round"
+      points="50,134 57,136 65,136 72,134 79,137 86,135 94,135 101,135 108,136 115,134 123,135 130,134 137,137 145,133 152,147 159,136 166,200 174,80 181,93 188,118 195,196 203,165 210,124 217,135 225,110 232,150 239,171 246,95 254,129 261,167 268,113 275,126 283,161 290,133 297,104 305,140 312,163 319,102 326,144 334,173 341,101 348,125 355,162 363,122 370,127 377,137 385,146 392,135 399,144 406,120 414,121 421,143 428,132 435,117 443,115 450,150 457,143 465,109 472,144 479,172 486,95 494,132 501,169 508,107 515,131 523,161 530,132 537,105 545,145 552,160 559,100 566,144 574,176 581,133 588,115 595,165 603,158 610,157 617,50 625,125 632,158 639,136 646,145 654,137 661,137 668,137 675,133 683,137 690,135 697,135 705,133 712,137 719,136 726,134 734,137 741,136 748,137 755,133 763,136 770,135"/>
+    <!-- Y axis signal (teal) -->
+    <polyline fill="none" stroke="#7EBEC5" stroke-width="1.2" opacity="0.85" stroke-linejoin="round"
+      points="50,134 57,137 65,133 72,134 79,136 86,135 94,137 101,136 108,134 115,134 123,136 130,134 137,136 145,135 152,140 159,145 166,90 174,136 181,136 188,150 195,170 203,112 210,123 217,134 225,147 232,145 239,118 246,136 254,153 261,133 268,117 275,151 283,136 290,110 297,152 305,147 312,115 319,137 326,143 334,127 341,121 348,156 355,141 363,132 370,144 377,136 385,141 392,132 399,123 406,142 414,133 421,142 428,137 435,114 443,154 450,146 457,110 465,149 472,144 479,114 486,137 494,154 501,133 508,116 515,152 523,140 530,108 537,152 545,146 552,118 559,141 566,147 574,125 581,135 588,161 595,130 603,127 610,115 617,121 625,169 632,153 639,141 646,125 654,134 661,133 668,135 675,137 683,134 690,134 697,133 705,137 712,137 719,134 726,136 734,137 741,137 748,134 755,135 763,133 770,134"/>
+    <!-- Z axis signal (gray) -->
+    <polyline fill="none" stroke="#58595b" stroke-width="1.2" opacity="0.85" stroke-linejoin="round"
+      points="50,136 57,136 65,136 72,136 79,134 86,136 94,136 101,136 108,133 115,135 123,136 130,135 137,134 145,136 152,134 159,105 166,115 174,179 181,179 188,136 195,63 203,136 210,133 217,137 225,163 232,123 239,122 246,176 254,122 261,107 268,161 275,137 283,118 290,149 297,155 305,113 312,114 319,171 326,125 334,112 341,174 348,127 355,104 363,136 370,139 377,141 385,115 392,137 399,135 406,145 414,138 421,137 428,121 435,159 443,139 450,109 457,133 465,158 472,124 479,118 486,173 494,121 501,105 508,164 515,137 523,118 530,145 537,155 545,112 552,115 559,169 566,123 574,117 581,142 588,132 595,112 603,87 610,152 617,214 625,113 632,141 639,110 646,132 654,136 661,134 668,136 675,133 683,136 690,136 697,137 705,135 712,135 719,134 726,133 734,137 741,135 748,134 755,136 763,133 770,136"/>
   </g>
   <!-- Time axis -->
   <line x1="50" y1="250" x2="770" y2="250" stroke="#999" stroke-width="0.5"/>
@@ -53,105 +59,4 @@
   <line x1="482" y1="250" x2="482" y2="254" stroke="#999"/>
   <line x1="626" y1="250" x2="626" y2="254" stroke="#999"/>
   <line x1="770" y1="250" x2="770" y2="254" stroke="#999"/>
-  <script type="text/javascript"><![CDATA[
-    var seed = 77;
-    function rand() { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; }
-    function noise() { return (rand() - 0.5) * 2; }
-
-    var W = 720, H = 230, OX = 50, OY = 20;
-    var midY = OY + H / 2;
-    var totalTime = 15;
-    var samplesPerSec = 50;
-    var totalSamples = totalTime * samplesPerSec;
-
-    // TUG phases:
-    // 0-2s: rest
-    // 2-3.5s: stand up (burst)
-    // 3.5-6.5s: walking to marker (~1.8Hz rhythmic)
-    // 6.5-8.0s: turn (irregular)
-    // 8.0-11.0s: walking back (~1.8Hz)
-    // 11.0-12.5s: sit down (burst)
-    // 12.5-15s: rest
-
-    function getPhase(t) {
-      if (t < 2.0) return {type: 'rest', env: 0};
-      if (t < 3.5) {
-        var f = (t - 2.0) / 1.5;
-        var env = f < 0.5 ? Math.sin(f * Math.PI) * 1.2 : Math.sin(f * Math.PI) * 0.8;
-        return {type: 'stand', env: Math.min(env, 1.0)};
-      }
-      if (t < 6.5) {
-        var f = (t - 3.5) / 3.0;
-        // Ramp up at start
-        var ramp = Math.min(f * 4, 1.0);
-        return {type: 'walk', env: 0.7 * ramp};
-      }
-      if (t < 8.0) {
-        return {type: 'turn', env: 0.4};
-      }
-      if (t < 11.0) {
-        var f = (t - 8.0) / 3.0;
-        var ramp = Math.min((1 - f) * 4, 1.0) * Math.min(f * 4, 1.0);
-        return {type: 'walk', env: 0.7 * Math.max(ramp, 0.3)};
-      }
-      if (t < 12.5) {
-        var f = (t - 11.0) / 1.5;
-        var env = Math.sin(f * Math.PI) * 1.0;
-        return {type: 'sit', env: Math.min(env, 1.0)};
-      }
-      return {type: 'rest', env: 0};
-    }
-
-    function genSignal(ampScale, freqWalk, phaseOff, noiseBase) {
-      var pts = [];
-      for (var i = 0; i < totalSamples; i++) {
-        var t = i / samplesPerSec;
-        var ph = getPhase(t);
-        var val = 0;
-
-        if (ph.type === 'rest') {
-          val = 0.015 * Math.sin(2 * Math.PI * 0.1 * t + phaseOff) + noise() * 0.008;
-        } else if (ph.type === 'stand' || ph.type === 'sit') {
-          val = ph.env * ampScale * 0.35 * (
-            Math.sin(2 * Math.PI * 1.2 * t + phaseOff) * 0.5 +
-            Math.sin(2 * Math.PI * 2.8 * t + phaseOff * 1.3) * 0.3 +
-            Math.sin(2 * Math.PI * 4.5 * t + phaseOff * 0.7) * 0.2
-          ) + noise() * noiseBase * 2 * ph.env;
-        } else if (ph.type === 'walk') {
-          val = ph.env * ampScale * 0.25 * (
-            Math.sin(2 * Math.PI * freqWalk * t + phaseOff) * 0.7 +
-            Math.sin(2 * Math.PI * freqWalk * 2 * t + phaseOff * 0.8) * 0.2 +
-            Math.sin(2 * Math.PI * freqWalk * 0.5 * t + phaseOff * 1.5) * 0.1
-          ) + noise() * noiseBase * 0.8 * ph.env;
-        } else if (ph.type === 'turn') {
-          val = ph.env * ampScale * 0.18 * (
-            Math.sin(2 * Math.PI * 1.1 * t + phaseOff) * 0.4 +
-            Math.sin(2 * Math.PI * 2.3 * t + phaseOff * 2.1) * 0.3 +
-            Math.sin(2 * Math.PI * 3.7 * t + phaseOff * 0.6) * 0.3
-          ) + noise() * noiseBase * 1.5 * ph.env;
-        }
-        pts.push(val);
-      }
-      return pts;
-    }
-
-    var xSig = genSignal(1.0, 1.8, 0, 0.02);
-    var ySig = genSignal(0.6, 1.8, 1.8, 0.015);
-    var zSig = genSignal(0.9, 1.8, 3.5, 0.018);
-
-    function toPath(sig) {
-      var maxAmp = 0.4;
-      var d = "";
-      for (var i = 0; i < sig.length; i++) {
-        var x = OX + (i / totalSamples) * W;
-        var y = midY - (sig[i] / maxAmp) * (H / 2 - 10);
-        d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
-      }
-      return d;
-    }
-
-    document.getElementById("pathX").setAttribute("d", toPath(xSig));
-    document.getElementById("pathY").setAttribute("d", toPath(ySig));
-    document.getElementById("pathZ").setAttribute("d", toPath(zSig));
-  ]]></script>
 </svg>

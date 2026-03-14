@@ -92,13 +92,13 @@ html_extra_path = ["_static/robots.txt", "_static/googlef63886eaa754b15d.html"]
 html_meta = {
     "description": (
         "Accelerometry Annotation Tool — an interactive application for "
-        "annotating wrist-worn accelerometer data from physical performance "
+        "annotating accelerometer data from physical performance "
         "tests including chair stand, TUG, and 6-minute walk test in the "
         "NSHAP aging-research study."
     ),
     "keywords": (
         "accelerometry, annotation tool, physical performance tests, "
-        "wrist-worn accelerometer, chair stand, TUG, timed up and go, "
+        "accelerometer, chair stand, TUG, timed up and go, "
         "6-minute walk test, NSHAP, aging research, actigraphy"
     ),
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Annotations in this tool represent **time boundaries of physical performance test activities** within continuous wrist-worn accelerometry recordings. Each annotation marks when a specific activity (e.g., a Chair Stand Test) began and ended, along with metadata about individual repetitions, scoring selections, and review status.
+Annotations in this tool represent **time boundaries of physical performance test activities** within continuous accelerometry recordings. Each annotation marks when a specific activity (e.g., a Chair Stand Test) began and ended, along with metadata about individual repetitions, scoring selections, and review status.
 
 The goal is to produce a structured dataset that links raw accelerometry signals to clinically meaningful physical performance events for frailty assessment research.
 

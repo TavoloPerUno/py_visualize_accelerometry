@@ -24,11 +24,17 @@
   <text x="583" y="16" class="legend-text" fill="#58595b">Z</text>
   <!-- Annotation overlay: activity region -->
   <rect x="170" y="20" width="480" height="230" fill="cyan" opacity="0.2"/>
-  <!-- Generate signals via script-computed paths -->
+  <!-- Signal traces -->
   <g clip-path="url(#plotArea)">
-    <path id="pathX" fill="none" stroke="#800000" stroke-width="1.2" opacity="0.85"/>
-    <path id="pathY" fill="none" stroke="#7EBEC5" stroke-width="1.2" opacity="0.85"/>
-    <path id="pathZ" fill="none" stroke="#58595b" stroke-width="1.2" opacity="0.85"/>
+    <!-- X axis signal (maroon) -->
+    <polyline fill="none" stroke="#800000" stroke-width="1.2" opacity="0.85" stroke-linejoin="round"
+      points="50,134 57,137 65,136 72,136 79,134 86,134 94,134 101,137 108,135 115,137 123,136 130,135 137,137 145,136 152,134 159,134 166,167 174,102 181,141 188,177 195,92 203,125 210,138 217,136 225,133 232,136 239,137 246,137 254,135 261,179 268,102 275,129 283,143 290,122 297,129 305,135 312,134 319,135 326,134 334,135 341,125 348,146 355,180 363,126 370,117 377,131 385,148 392,135 399,134 406,136 414,135 421,136 428,135 435,122 443,141 450,157 457,151 465,90 472,130 479,145 486,133 494,134 501,135 508,134 515,134 523,140 530,147 537,133 545,140 552,167 559,93 566,132 574,134 581,136 588,134 595,135 603,133 610,135 617,136 625,136 632,135 639,136 646,135 654,134 661,135 668,136 675,133 683,135 690,137 697,137 705,136 712,135 719,134 726,135 734,137 741,135 748,133 755,135 763,133 770,134"/>
+    <!-- Y axis signal (teal) -->
+    <polyline fill="none" stroke="#7EBEC5" stroke-width="1.2" opacity="0.85" stroke-linejoin="round"
+      points="50,136 57,134 65,136 72,135 79,135 86,134 94,135 101,135 108,136 115,135 123,135 130,134 137,135 145,134 152,135 159,136 166,132 174,132 181,139 188,141 195,114 203,140 210,138 217,135 225,135 232,135 239,135 246,136 254,141 261,139 268,117 275,138 283,142 290,117 297,140 305,134 312,135 319,134 326,134 334,136 341,134 348,141 355,146 363,107 370,137 377,145 385,127 392,135 399,134 406,136 414,135 421,135 428,135 435,129 443,141 450,150 457,105 465,139 472,142 479,133 486,134 494,136 501,134 508,135 515,136 523,142 530,124 537,143 545,148 552,107 559,140 566,139 574,135 581,136 588,136 595,134 603,134 610,136 617,134 625,134 632,134 639,134 646,135 654,134 661,135 668,134 675,134 683,134 690,134 697,135 705,134 712,136 719,136 726,134 734,135 741,134 748,135 755,136 763,135 770,134"/>
+    <!-- Z axis signal (gray) -->
+    <polyline fill="none" stroke="#58595b" stroke-width="1.2" opacity="0.85" stroke-linejoin="round"
+      points="50,135 57,135 65,134 72,136 79,136 86,137 94,136 101,137 108,136 115,135 123,133 130,134 137,135 145,135 152,134 159,137 166,116 174,156 181,138 188,78 195,170 203,152 210,133 217,136 225,135 232,133 239,137 246,135 254,146 261,91 268,160 275,140 283,106 290,153 297,142 305,134 312,135 319,137 326,134 334,134 341,144 348,148 355,84 363,141 370,141 377,134 385,135 392,135 399,134 406,134 414,136 421,134 428,135 435,154 443,144 450,102 457,127 465,151 472,148 479,129 486,133 494,135 501,136 508,136 515,136 523,128 530,141 537,141 545,123 552,108 559,162 566,147 574,136 581,135 588,134 595,135 603,136 610,135 617,136 625,137 632,136 639,134 646,135 654,136 661,134 668,134 675,136 683,133 690,136 697,136 705,135 712,134 719,135 726,135 734,135 741,136 748,136 755,135 763,135 770,134"/>
   </g>
   <!-- Time axis -->
   <line x1="50" y1="250" x2="770" y2="250" stroke="#999" stroke-width="0.5"/>
@@ -44,79 +50,4 @@
   <line x1="410" y1="250" x2="410" y2="254" stroke="#999"/>
   <line x1="590" y1="250" x2="590" y2="254" stroke="#999"/>
   <line x1="770" y1="250" x2="770" y2="254" stroke="#999"/>
-  <script type="text/javascript"><![CDATA[
-    // Seeded pseudo-random for reproducibility
-    var seed = 42;
-    function rand() { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; }
-    function noise() { return (rand() - 0.5) * 2; }
-
-    var W = 720, H = 230, OX = 50, OY = 20;
-    var midY = OY + H / 2;
-    var totalTime = 20; // seconds
-    var samplesPerSec = 50;
-    var totalSamples = totalTime * samplesPerSec;
-
-    // Chair stand: 5 bursts between ~3s and ~17s
-    // Each burst ~2s with ~1s gap
-    // burst centers at: 4.5, 7.5, 10.5, 13.0, 15.5
-    var bursts = [
-      {start: 3.0, end: 5.0},
-      {start: 6.0, end: 8.0},
-      {start: 9.0, end: 11.0},
-      {start: 12.0, end: 13.8},
-      {start: 14.8, end: 16.8}
-    ];
-
-    function inBurst(t) {
-      for (var i = 0; i < bursts.length; i++) {
-        var b = bursts[i];
-        if (t >= b.start && t <= b.end) {
-          // envelope: ramp up and down
-          var dur = b.end - b.start;
-          var frac = (t - b.start) / dur;
-          var env = Math.sin(frac * Math.PI);
-          return env;
-        }
-      }
-      return 0;
-    }
-
-    function genSignal(ampRest, ampBurst, freqRest, freqBurst, phaseOff, noiseScale) {
-      var pts = [];
-      for (var i = 0; i < totalSamples; i++) {
-        var t = i / samplesPerSec;
-        var env = inBurst(t);
-        var restSig = ampRest * Math.sin(2 * Math.PI * freqRest * t + phaseOff);
-        var burstSig = ampBurst * (
-          Math.sin(2 * Math.PI * freqBurst * t + phaseOff) * 0.6 +
-          Math.sin(2 * Math.PI * freqBurst * 1.7 * t + phaseOff * 0.5) * 0.25 +
-          Math.sin(2 * Math.PI * freqBurst * 3.1 * t + phaseOff * 1.3) * 0.15
-        );
-        var val = restSig * (1 - env) + burstSig * env + noise() * noiseScale * (0.3 + env * 0.7);
-        // Add sharp peak at transitions
-        if (env > 0.1 && env < 0.4) val += ampBurst * 0.3 * Math.sin(2 * Math.PI * 2.5 * t);
-        pts.push(val);
-      }
-      return pts;
-    }
-
-    var xSig = genSignal(0.02, 0.30, 0.1, 0.7, 0, 0.025);
-    var ySig = genSignal(0.015, 0.12, 0.12, 0.5, 1.5, 0.018);
-    var zSig = genSignal(0.02, 0.28, 0.08, 0.8, 3.0, 0.022);
-
-    function toPath(sig) {
-      var maxAmp = 0.45;
-      var d = "";
-      for (var i = 0; i < sig.length; i++) {
-        var x = OX + (i / totalSamples) * W;
-        var y = midY - (sig[i] / maxAmp) * (H / 2 - 10);
-        d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
-      }
-      return d;
-    }
-
-    document.getElementById("pathX").setAttribute("d", toPath(xSig));
-    document.getElementById("pathY").setAttribute("d", toPath(ySig));
-    document.getElementById("pathZ").setAttribute("d", toPath(zSig));
-  ]]></script>
 </svg>

@@ -1,7 +1,7 @@
 Accelerometry Annotation Tool
 =============================
 
-A web-based application for annotating wrist-worn accelerometry data from
+A web-based application for annotating accelerometry data from
 physical performance tests, built with `Panel <https://panel.holoviz.org/>`_ and
 `Bokeh <https://bokeh.org/>`_. Developed by the
 `NSHAP Lab <https://www.norc.org/research/projects/national-social-life-health-and-aging-project.html>`_

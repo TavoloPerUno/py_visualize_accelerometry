@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "accelerometry-annotator"
 dynamic = ["version"]
-description = "Web-based tool for visualizing and annotating wrist-worn accelerometry data from physical performance assessments."
+description = "Web-based tool for visualizing and annotating accelerometry data from physical performance assessments."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
