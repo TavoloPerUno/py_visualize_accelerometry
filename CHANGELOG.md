@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.22] - 2026-03-14
+
+### Changed
+- perf: speed up data loading, add latency monitoring
+
 ## [3.3.21] - 2026-03-14
 
 ### Changed
@@ -325,3 +330,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [3.3.20]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.19...v3.3.20
 
 [3.3.21]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.20...v3.3.21
+
+[3.3.22]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.21...v3.3.22
