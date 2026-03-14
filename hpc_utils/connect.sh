@@ -217,7 +217,7 @@ trap cleanup EXIT INT TERM
 echo ""
 echo "Opening SSH tunnel: localhost:${LOCAL_PORT} -> ${NODE}:${PORT} via ${SSH_DEST}..."
 
-ssh "${SSH_OPTS[@]}" -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
+ssh "${SSH_OPTS[@]}" -o "ControlMaster=no" -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
 SSH_PID=$!
 
 # ---------------------------------------------------------------------------
