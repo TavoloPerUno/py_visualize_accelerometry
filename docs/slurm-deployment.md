@@ -95,7 +95,7 @@ bash hpc_utils/connect.sh
 The script will:
 
 1. SSH into the login node
-2. Check if a `panel-server` job is already running
+2. Check if a `py_accel_viewer` job is already running
 3. If not, submit one via `sbatch` and wait for it to start
 4. Retrieve the compute node and port from `server_info.txt`
 5. Find a free local port

@@ -2,11 +2,21 @@
 
 ## Prerequisites
 
-- Python 3.9+
+- **Python 3.9 or newer** (3.12 recommended)
 - Conda (recommended) or pip
 - HDF5 accelerometry files
 
 ## Installation
+
+### From PyPI
+
+The package is published on PyPI as **`accelerometry-annotator`**:
+
+```bash
+pip install accelerometry-annotator
+```
+
+### From source
 
 ```bash
 # Clone the repository
