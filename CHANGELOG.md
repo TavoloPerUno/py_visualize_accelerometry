@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.15] - 2026-03-14
+
+### Fixed
+- use in-memory timestamp filter instead of HDF5 where clause for cross-version compatibility
+
 ## [3.3.14] - 2026-03-14
 
 ### Changed
@@ -276,3 +281,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [3.3.13]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.12...v3.3.13
 
 [3.3.14]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.13...v3.3.14
+
+[3.3.15]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.14...v3.3.15
