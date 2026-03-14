@@ -160,7 +160,7 @@ class TestAnnotations:
         assert result["segment"].isna().sum() == 0
         assert result["scoring"].isna().sum() == 0
         assert result["review"].isna().sum() == 0
-        assert result["notes"].dtype == object
+        assert pd.api.types.is_string_dtype(result["notes"])
 
     def test_cleanup_adds_notes_column(self):
         pdf = pd.DataFrame({
