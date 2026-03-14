@@ -43,7 +43,7 @@ SSH_OPTS=(-o "ControlPath=${SSH_CONTROL_PATH}")
 
 # Open a persistent control connection (user authenticates here — once)
 echo "Authenticating to ${SSH_DEST}..."
-ssh -fNM -o "ControlMaster=yes" -o "ControlPath=${SSH_CONTROL_PATH}" -o "ControlPersist=10m" "${SSH_DEST}"
+ssh -fNM -o "ControlMaster=yes" -o "ControlPath=${SSH_CONTROL_PATH}" -o "ControlPersist=12h" "${SSH_DEST}"
 
 # Note: cleanup of the control connection is handled by the main cleanup()
 # trap set in Step 4 below.
@@ -217,11 +217,10 @@ trap cleanup EXIT INT TERM
 echo ""
 echo "Opening SSH tunnel: localhost:${LOCAL_PORT} -> ${NODE}:${PORT} via ${SSH_DEST}..."
 
-# Note: deliberately NOT using SSH_OPTS here — the tunnel must be a standalone
-# connection so its process stays alive. The ControlMaster only handles the
-# remote command in Step 1. The user will not be prompted again because the
-# ControlMaster socket is still active and SSH discovers it automatically.
+# Use the existing ControlMaster for auth (no re-prompt) but keep the tunnel
+# alive independently with ServerAliveInterval.
 ssh -o "ControlPath=${SSH_CONTROL_PATH}" -o "ControlMaster=no" \
+    -o "ServerAliveInterval=60" -o "ExitOnForwardFailure=yes" \
     -N -L "${LOCAL_PORT}:${NODE}:${PORT}" "${SSH_DEST}" &
 SSH_PID=$!
 
@@ -269,14 +268,11 @@ elif command -v xdg-open &>/dev/null; then
     xdg-open "${URL}"
 fi
 
-# Keep the script alive until the user presses Ctrl+C
-if [[ -n "${SSH_PID}" ]]; then
-    # Tunnel has its own process — wait for it
-    wait "${SSH_PID}"
-else
-    # Tunnel is managed by the ControlMaster — stay alive while port is forwarded
-    echo "(Tunnel managed by SSH multiplexing — press Ctrl+C to disconnect)"
-    while is_port_in_use "${LOCAL_PORT}"; do
-        sleep 5
-    done
-fi
+# Keep the script alive until Ctrl+C or the tunnel drops.
+# The SSH slave process may exit immediately when multiplexed through the
+# ControlMaster, but the port forwarding stays alive through the master.
+# Always poll the port so we don't exit prematurely.
+while is_port_in_use "${LOCAL_PORT}"; do
+    sleep 5
+done
+echo "Tunnel port ${LOCAL_PORT} is no longer active."
