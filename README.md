@@ -156,7 +156,7 @@ Full documentation is available at [https://tavoloperuno.github.io/py_visualize_
 To build documentation locally:
 
 ```bash
-pip install sphinx sphinx-rtd-theme myst-parser
+pip install sphinx furo sphinx-copybutton myst-parser
 cd docs
 make html
 open _build/html/index.html
