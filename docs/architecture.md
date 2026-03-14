@@ -36,6 +36,14 @@ Raw accelerometry files can contain 500K+ data points per axis. Sending all of t
 
 Bokeh's `BoxSelectTool` selects data indices from point-based glyphs (scatter, circle) but not from line glyphs. To enable time-range selection on signal lines, invisible scatter points (size=0, alpha=0) are rendered on top of the lines. The `selected.on_change("indices", ...)` callback converts selected indices to timestamps.
 
+### HDF5 server-side filtering
+
+Data loading uses PyTables `where` clauses (`pd.read_hdf(..., where="timestamp >= ts_start & timestamp <= ts_end")`) to read only the time window needed, instead of loading the entire file into memory and filtering in Python. This reduces load times from seconds to milliseconds on large files (e.g., 14 ms vs 1.38 s on a 123 MB file). A fallback to in-memory filtering is included for fixed-format HDF5 files.
+
+### Fast-path navigation
+
+When the user navigates with Previous/Next, the app updates the existing Bokeh `ColumnDataSource.data` and adjusts axis ranges in place, rather than rebuilding the entire figure. Bokeh sends this as a lightweight websocket data-patch. Annotation quad bounds (`top`/`bottom`) are also updated dynamically to match the new y-range. A full figure rebuild is only needed on the initial load.
+
 ### Explicit y-range
 
 The plot uses `Range1d` (not `DataRange1d`) for the y-axis. This is because `DataRange1d` auto-expands to include all renderers — including annotation quad overlays — which would squash the signal to a thin line. The y-range is computed from the actual signal data with 5% padding.
@@ -49,14 +57,19 @@ Despite having up to 10,000 points per axis, the app uses the default canvas bac
 
 ## Data flow
 
+### Network latency indicator
+
+The header includes a network latency indicator that pings `/favicon.ico` every 10 seconds and displays the round-trip time. Because Panel's `pn.pane.HTML` renders inside Shadow DOM using `innerHTML` (which doesn't execute `<script>` tags), the ping JavaScript is injected via a Bokeh `Div` model with a `CustomJS` callback on the `DocumentReady` event.
+
 ### Signal loading
 ```
 File picker change
   → CallbackManager.plot_new_file()
     → AppState.load_file_data()
       → data_loading.get_filedata() — reads HDF5 with time-window query
-    → CallbackManager._refresh_plot()
-      → plotting.make_plot() — LTTB downsample + create Bokeh figures
+    → CallbackManager.update_plot()
+      → Fast path: plotting.update_plot_data() — update CDS + ranges in place
+      → Full rebuild: plotting.make_plot() — LTTB downsample + create Bokeh figures
 ```
 
 ### Annotation lifecycle

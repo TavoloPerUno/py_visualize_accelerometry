@@ -234,8 +234,13 @@ class CallbackManager:
         import panel as pn
         getattr(pn.state.notifications, kind)(msg, duration=duration)
 
-    def update_plot(self):
-        """Load data for the current file/anchor and rebuild the plot.
+    def update_plot(self, force_rebuild=False, _empty_depth=0):
+        """Load data for the current file/anchor and update the plot.
+
+        When an existing plot exists and *force_rebuild* is False, only
+        the CDS data and axis ranges are patched (much faster than a
+        full figure rebuild).  Falls back to a full rebuild when no
+        existing plot is available or when the fast path fails.
 
         If the file is empty or unreadable, shows a notification and
         advances to the next file in the dropdown.
@@ -257,20 +262,46 @@ class CallbackManager:
             print(f"Error loading file {self.state.fname}: {ex}")
 
         if pdf is None or len(pdf) == 0:
-            self._handle_empty_file()
+            self._handle_empty_file(_depth=_empty_depth)
             return
 
+        # Fast path: update existing CDS + ranges without rebuilding
+        if (
+            not force_rebuild
+            and self.state.signal_cds is not None
+            and self.w.get("main_fig") is not None
+        ):
+            from .plotting import update_plot_data
+            updated = update_plot_data(
+                pdf,
+                self.state.signal_cds,
+                self.w["main_fig"],
+                range_source=self.w.get("range_source"),
+            )
+            if updated:
+                self.state.selection_bounds = None
+                self.update_annotations()
+                self._update_nav_buttons()
+                return
+
+        # Full rebuild (first load or fast path failed)
         self._refresh_plot(pdf)
         self.state.selection_bounds = None
         self.update_annotations()
         self._update_nav_buttons()
 
-    def _handle_empty_file(self):
-        """Show a notification and skip to the next file when data is empty."""
-        import panel as pn
+    def _handle_empty_file(self, _depth=0):
+        """Show a notification and skip to the next non-empty file.
+
+        Uses a depth counter to prevent unbounded recursion when
+        consecutive files are all empty.
+        """
+        if _depth >= len(self.state.lst_fnames):
+            self._notify("All files are empty or unreadable.", duration=5000)
+            return
 
         basename = os.path.basename(self.state.fname)
-        pn.state.notifications.warning(
+        self._notify(
             f"File '{basename}' is empty or could not be loaded. Skipping to next file.",
             duration=5000,
         )
@@ -280,7 +311,8 @@ class CallbackManager:
         # Find which entries match this file (ignoring user prefix)
         current_idx = None
         for i, fn in enumerate(current_fnames):
-            if fn.split("--")[1] == os.path.splitext(current_basename)[0]:
+            parts = fn.split("--", 1)
+            if len(parts) == 2 and parts[1] == os.path.splitext(current_basename)[0]:
                 current_idx = i
                 break
 
@@ -292,7 +324,7 @@ class CallbackManager:
         else:
             return
 
-        self.plot_new_file(next_fname)
+        self.plot_new_file(next_fname, _empty_depth=_depth + 1)
 
     def _refresh_plot(self, pdf):
         """Rebuild Bokeh figures with new signal data.
@@ -302,7 +334,7 @@ class CallbackManager:
         Re-wires the box-select callback on the new signal CDS.
         """
         from .plotting import make_plot
-        main_pane, range_pane, main_fig, signal_cds = make_plot(
+        main_pane, range_pane, main_fig, signal_cds, range_source = make_plot(
             pdf, self.state.annotation_cds
         )
         # Swap panes by index in the stable parent Column
@@ -312,6 +344,7 @@ class CallbackManager:
         self.w["main_plot"] = main_pane
         self.w["range_plot"] = range_pane
         self.w["main_fig"] = main_fig
+        self.w["range_source"] = range_source
         self.state.signal_cds = signal_cds
         # Re-attach the selection callback to the new CDS
         if self.w.get("_selection_wire_fn"):
@@ -465,7 +498,7 @@ class CallbackManager:
         selected = s.pdf_annotations.loc[mask].reset_index(drop=True)
         s.pdf_annotations = s.pdf_annotations.loc[~mask]
         selected = selected.assign(notes=notes_text)
-        s.pdf_annotations = pd.concat([s.pdf_annotations, selected])
+        s.pdf_annotations = pd.concat([s.pdf_annotations, selected], ignore_index=True)
         self.w["notes_input"].value = ""
         self.update_annotations()
 
@@ -483,8 +516,8 @@ class CallbackManager:
     # Navigation
     # ------------------------------------------------------------------
 
-    def plot_new_file(self, fname_with_user):
-        """Switch to a different file and rebuild the plot.
+    def plot_new_file(self, fname_with_user, _empty_depth=0):
+        """Switch to a different file and update the plot.
 
         Parameters
         ----------
@@ -494,11 +527,12 @@ class CallbackManager:
         self._notify("Loading file\u2026", duration=3000)
         s = self.state
         s.anchor_timestamp = None
+        parts = fname_with_user.split("--", 1)
         s.fname = os.path.join(
             os.path.dirname(s.fname),
-            fname_with_user.split("--")[1],
+            parts[1] if len(parts) == 2 else parts[0],
         )
-        self.update_plot()
+        self.update_plot(_empty_depth=_empty_depth)
         self.w["summary"].object = build_summary_html(s)
 
     def move_next_window(self):
@@ -516,7 +550,6 @@ class CallbackManager:
             return
         s.anchor_timestamp = new_anchor.strftime(TIME_FMT)
         self.update_plot()
-        self._update_nav_buttons()
 
     def move_prev_window(self):
         """Move the anchor timestamp back by one full window, clamped to file start."""
@@ -533,7 +566,6 @@ class CallbackManager:
             return
         s.anchor_timestamp = new_anchor.strftime(TIME_FMT)
         self.update_plot()
-        self._update_nav_buttons()
 
     def _update_nav_buttons(self):
         """Enable or disable prev/next buttons based on file boundaries."""
@@ -619,7 +651,7 @@ class CallbackManager:
                             "segment": 0,
                             "scoring": 0,
                             "review": 1,
-                            "annotated_at": datetime.now(),
+                            "annotated_at": str(datetime.now()),
                             "user": s.username,
                         }
                         for artifact in new_reviews

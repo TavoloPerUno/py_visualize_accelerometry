@@ -74,20 +74,23 @@ def make_plot(pdf, annotation_cds):
 
     Returns
     -------
-    tuple of (Panel.pane.Bokeh, Panel.pane.Bokeh, Figure, ColumnDataSource)
-        ``(main_pane, range_pane, main_fig, signal_cds)`` where
-        ``signal_cds`` is the downsampled signal data source (needed
-        for wiring box-select callbacks).
+    tuple of (Panel.pane.Bokeh, Panel.pane.Bokeh, Figure, ColumnDataSource, ColumnDataSource)
+        ``(main_pane, range_pane, main_fig, signal_cds, range_source)``
+        where ``signal_cds`` is the downsampled signal data source and
+        ``range_source`` is the minimap CDS (both needed for fast
+        in-place data updates on navigation).
     """
     import panel as pn
 
     if pdf is None or len(pdf) == 0:
-        empty_fig = figure(height=300, sizing_mode="stretch_width")
+        empty_fig1 = figure(height=300, sizing_mode="stretch_width")
+        empty_fig2 = figure(height=130, sizing_mode="stretch_width")
         empty_cds = ColumnDataSource(data=dict(timestamp=[], x=[], y=[], z=[]))
         return (
-            pn.pane.Bokeh(empty_fig, sizing_mode="stretch_width"),
-            pn.pane.Bokeh(empty_fig, sizing_mode="stretch_width"),
-            empty_fig,
+            pn.pane.Bokeh(empty_fig1, sizing_mode="stretch_width"),
+            pn.pane.Bokeh(empty_fig2, sizing_mode="stretch_width"),
+            empty_fig1,
+            empty_cds,
             empty_cds,
         )
 
@@ -115,9 +118,9 @@ def make_plot(pdf, annotation_cds):
     # Explicit y_range computed from signal data.  Using Range1d (not
     # DataRange1d) is critical because DataRange1d would auto-expand to
     # include annotation quad bounds, squashing the signal to a thin line.
-    y_min = min(ds_data["x"].min(), ds_data["y"].min(), ds_data["z"].min())
-    y_max = max(ds_data["x"].max(), ds_data["y"].max(), ds_data["z"].max())
-    y_pad = (y_max - y_min) * 0.05
+    y_min = float(np.nanmin([np.nanmin(ds_data["x"]), np.nanmin(ds_data["y"]), np.nanmin(ds_data["z"])]))
+    y_max = float(np.nanmax([np.nanmax(ds_data["x"]), np.nanmax(ds_data["y"]), np.nanmax(ds_data["z"])]))
+    y_pad = max((y_max - y_min) * 0.05, 0.1)
     y_range = Range1d(start=y_min - y_pad, end=y_max + y_pad)
 
     # --- Main signal plot ---
@@ -164,7 +167,6 @@ def make_plot(pdf, annotation_cds):
 
     # --- Annotation overlay quads ---
     # Quads span the full y_range so they are visible behind the signal.
-    # Using level="overlay" prevents them from affecting auto-range.
     q_top = y_max + y_pad
     q_bot = y_min - y_pad
 
@@ -174,6 +176,7 @@ def make_plot(pdf, annotation_cds):
             left="start_time", right="end_time", top=q_top, bottom=q_bot,
             fill_color=color, fill_alpha=0.2, line_alpha=0,
             source=annotation_cds[key], level="overlay",
+            name="annotation_quad",
         )
 
     # Flag overlays (hatch patterns with no fill, matching the original app)
@@ -189,6 +192,7 @@ def make_plot(pdf, annotation_cds):
             hatch_pattern=hatch, hatch_color="black",
             hatch_weight=0.5, hatch_alpha=0.1,
             source=annotation_cds[key], level="overlay",
+            name="annotation_quad",
         )
 
     # --- Range selector (minimap) ---
@@ -239,4 +243,78 @@ def make_plot(pdf, annotation_cds):
     main_pane = pn.pane.Bokeh(main_fig, sizing_mode="stretch_width")
     range_pane = pn.pane.Bokeh(range_fig, sizing_mode="stretch_width")
 
-    return main_pane, range_pane, main_fig, colsource
+    return main_pane, range_pane, main_fig, colsource, range_source
+
+
+def update_plot_data(pdf, signal_cds, main_fig, range_source=None):
+    """Update an existing plot's data without rebuilding figures.
+
+    Replaces the signal CDS data, adjusts x/y ranges, and optionally
+    updates the range selector CDS.  Much faster than ``make_plot``
+    because Bokeh sends only a data-patch over the websocket instead
+    of tearing down and reconstructing the entire document subtree.
+
+    Parameters
+    ----------
+    pdf : DataFrame
+        New signal data with ``timestamp``, ``x``, ``y``, ``z``.
+    signal_cds : ColumnDataSource
+        The main signal CDS to update (returned by ``make_plot``).
+    main_fig : Figure
+        The main plot figure (for x_range / y_range adjustment).
+    range_source : ColumnDataSource or None
+        The range selector CDS.  If None, the minimap is not updated.
+
+    Returns
+    -------
+    bool
+        True if updated successfully, False if a full rebuild is needed.
+    """
+    if pdf is None or len(pdf) == 0:
+        return False
+
+    ts_raw = pdf["timestamp"].values
+
+    # Downsample
+    ds_data = {"timestamp": None}
+    for col in ["x", "y", "z"]:
+        ds_ts, ds_vals = _downsample(ts_raw, pdf[col].values, MAX_POINTS)
+        if ds_data["timestamp"] is None:
+            ds_data["timestamp"] = ds_ts
+        ds_data[col] = ds_vals
+
+    # Update signal CDS in one shot (triggers a single websocket push)
+    signal_cds.data = ds_data
+
+    # Adjust y_range to fit new data
+    y_min = float(np.nanmin([np.nanmin(ds_data["x"]), np.nanmin(ds_data["y"]), np.nanmin(ds_data["z"])]))
+    y_max = float(np.nanmax([np.nanmax(ds_data["x"]), np.nanmax(ds_data["y"]), np.nanmax(ds_data["z"])]))
+    y_pad = max((y_max - y_min) * 0.05, 0.1)
+    q_top = y_max + y_pad
+    q_bot = y_min - y_pad
+    main_fig.y_range.start = q_bot
+    main_fig.y_range.end = q_top
+
+    # Update annotation quad renderers to match new y_range.
+    # Annotation quads are tagged with name="annotation_quad" at creation.
+    for renderer in main_fig.renderers:
+        if getattr(renderer, "name", None) == "annotation_quad":
+            renderer.glyph.top = q_top
+            renderer.glyph.bottom = q_bot
+
+    # Reset x_range to show full window
+    main_fig.x_range.start = ts_raw[0]
+    main_fig.x_range.end = ts_raw[-1]
+
+    # Update range selector if provided
+    if range_source is not None:
+        n_main = len(ds_data["timestamp"])
+        step = max(1, n_main // 2000)
+        range_source.data = {
+            "timestamp": ds_data["timestamp"][::step],
+            "x": ds_data["x"][::step],
+            "y": ds_data["y"][::step],
+            "z": ds_data["z"][::step],
+        }
+
+    return True

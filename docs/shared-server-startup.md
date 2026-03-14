@@ -61,6 +61,15 @@ Press Ctrl+C to close the tunnel.
 
 If a server is already running, the script skips the submission step and connects directly.
 
+While the tunnel is active, the script prints network latency every 30 seconds:
+
+```
+  [14:30:00] latency: 42 ms
+  [14:30:30] latency: 38 ms
+```
+
+The app also displays a latency indicator in the header bar, updated every 10 seconds.
+
 Log in with the credentials defined in `credentials.json`.
 
 ## Manual connection (alternative)

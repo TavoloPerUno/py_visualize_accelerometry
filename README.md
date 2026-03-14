@@ -55,6 +55,9 @@ Researchers collect tri-axial accelerometry signals (x, y, z) during standardize
 ## Features
 
 - **LTTB downsampling** — Renders 500K+ data points smoothly by reducing to ~10,000 visually representative points using the Largest Triangle Three Buckets algorithm
+- **Server-side HDF5 filtering** — Loads only the visible time window from disk using PyTables `where` clauses, keeping load times under 20 ms even for 1 GB+ files
+- **Fast navigation** — Previous/Next updates plot data in place (no full figure rebuild), so transitions are near-instant
+- **Network latency indicator** — Header displays live round-trip latency to the server, color-coded by speed
 - **Range selector** — Minimap for navigating long recordings without losing context
 - **Box-select annotation** — Select a time range and label it with one click
 - **Segment, scoring, and review flags** — Mark annotations for segmentation, scoring, or review with distinct hatch-pattern overlays

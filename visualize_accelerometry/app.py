@@ -52,6 +52,7 @@ from visualize_accelerometry.config import (
 from visualize_accelerometry.plotting import make_plot
 from visualize_accelerometry.state import AppState
 
+
 pn.extension(sizing_mode="stretch_width", notifications=True)
 
 # Theme notification toasts to UChicago palette
@@ -296,7 +297,7 @@ def create_app():
     )
 
     # Create plots (native Bokeh with LTTB downsampling)
-    main_plot_pane, range_plot_pane, main_bokeh_fig, signal_cds = make_plot(
+    main_plot_pane, range_plot_pane, main_bokeh_fig, signal_cds, range_src = make_plot(
         pdf_signal, state.annotation_cds
     )
     state.signal_cds = signal_cds
@@ -323,6 +324,7 @@ def create_app():
         "selected_annotations_table": selected_annotations_table,
         "btn_prev": btn_prev,
         "btn_next": btn_next,
+        "range_source": range_src,
     }
 
     cb = CallbackManager(state, widgets)
@@ -1065,14 +1067,37 @@ def create_app():
         styles={"display": "flex", "align-items": "center"},
     )
 
-    # Network latency indicator — display element only; script injected below
-    latency_indicator = pn.pane.HTML(
-        "<span id='latency-display' style='font-size:10px;"
-        " font-family:Montserrat,monospace; color:rgba(255,255,255,0.7);"
-        " white-space:nowrap;' title='Network round-trip latency'>-- ms</span>",
-        sizing_mode="fixed", width=55, align="center",
-        margin=(0, 6),
+    # Network latency indicator — uses a Bokeh Div + CustomJS on
+    # DocumentReady so the JS actually executes (pn.pane.HTML uses
+    # Shadow DOM + innerHTML which blocks <script> execution).
+    from bokeh.models import Div
+    from bokeh.models.callbacks import CustomJS
+    from bokeh.events import DocumentReady
+
+    latency_div = Div(
+        text='<span style="font-size:10px; font-family:Montserrat,monospace;'
+             ' color:rgba(255,255,255,0.7); white-space:nowrap;"'
+             ' title="Network round-trip latency">-- ms</span>',
+        width=65, height=20,
     )
+    latency_ping_js = CustomJS(args=dict(div=latency_div), code="""
+        function ping() {
+            var t0 = performance.now();
+            var img = new Image();
+            img.onload = img.onerror = function() {
+                var ms = Math.round(performance.now() - t0);
+                var color = ms < 100 ? '#7EBEC5' : ms < 300 ? '#ffa726' : '#ef5350';
+                div.text = '<span style="font-size:10px; font-family:Montserrat,monospace;'
+                    + ' color:' + color + '; white-space:nowrap;"'
+                    + ' title="Network round-trip latency">' + ms + ' ms</span>';
+            };
+            img.src = '/favicon.ico?_=' + Date.now();
+        }
+        ping();
+        setInterval(ping, 10000);
+    """)
+    latency_indicator = pn.pane.Bokeh(latency_div, width=65, height=20,
+                                      align="center", margin=(0, 6))
 
     header_row = pn.Row(
         pn.Spacer(),
@@ -1145,22 +1170,6 @@ def create_app():
     sidebar_toggle_js = """
     <script>
     (function() {
-        // --- Latency ping ---
-        function pingLatency() {
-            var s = performance.now();
-            fetch(window.location.pathname + '?_ping=' + Date.now(), {
-                cache: 'no-store', credentials: 'same-origin'
-            }).then(function() {
-                var ms = Math.round(performance.now() - s);
-                var el = document.getElementById('latency-display');
-                if (!el) return;
-                el.textContent = ms + ' ms';
-                el.style.color = ms < 100 ? '#7EBEC5' : ms < 300 ? '#ffa726' : '#ef5350';
-            }).catch(function() {});
-        }
-        pingLatency();
-        setInterval(pingLatency, 10000);
-
         // --- Sidebar toggle ---
         function setup() {
             var sidebar = document.getElementById('sidebar');
@@ -1207,6 +1216,7 @@ def create_app():
         else
             setup();
     })();
+
     </script>
     """
     # Append to header row (horizontal) so it doesn't create vertical space in main
@@ -1214,6 +1224,8 @@ def create_app():
         sidebar_toggle_js, sizing_mode="fixed",
         width=0, height=0, margin=0,
     ))
+
+    pn.state.curdoc.js_on_event(DocumentReady, latency_ping_js)
 
     return template
 

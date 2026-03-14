@@ -12,13 +12,13 @@ The app has three main areas:
 
 - **Sidebar** (left) — File picker, time navigation, window size, review flags, notes, and admin controls
 - **Main area** (center) — Signal plot, annotation toolbar, color key, summary, and data tables
-- **Header** (top) — App logo, title, current user, impersonation selector (admins), and logout
+- **Header** (top) — App logo, title, network latency indicator, current user, impersonation selector (admins), and logout
 
 ![Full application interface](images/full_app.png)
 
 ### Header bar
 
-The header displays the app logo, title, the currently logged-in user, an impersonation dropdown (for admins), and a logout icon on the far right.
+The header displays the app logo, title, a **network latency indicator** (round-trip time to the server, updated every 10 seconds), the currently logged-in user, an impersonation dropdown (for admins), and a logout icon on the far right. The latency value is color-coded: teal (<100 ms), orange (<300 ms), or red (≥300 ms).
 
 ![Header bar](images/header_bar.png)
 
@@ -93,6 +93,8 @@ LTTB is a perceptual downsampling algorithm that preserves the visual shape of t
 If the `lttbc` C extension is installed, downsampling is very fast. Otherwise, the app falls back to uniform strided sampling, which is less accurate but still performant.
 
 The window size also affects how much data is loaded and downsampled. A smaller window (e.g., 60 seconds) shows more detail from fewer raw points, while a larger window (e.g., 3600 seconds) compresses more data into the same number of display points.
+
+When navigating with **Previous** / **Next**, the app uses a fast path that updates the existing plot data in place (no full figure rebuild), so transitions between windows are near-instant.
 
 ---
 
