@@ -59,31 +59,35 @@ Common reasons to flag for review:
 
 Flags are **toggles** — clicking the same flag button again removes it. Multiple flags can coexist on the same annotation (e.g., a segment can be both the scoring selection and flagged for review).
 
+## Annotation boundaries
+
+**Start** the annotation at the **first disturbance from the flat baseline** — the moment the accelerometer axes begin to diverge from their resting values. **End** the annotation at the **last disturbance before the signal returns to flat**. Do not include extended periods of inactivity before or after the actual movement.
+
 ## What the signals look like
 
-Understanding the characteristic signal patterns for each test helps you identify activity boundaries quickly.
+At rest, the three accelerometer axes (X, Y, Z) converge near a flat baseline. During activity, the axes **diverge** — the amplitude and direction of divergence depend on the type and vigor of movement. Between repetitions, the axes briefly **converge** back to baseline.
 
 ### Chair Stand Test
 
-Five distinct bursts of high-amplitude activity separated by brief pauses. Each burst corresponds to one sit-to-stand-to-sit cycle. The X and Z axes show the most movement.
+Five distinct waves where all three axes diverge from the flat baseline, separated by brief convergence periods. Each wave corresponds to one sit-to-stand-to-sit cycle. The large deflections reflect the thigh rotating approximately 90° between sitting (horizontal) and standing (vertical).
 
 ![Chair Stand signal pattern](images/signal_chair_stand.svg)
 
 ### Timed Up and Go (TUG)
 
-A sequence of distinct phases: sharp stand-up burst, rhythmic walking (regular arm-swing oscillation at ~1.8 Hz), a turn (disrupted rhythm with lower amplitude), walking back, and a sharp sit-down burst.
+A composite activity: a chair rise (large single burst like one chair stand), rhythmic walking out (regular oscillations), a turn (brief disrupted rhythm with reduced amplitude), walking back, and a chair sit (another large burst). The walking phases show periodic gait oscillations between the rise and sit bursts.
 
 ![TUG signal pattern](images/signal_tug.svg)
 
 ### 3-Meter Walk
 
-A short burst of rhythmic walking (~3-5 strides). Look for gradual onset as the participant accelerates and gradual offset as they decelerate. The entire test lasts only a few seconds.
+Two walking segments separated by a turnaround. The signal shows: flat baseline → rhythmic gait oscillations (walk out) → brief turn → rhythmic gait oscillations (walk back) → flat baseline. The walk-back segment may show slightly different amplitudes due to dominant vs. non-dominant stride differences.
 
 ![3-Meter Walk signal pattern](images/signal_3m_walk.svg)
 
 ### 6-Minute Walk Test
 
-Sustained rhythmic walking with periodic brief disruptions from corridor turns. May show subtle fatigue effects (decreasing amplitude) over time.
+Sustained rhythmic walking with periodic brief disruptions from corridor turns. May show subtle fatigue effects (decreasing amplitude) toward the end. Turn points appear as momentary reductions in oscillation amplitude.
 
 ![6-Minute Walk signal pattern](images/signal_6min_walk.svg)
 
@@ -93,7 +97,7 @@ This walkthrough covers the full annotation process for a typical Chair Stand Te
 
 ### Step 1: Select the episode
 
-Navigate to the portion of the file where the chair stands occur. Box-select the entire time range covering all repetitions, then click **Chairstand**.
+Navigate to the portion of the file where the chair stands occur. Box-select from the **first disturbance** (where axes begin to diverge from flat) to the **last disturbance** (where axes return to flat after the final repetition), then click **Chairstand**. Keep the boundaries tight — do not include extended flat periods before or after the activity.
 
 ![Step 1: Box-select the episode](images/step1_mark_episode.svg)
 

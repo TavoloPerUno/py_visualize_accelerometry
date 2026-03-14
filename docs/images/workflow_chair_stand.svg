@@ -1,151 +1,77 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400">
+  <style>
+    .title { font: bold 14px sans-serif; fill: #333; }
+    .step-label { font: bold 12px sans-serif; fill: #800000; }
+    .desc { font: 11px sans-serif; fill: #555; }
+  </style>
   <defs>
-    <!-- Cross-hatch pattern for segment markers -->
-    <pattern id="crosshatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="8" stroke="#555" stroke-width="1" opacity="0.5"/>
+    <clipPath id="wf-plot"><rect x="50" y="40" width="720" height="180"/></clipPath>
+    <pattern id="wf-hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#008080" stroke-width="1.5" opacity="0.4"/>
     </pattern>
-    <!-- Dot pattern for scoring flag -->
-    <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse">
-      <circle cx="3" cy="3" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+    <pattern id="wf-dots" patternUnits="userSpaceOnUse" width="8" height="8">
+      <circle cx="4" cy="4" r="1.5" fill="#b8860b" opacity="0.5"/>
     </pattern>
-    <!-- Spiral/ring pattern for review flag -->
-    <pattern id="rings" width="10" height="10" patternUnits="userSpaceOnUse">
-      <circle cx="5" cy="5" r="3" fill="none" stroke="#b03030" stroke-width="1" opacity="0.55"/>
-    </pattern>
-    <!-- Arrowhead marker -->
-    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#333"/>
-    </marker>
   </defs>
+  <rect width="800" height="400" fill="#f5f5f5" rx="4"/>
+  <rect x="50" y="40" width="720" height="180" fill="white" stroke="#ddd" stroke-width="0.5"/>
+  <text x="60" y="30" class="title">Chair Stand Annotation Workflow — Complete Example</text>
 
-  <!-- Background -->
-  <rect width="800" height="400" fill="#e8e8e8" rx="4"/>
+  <!-- Baseline -->
+  <line x1="50" y1="135" x2="770" y2="135" stroke="#eee" stroke-width="0.5"/>
 
-  <!-- Plot area -->
-  <rect x="60" y="30" width="680" height="260" fill="#fff" stroke="#bbb" stroke-width="1" rx="2"/>
+  <!-- Cyan episode overlay -->
+  <rect x="135" y="40" width="530" height="180" fill="cyan" opacity="0.12"/>
 
-  <!-- Y-axis label -->
-  <text x="18" y="165" font-family="Arial, sans-serif" font-size="11" fill="#444" text-anchor="middle" transform="rotate(-90,18,165)">Acceleration (g)</text>
+  <!-- 5 segment hatched overlays -->
+  <rect x="140" y="42" width="80" height="176" fill="url(#wf-hatch)" stroke="#008080" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+  <rect x="250" y="42" width="80" height="176" fill="url(#wf-hatch)" stroke="#008080" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+  <rect x="360" y="42" width="80" height="176" fill="url(#wf-hatch)" stroke="#008080" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+  <rect x="470" y="42" width="80" height="176" fill="url(#wf-hatch)" stroke="#008080" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+  <rect x="580" y="42" width="80" height="176" fill="url(#wf-hatch)" stroke="#008080" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
 
-  <!-- X-axis label -->
-  <text x="400" y="308" font-family="Arial, sans-serif" font-size="11" fill="#444" text-anchor="middle">Time (seconds)</text>
+  <!-- Scoring on segment 3 -->
+  <rect x="360" y="42" width="80" height="176" fill="#ffd700" opacity="0.2"/>
+  <rect x="360" y="42" width="80" height="176" fill="url(#wf-dots)"/>
+  <rect x="360" y="42" width="80" height="176" fill="none" stroke="#b8860b" stroke-width="2"/>
 
-  <!-- Y-axis ticks -->
-  <text x="55" y="50" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="end">1.5</text>
-  <text x="55" y="105" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="end">1.0</text>
-  <text x="55" y="165" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="end">0.5</text>
-  <text x="55" y="225" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="end">0.0</text>
-  <text x="55" y="280" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="end">-0.5</text>
+  <!-- Signal traces (X and Z only for clarity) -->
+  <g clip-path="url(#wf-plot)">
+    <polyline fill="none" stroke="#800000" stroke-width="1.3" opacity="0.85" stroke-linejoin="round"
+      points="50,136 53,134 56,137 59,133 62,133 65,135 68,136 71,136 74,137 77,133 80,136 83,137 86,136 89,135 92,134 95,134 98,136 101,134 104,136 107,136 110,137 113,136 116,134 119,134 122,137 125,135 128,134 140,135 142,127 144,119 146,111 148,103 150,96 152,89 154,85 156,81 158,79 160,79 162,79 164,79 166,80 168,80 170,79 172,77 174,74 176,69 178,65 180,60 182,56 184,52 186,50 188,49 190,51 192,54 194,59 196,65 198,71 200,79 202,86 204,93 206,99 208,104 210,109 212,113 214,118 216,122 218,128 220,135 222,135 225,138 228,133 231,136 234,132 237,137 240,134 243,133 246,133 250,135 252,127 254,118 256,110 258,103 260,96 262,90 264,86 266,84 268,83 270,82 272,82 274,82 276,82 278,80 280,78 282,75 284,70 286,66 288,60 290,56 292,52 294,49 296,48 298,49 300,51 302,56 304,61 306,68 308,75 310,82 312,89 314,95 316,100 318,104 320,108 322,112 324,117 326,122 328,128 330,135 332,133 335,136 338,136 341,135 344,137 347,133 350,136 353,135 356,133 360,135 362,127 364,118 366,110 368,103 370,97 372,92 374,89 376,87 378,86 380,85 382,85 384,84 386,82 388,80 390,76 392,72 394,67 396,61 398,56 400,52 402,48 404,47 406,47 408,49 410,53 412,58 414,65 416,72 418,79 420,85 422,91 424,96 426,100 428,104 430,108 432,111 434,116 436,121 438,127 440,135 442,138 445,136 448,136 451,137 454,132 457,132 460,133 463,134 466,134 470,135 472,126 474,118 476,110 478,104 480,98 482,94 484,91 486,90 488,88 490,88 492,86 494,85 496,82 498,78 500,73 502,68 504,62 506,57 508,52 510,48 512,46 514,46 516,48 518,51 520,56 522,62 524,69 526,75 528,82 530,88 532,92 534,97 536,100 538,103 540,106 542,110 544,114 546,120 548,127 550,135 552,138 555,133 558,137 561,137 564,134 567,135 570,136 573,135 576,133 580,135 582,126 584,118 586,111 588,105 590,100 592,96 594,94 596,92 598,91 600,89 602,87 604,84 606,80 608,75 610,70 612,64 614,58 616,53 618,49 620,46 622,45 624,46 626,49 628,54 630,60 632,66 634,73 636,79 638,84 640,89 642,93 644,96 646,99 648,102 650,105 652,108 654,113 656,119 658,127 660,135 660,135 663,134 666,135 669,137 672,135 675,134 678,134 681,134 684,136 687,134 690,137 693,137 696,134 699,134 702,137 705,133 708,136 711,133 714,134 717,136 720,134 723,134 726,134 729,136 732,133 735,134 738,135 741,136 744,134 747,135 750,135 753,135 756,137 759,135 762,136 765,136 768,136"/>
+    <polyline fill="none" stroke="#58595b" stroke-width="1.3" opacity="0.85" stroke-linejoin="round"
+      points="50,134 53,136 56,135 59,135 62,136 65,135 68,136 71,134 74,133 77,135 80,135 83,135 86,136 89,133 92,133 95,134 98,134 101,137 104,134 107,135 110,135 113,136 116,134 119,137 122,136 125,135 128,135 140,135 142,143 144,151 146,157 148,162 150,165 152,166 154,167 156,168 158,168 160,170 162,174 164,178 166,185 168,192 170,200 172,207 174,213 176,216 178,218 180,216 182,213 184,207 186,200 188,193 190,186 192,181 194,177 196,175 198,174 200,175 202,176 204,176 206,176 208,174 210,170 212,165 214,158 216,150 218,142 220,135 222,137 225,136 228,134 231,137 234,133 237,135 240,135 243,134 246,136 250,135 252,143 254,150 256,156 258,160 260,163 262,165 264,165 266,166 268,168 270,171 272,175 274,181 276,188 278,195 280,203 282,210 284,215 286,217 288,217 290,215 292,210 294,203 296,196 298,190 300,184 302,179 304,176 306,175 308,176 310,177 312,178 314,178 316,178 318,175 320,171 322,165 324,158 326,150 328,142 330,135 332,134 335,135 338,133 341,135 344,135 347,136 350,135 353,135 356,136 360,135 362,143 364,150 366,155 368,159 370,162 372,163 374,164 376,165 378,168 380,172 382,177 384,183 386,191 388,199 390,206 392,212 394,216 396,217 398,216 400,212 402,207 404,200 406,193 408,187 410,182 412,178 414,176 416,176 418,178 420,179 422,180 424,181 426,179 428,176 430,171 432,165 434,157 436,149 438,142 440,135 442,136 445,133 448,135 451,133 454,136 457,133 460,134 463,136 466,135 470,135 472,143 474,149 476,154 478,158 480,160 482,162 484,163 486,165 488,168 490,173 492,179 494,186 496,194 498,202 500,208 502,213 504,216 506,216 508,214 510,209 512,203 514,196 516,190 518,184 520,180 522,178 524,177 526,178 528,180 530,182 532,183 534,183 536,181 538,177 540,171 542,164 544,157 546,149 548,142 550,135 552,136 555,136 558,134 561,136 564,136 567,134 570,135 573,134 576,133 580,135 582,143 584,149 586,153 588,157 590,159 592,160 594,162 596,165 598,169 600,175 602,182 604,189 606,197 608,204 610,210 612,214 614,216 616,215 618,211 620,206 622,200 624,193 626,187 628,182 630,179 632,178 634,179 636,180 638,183 640,184 642,185 644,185 646,182 648,177 650,171 652,164 654,156 656,148 658,141 660,134 660,135 663,134 666,135 669,135 672,137 675,136 678,136 681,135 684,135 687,134 690,135 693,137 696,137 699,135 702,136 705,135 708,135 711,133 714,134 717,134 720,136 723,137 726,135 729,135 732,134 735,134 738,136 741,136 744,134 747,134 750,135 753,133 756,136 759,134 762,134 765,134 768,134"/>
+  </g>
 
-  <!-- Grid lines -->
-  <line x1="60" y1="46" x2="740" y2="46" stroke="#eee" stroke-width="0.5"/>
-  <line x1="60" y1="101" x2="740" y2="101" stroke="#eee" stroke-width="0.5"/>
-  <line x1="60" y1="161" x2="740" y2="161" stroke="#ddd" stroke-width="0.5"/>
-  <line x1="60" y1="221" x2="740" y2="221" stroke="#eee" stroke-width="0.5"/>
-  <line x1="60" y1="276" x2="740" y2="276" stroke="#eee" stroke-width="0.5"/>
+  <!-- Timeline -->
+  <line x1="50" y1="220" x2="770" y2="220" stroke="#ccc" stroke-width="0.5"/>
 
-  <!-- EPISODE ANNOTATION: large cyan overlay spanning all 5 reps -->
-  <rect x="90" y="35" width="620" height="250" fill="#00bcd4" opacity="0.12" rx="3"/>
+  <!-- Workflow steps legend below -->
+  <rect x="50" y="245" width="700" height="140" fill="white" rx="4" stroke="#ddd"/>
 
-  <!-- SEGMENT OVERLAYS (5 reps, cross-hatch) -->
-  <!-- Segment 1: ~3-4.5s -->
-  <rect x="150" y="55" width="60" height="210" fill="url(#crosshatch)" opacity="0.5" rx="2"/>
-  <rect x="150" y="55" width="60" height="210" fill="#00bcd4" opacity="0.08" rx="2"/>
-  <!-- Segment 2: ~5.5-7s -->
-  <rect x="240" y="55" width="60" height="210" fill="url(#crosshatch)" opacity="0.5" rx="2"/>
-  <rect x="240" y="55" width="60" height="210" fill="#00bcd4" opacity="0.08" rx="2"/>
-  <!-- Segment 3 (scoring flag): ~8-9.5s -->
-  <rect x="330" y="55" width="60" height="210" fill="url(#crosshatch)" opacity="0.5" rx="2"/>
-  <rect x="330" y="55" width="60" height="210" fill="url(#dots)" opacity="0.7" rx="2"/>
-  <rect x="330" y="55" width="60" height="210" fill="#2a7a2a" opacity="0.08" rx="2"/>
-  <!-- Segment 4: ~10.5-12s -->
-  <rect x="420" y="55" width="60" height="210" fill="url(#crosshatch)" opacity="0.5" rx="2"/>
-  <rect x="420" y="55" width="60" height="210" fill="#00bcd4" opacity="0.08" rx="2"/>
-  <!-- Segment 5 (review flag): ~13-14.5s -->
-  <rect x="510" y="55" width="60" height="210" fill="url(#crosshatch)" opacity="0.5" rx="2"/>
-  <rect x="510" y="55" width="60" height="210" fill="url(#rings)" opacity="0.7" rx="2"/>
-  <rect x="510" y="55" width="60" height="210" fill="#b03030" opacity="0.06" rx="2"/>
+  <!-- Step indicators -->
+  <circle cx="80" cy="270" r="12" fill="#800000" opacity="0.9"/>
+  <text x="76" y="274" font-size="11" font-weight="bold" fill="white">1</text>
+  <text x="100" y="268" class="step-label">Episode</text>
+  <text x="100" y="282" class="desc">Box-select from first to last disturbance → click activity type</text>
 
-  <!-- Segment labels along the bottom of the plot -->
-  <text x="180" y="280" font-family="Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle">1</text>
-  <text x="270" y="280" font-family="Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle">2</text>
-  <text x="360" y="280" font-family="Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle">3</text>
-  <text x="450" y="280" font-family="Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle">4</text>
-  <text x="540" y="280" font-family="Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle">5</text>
+  <circle cx="80" cy="310" r="12" fill="#008080" opacity="0.9"/>
+  <text x="76" y="314" font-size="11" font-weight="bold" fill="white">2</text>
+  <text x="100" y="308" class="step-label">Segments</text>
+  <text x="100" y="322" class="desc">Select each individual repetition → click Segment (diagonal stripes)</text>
 
-  <!-- SIGNAL TRACES -->
-  <!-- X-axis signal (dark red #800000) - chair stand with 5 sharp peaks -->
-  <polyline fill="none" stroke="#800000" stroke-width="1.8" opacity="0.85" points="
-    70,160 80,161 90,160 100,160 110,159
-    130,160 140,159 150,140 160,110 170,85 180,120 190,155 200,162
-    210,160 220,159 230,160 240,138 250,105 260,80 270,118 280,155 290,162
-    300,160 310,159 320,158 330,135 340,100 350,75 360,115 370,152 380,161
-    390,160 400,159 410,160 420,137 430,103 440,78 450,117 460,153 470,162
-    480,160 490,158 500,159 510,132 520,98 530,72 540,110 550,150 560,161
-    570,160 590,161 610,160 630,161 650,160 670,160 690,161 710,160 730,160
-  "/>
+  <circle cx="80" cy="350" r="12" fill="#b8860b" opacity="0.9"/>
+  <text x="76" y="354" font-size="11" font-weight="bold" fill="white">3</text>
+  <text x="100" y="348" class="step-label">Scoring</text>
+  <text x="100" y="362" class="desc">Select the cleanest repetition → click Scoring (gold dot pattern)</text>
 
-  <!-- Y-axis signal (teal #7EBEC5) -->
-  <polyline fill="none" stroke="#7EBEC5" stroke-width="1.8" opacity="0.85" points="
-    70,145 80,146 90,145 100,145 110,144
-    130,145 140,144 150,135 160,150 170,175 180,190 190,170 200,148
-    210,145 220,144 230,145 240,133 250,152 260,180 270,195 280,172 290,148
-    300,145 310,143 320,144 330,130 340,150 350,178 360,198 370,175 380,148
-    390,145 400,143 410,145 420,132 430,153 440,182 450,196 460,174 470,148
-    480,145 490,143 500,144 510,128 520,148 530,175 540,200 550,178 560,150
-    570,145 590,146 610,145 630,146 650,145 670,145 690,146 710,145 730,145
-  "/>
+  <circle cx="500" cy="270" r="12" fill="#666" opacity="0.9"/>
+  <text x="496" y="274" font-size="11" font-weight="bold" fill="white">4</text>
+  <text x="520" y="268" class="step-label">Review (optional)</text>
+  <text x="520" y="282" class="desc">Flag ambiguous signals → click Review + add notes</text>
 
-  <!-- Z-axis signal (dark gray #58595b) -->
-  <polyline fill="none" stroke="#58595b" stroke-width="1.8" opacity="0.85" points="
-    70,185 80,186 90,185 100,185 110,184
-    130,185 140,184 150,170 160,190 170,215 180,230 190,212 200,190
-    210,185 220,184 230,185 240,168 250,192 260,220 270,235 280,214 290,190
-    300,185 310,183 320,184 330,165 340,190 350,218 360,238 370,216 380,192
-    390,185 400,183 410,185 420,167 430,192 440,222 450,237 460,215 470,192
-    480,185 490,182 500,183 510,162 520,188 530,215 540,240 550,218 560,193
-    570,185 590,186 610,185 630,186 650,185 670,185 690,186 710,185 730,185
-  "/>
-
-  <!-- CALLOUT LABELS WITH ARROWS -->
-
-  <!-- 1. Episode annotation callout -->
-  <rect x="62" y="320" width="220" height="22" fill="#fff" stroke="#00838f" stroke-width="1" rx="3" opacity="0.92"/>
-  <text x="172" y="335" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#00838f" text-anchor="middle">Episode annotation (Chairstand)</text>
-  <line x1="172" y1="320" x2="172" y2="290" stroke="#333" stroke-width="1" marker-end="url(#arrowhead)"/>
-
-  <!-- 2. Segment 1-5 callout -->
-  <rect x="280" y="320" width="100" height="22" fill="#fff" stroke="#555" stroke-width="1" rx="3" opacity="0.92"/>
-  <text x="330" y="335" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#555" text-anchor="middle">Segments 1-5</text>
-  <line x1="330" y1="320" x2="270" y2="275" stroke="#333" stroke-width="1" marker-end="url(#arrowhead)"/>
-
-  <!-- 3. Selected for scoring callout (points to segment 3) -->
-  <rect x="375" y="356" width="145" height="22" fill="#fff" stroke="#2a7a2a" stroke-width="1" rx="3" opacity="0.92"/>
-  <text x="447" y="371" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#2a7a2a" text-anchor="middle">Selected for scoring</text>
-  <line x1="420" y1="356" x2="365" y2="270" stroke="#333" stroke-width="1" marker-end="url(#arrowhead)"/>
-
-  <!-- 4. Flagged for review callout (points to segment 5) -->
-  <rect x="585" y="320" width="145" height="22" fill="#fff" stroke="#b03030" stroke-width="1" rx="3" opacity="0.92"/>
-  <text x="657" y="335" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#b03030" text-anchor="middle">Flagged for review</text>
-  <line x1="640" y1="320" x2="545" y2="270" stroke="#333" stroke-width="1" marker-end="url(#arrowhead)"/>
-
-  <!-- LEGEND -->
-  <rect x="555" y="36" width="180" height="62" fill="#fff" stroke="#ccc" stroke-width="0.8" rx="3" opacity="0.93"/>
-  <line x1="563" y1="52" x2="583" y2="52" stroke="#800000" stroke-width="2"/>
-  <text x="588" y="56" font-family="Arial, sans-serif" font-size="10" fill="#444">X-axis</text>
-  <line x1="563" y1="68" x2="583" y2="68" stroke="#7EBEC5" stroke-width="2"/>
-  <text x="588" y="72" font-family="Arial, sans-serif" font-size="10" fill="#444">Y-axis</text>
-  <line x1="563" y1="84" x2="583" y2="84" stroke="#58595b" stroke-width="2"/>
-  <text x="588" y="88" font-family="Arial, sans-serif" font-size="10" fill="#444">Z-axis</text>
-
-  <!-- Pattern legend items -->
-  <rect x="640" y="44" width="14" height="14" fill="url(#crosshatch)" stroke="#999" stroke-width="0.5"/>
-  <text x="658" y="55" font-family="Arial, sans-serif" font-size="9" fill="#444">Segment</text>
-  <rect x="640" y="60" width="14" height="14" fill="url(#dots)" stroke="#999" stroke-width="0.5"/>
-  <text x="658" y="71" font-family="Arial, sans-serif" font-size="9" fill="#444">Scoring</text>
-  <rect x="640" y="76" width="14" height="14" fill="url(#rings)" stroke="#999" stroke-width="0.5"/>
-  <text x="658" y="87" font-family="Arial, sans-serif" font-size="9" fill="#444">Review</text>
-
-  <!-- Title -->
-  <text x="400" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">Chair Stand Test — Annotation Workflow</text>
+  <circle cx="500" cy="310" r="12" fill="#666" opacity="0.9"/>
+  <text x="496" y="314" font-size="11" font-weight="bold" fill="white">5</text>
+  <text x="520" y="308" class="step-label">Export</text>
+  <text x="520" y="322" class="desc">Click Export to save annotations to disk</text>
 </svg>
