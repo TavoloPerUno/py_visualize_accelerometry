@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
+  <style>
+    .title { font: bold 14px sans-serif; fill: #333; }
+    .axis-label { font: 11px sans-serif; fill: #666; }
+    .legend-text { font: 11px sans-serif; }
+  </style>
+  <defs>
+    <clipPath id="plotArea">
+      <rect x="50" y="20" width="720" height="230"/>
+    </clipPath>
+  </defs>
+  <!-- Background -->
+  <rect width="800" height="300" fill="#e8e8e8" rx="4"/>
+  <!-- Plot area background -->
+  <rect x="50" y="20" width="720" height="230" fill="white" stroke="#ccc" stroke-width="0.5"/>
+  <!-- Title -->
+  <text x="60" y="16" class="title">Chair Stand Test (5 Repetitions)</text>
+  <!-- Legend -->
+  <line x1="460" y1="12" x2="480" y2="12" stroke="#800000" stroke-width="2"/>
+  <text x="483" y="16" class="legend-text" fill="#800000">X</text>
+  <line x1="510" y1="12" x2="530" y2="12" stroke="#7EBEC5" stroke-width="2"/>
+  <text x="533" y="16" class="legend-text" fill="#7EBEC5">Y</text>
+  <line x1="560" y1="12" x2="580" y2="12" stroke="#58595b" stroke-width="2"/>
+  <text x="583" y="16" class="legend-text" fill="#58595b">Z</text>
+  <!-- Annotation overlay: activity region -->
+  <rect x="170" y="20" width="480" height="230" fill="cyan" opacity="0.2"/>
+  <!-- Generate signals via script-computed paths -->
+  <g clip-path="url(#plotArea)">
+    <path id="pathX" fill="none" stroke="#800000" stroke-width="1.2" opacity="0.85"/>
+    <path id="pathY" fill="none" stroke="#7EBEC5" stroke-width="1.2" opacity="0.85"/>
+    <path id="pathZ" fill="none" stroke="#58595b" stroke-width="1.2" opacity="0.85"/>
+  </g>
+  <!-- Time axis -->
+  <line x1="50" y1="250" x2="770" y2="250" stroke="#999" stroke-width="0.5"/>
+  <text x="50" y="268" class="axis-label">0s</text>
+  <text x="230" y="268" class="axis-label">5s</text>
+  <text x="410" y="268" class="axis-label">10s</text>
+  <text x="590" y="268" class="axis-label">15s</text>
+  <text x="755" y="268" class="axis-label">20s</text>
+  <text x="380" y="285" class="axis-label">Time (seconds)</text>
+  <!-- Tick marks -->
+  <line x1="50" y1="250" x2="50" y2="254" stroke="#999"/>
+  <line x1="230" y1="250" x2="230" y2="254" stroke="#999"/>
+  <line x1="410" y1="250" x2="410" y2="254" stroke="#999"/>
+  <line x1="590" y1="250" x2="590" y2="254" stroke="#999"/>
+  <line x1="770" y1="250" x2="770" y2="254" stroke="#999"/>
+  <script type="text/javascript"><![CDATA[
+    // Seeded pseudo-random for reproducibility
+    var seed = 42;
+    function rand() { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; }
+    function noise() { return (rand() - 0.5) * 2; }
+
+    var W = 720, H = 230, OX = 50, OY = 20;
+    var midY = OY + H / 2;
+    var totalTime = 20; // seconds
+    var samplesPerSec = 50;
+    var totalSamples = totalTime * samplesPerSec;
+
+    // Chair stand: 5 bursts between ~3s and ~17s
+    // Each burst ~2s with ~1s gap
+    // burst centers at: 4.5, 7.5, 10.5, 13.0, 15.5
+    var bursts = [
+      {start: 3.0, end: 5.0},
+      {start: 6.0, end: 8.0},
+      {start: 9.0, end: 11.0},
+      {start: 12.0, end: 13.8},
+      {start: 14.8, end: 16.8}
+    ];
+
+    function inBurst(t) {
+      for (var i = 0; i < bursts.length; i++) {
+        var b = bursts[i];
+        if (t >= b.start && t <= b.end) {
+          // envelope: ramp up and down
+          var dur = b.end - b.start;
+          var frac = (t - b.start) / dur;
+          var env = Math.sin(frac * Math.PI);
+          return env;
+        }
+      }
+      return 0;
+    }
+
+    function genSignal(ampRest, ampBurst, freqRest, freqBurst, phaseOff, noiseScale) {
+      var pts = [];
+      for (var i = 0; i < totalSamples; i++) {
+        var t = i / samplesPerSec;
+        var env = inBurst(t);
+        var restSig = ampRest * Math.sin(2 * Math.PI * freqRest * t + phaseOff);
+        var burstSig = ampBurst * (
+          Math.sin(2 * Math.PI * freqBurst * t + phaseOff) * 0.6 +
+          Math.sin(2 * Math.PI * freqBurst * 1.7 * t + phaseOff * 0.5) * 0.25 +
+          Math.sin(2 * Math.PI * freqBurst * 3.1 * t + phaseOff * 1.3) * 0.15
+        );
+        var val = restSig * (1 - env) + burstSig * env + noise() * noiseScale * (0.3 + env * 0.7);
+        // Add sharp peak at transitions
+        if (env > 0.1 && env < 0.4) val += ampBurst * 0.3 * Math.sin(2 * Math.PI * 2.5 * t);
+        pts.push(val);
+      }
+      return pts;
+    }
+
+    var xSig = genSignal(0.02, 0.30, 0.1, 0.7, 0, 0.025);
+    var ySig = genSignal(0.015, 0.12, 0.12, 0.5, 1.5, 0.018);
+    var zSig = genSignal(0.02, 0.28, 0.08, 0.8, 3.0, 0.022);
+
+    function toPath(sig) {
+      var maxAmp = 0.45;
+      var d = "";
+      for (var i = 0; i < sig.length; i++) {
+        var x = OX + (i / totalSamples) * W;
+        var y = midY - (sig[i] / maxAmp) * (H / 2 - 10);
+        d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+      }
+      return d;
+    }
+
+    document.getElementById("pathX").setAttribute("d", toPath(xSig));
+    document.getElementById("pathY").setAttribute("d", toPath(ySig));
+    document.getElementById("pathZ").setAttribute("d", toPath(zSig));
+  ]]></script>
+</svg>

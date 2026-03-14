@@ -59,40 +59,72 @@ Common reasons to flag for review:
 
 Flags are **toggles** — clicking the same flag button again removes it. Multiple flags can coexist on the same annotation (e.g., a segment can be both the scoring selection and flagged for review).
 
+## What the signals look like
+
+Understanding the characteristic signal patterns for each test helps you identify activity boundaries quickly.
+
+### Chair Stand Test
+
+Five distinct bursts of high-amplitude activity separated by brief pauses. Each burst corresponds to one sit-to-stand-to-sit cycle. The X and Z axes show the most movement.
+
+![Chair Stand signal pattern](images/signal_chair_stand.svg)
+
+### Timed Up and Go (TUG)
+
+A sequence of distinct phases: sharp stand-up burst, rhythmic walking (regular arm-swing oscillation at ~1.8 Hz), a turn (disrupted rhythm with lower amplitude), walking back, and a sharp sit-down burst.
+
+![TUG signal pattern](images/signal_tug.svg)
+
+### 3-Meter Walk
+
+A short burst of rhythmic walking (~3-5 strides). Look for gradual onset as the participant accelerates and gradual offset as they decelerate. The entire test lasts only a few seconds.
+
+![3-Meter Walk signal pattern](images/signal_3m_walk.svg)
+
+### 6-Minute Walk Test
+
+Sustained rhythmic walking with periodic brief disruptions from corridor turns. May show subtle fatigue effects (decreasing amplitude) over time.
+
+![6-Minute Walk signal pattern](images/signal_6min_walk.svg)
+
 ## Complete workflow example: Chair Stand Test
 
 This walkthrough covers the full annotation process for a typical Chair Stand Test episode.
 
-### 1. Mark the full episode
+### Step 1: Select the episode
 
-Navigate to the portion of the file where the chair stands occur. Box-select the entire time range covering all five repetitions and click **Chairstand**. A cyan overlay appears on the plot.
+Navigate to the portion of the file where the chair stands occur. Box-select the entire time range covering all repetitions, then click **Chairstand**.
 
-### 2. Segment each repetition
+![Step 1: Box-select the episode](images/step1_mark_episode.svg)
 
-Reduce the window size to zoom in so that individual sit-to-stand cycles are clearly visible. For each cycle:
-- Box-select the time range of that single repetition
-- Click **Segment**
+### Step 2: Episode annotated
 
-You should end up with five segment boxes (diagonal stripe pattern) inside the cyan activity overlay.
+A cyan overlay appears on the plot, marking the full Chair Stand episode.
 
-### 3. Select one segment for scoring
+![Step 2: Cyan overlay marks the episode](images/step2_episode_annotated.svg)
 
-Identify the cleanest, most representative repetition — for example, the third stand where the participant's movement was smooth and the signal is unambiguous. Select that segment and click **Scoring**. A dot pattern appears on the chosen segment.
+### Step 3: Add segment markers
 
-### 4. Flag anything unclear
+Zoom in so that individual sit-to-stand cycles are clearly visible. For each repetition, box-select the time range and click **Segment**. Diagonal stripe patterns appear on each segment.
 
-If one of the repetitions has a noisy signal or the participant appears to have paused mid-stand:
+![Step 3: Segment markers on each repetition](images/step3_add_segments.svg)
+
+### Step 4: Select a segment for scoring
+
+Identify the cleanest, most representative repetition — where the participant's movement was smooth and the signal is unambiguous. Select that segment and click **Scoring**. A dot pattern and gold highlight appear on the chosen segment.
+
+![Step 4: Scoring flag on the selected segment](images/step4_select_scoring.svg)
+
+### Step 5: Flag anything unclear
+
+If a repetition has a noisy signal or the participant appears to have paused mid-stand:
 - Select that segment
 - Click **Review** (checkerboard pattern appears)
 - Add a note in the sidebar (e.g., "possible pause at top of stand — unclear if completed")
 
-### 5. Add notes
+### Step 6: Add notes and export
 
-Use the **Notes** field in the sidebar to attach free-text context to any annotation. Click **Save notes** to persist.
-
-### 6. Export
-
-Click **Export** in the toolbar to save all annotations to disk. The app writes an Excel file for the current user.
+Use the **Notes** field in the sidebar to attach free-text context. Click **Save notes** to persist, then click **Export** to save all annotations to disk.
 
 ## Annotation export format
 
