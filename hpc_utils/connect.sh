@@ -38,8 +38,7 @@ STATUS_FILE="hpc_utils/server_info.txt"
 # SSH connection multiplexing — authenticate once, reuse for all SSH calls
 # ---------------------------------------------------------------------------
 SSH_DEST="${SSH_USER}@${LOGIN_NODE}"
-SSH_CONTROL_DIR=$(mktemp -d)
-SSH_CONTROL_PATH="${SSH_CONTROL_DIR}/ctrl-%r@%h:%p"
+SSH_CONTROL_PATH="/tmp/ssh-accel-$$"
 SSH_OPTS=(-o "ControlPath=${SSH_CONTROL_PATH}")
 
 # Open a persistent control connection (user authenticates here — once)
@@ -207,7 +206,7 @@ cleanup() {
     fi
     # Close the ControlMaster connection
     ssh -O exit -o "ControlPath=${SSH_CONTROL_PATH}" "${SSH_DEST}" 2>/dev/null || true
-    rm -rf "${SSH_CONTROL_DIR}"
+    rm -f "${SSH_CONTROL_PATH}"
     echo "Tunnel closed."
 }
 trap cleanup EXIT INT TERM
