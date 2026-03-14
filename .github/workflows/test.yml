@@ -22,6 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # On Python 3.9, PyTables wheels are built against numpy <2.
+          # Installing numpy 2.x causes "dtype size changed" at import.
+          if python -c "import sys; sys.exit(0 if sys.version_info < (3, 10) else 1)"; then
+            pip install "numpy<2"
+          fi
           pip install -r requirements.txt
           pip install pytest
 
