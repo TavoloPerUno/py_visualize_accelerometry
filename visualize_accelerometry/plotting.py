@@ -302,9 +302,10 @@ def update_plot_data(pdf, signal_cds, main_fig, range_source=None):
             renderer.glyph.top = q_top
             renderer.glyph.bottom = q_bot
 
-    # Reset x_range to show full window
+    # Reset x_range to show ~10% of the file initially (matches make_plot)
     main_fig.x_range.start = ts_raw[0]
-    main_fig.x_range.end = ts_raw[-1]
+    initial_end_idx = min(len(ts_raw) - 1, int(len(ts_raw) * 0.1))
+    main_fig.x_range.end = ts_raw[initial_end_idx]
 
     # Update range selector if provided
     if range_source is not None:
