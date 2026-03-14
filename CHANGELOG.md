@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.11] - 2026-03-14
+
+### Fixed
+- handle SSH tunnel managed by ControlMaster, keep script alive
+
 ## [3.3.10] - 2026-03-14
 
 ### Fixed
@@ -248,3 +253,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [3.3.9]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.8...v3.3.9
 
 [3.3.10]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.9...v3.3.10
+
+[3.3.11]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.3.10...v3.3.11
