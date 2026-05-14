@@ -137,24 +137,25 @@ See [Shared server startup](docs/shared-server-startup.md) for the self-service 
 ```
 py_visualize_accelerometry/
 ├── visualize_accelerometry/
-│   ├── app.py              # Main Panel application and layout
-│   ├── callbacks.py         # UI event handlers and annotation logic
-│   ├── config.py            # Colors, paths, user lists, constants
-│   ├── data_loading.py      # HDF5 I/O, annotation file management
-│   ├── plotting.py          # Bokeh plots with LTTB downsampling
-│   ├── state.py             # Per-session state management
-│   ├── templates/           # Login/logout HTML templates
-│   ├── static/              # Favicon, logo
+│   ├── app.py                  # Main Panel application and layout
+│   ├── callbacks.py            # UI event handlers and annotation logic
+│   ├── config.py               # Colors, paths, user lists, constants
+│   ├── data_loading.py         # HDF5 I/O, annotation and walking-suggestion file management
+│   ├── plotting.py             # Bokeh plots with LTTB downsampling and VM overlay
+│   ├── state.py                # Per-session state management
+│   ├── walking_detection.py    # Urbanek 2015 sustained-harmonic-walking detector
+│   ├── templates/              # Login/logout HTML templates
+│   ├── static/                 # Favicon, logo
 │   └── data/
-│       ├── readings/        # HDF5 accelerometry files
-│       └── output/          # Per-user annotation Excel files
-├── hpc_utils/               # HPC deployment scripts (Slurm, SSH tunneling)
-│   ├── connect.sh           # Self-service connect script
-│   ├── start_server.sh      # Slurm job script
-│   ├── stop_server.sh       # Stop running server
-│   └── logs/                # Job and server logs
+│       ├── readings/           # HDF5 accelerometry files
+│       └── output/             # Per-user annotation Excel files + shared walking_suggestions.xlsx
+├── hpc_utils/                  # HPC deployment scripts (Slurm, SSH tunneling)
+│   ├── connect.sh              # Self-service connect script
+│   ├── start_server.sh         # Slurm job script
+│   ├── stop_server.sh          # Stop running server
+│   └── logs/                   # Job and server logs
 ├── requirements.txt
-└── credentials.json         # Auth credentials (not in repo)
+└── credentials.json            # Auth credentials (not in repo)
 ```
 
 ## Documentation
