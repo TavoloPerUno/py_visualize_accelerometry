@@ -22,6 +22,11 @@ keywords = [
     "data-visualization",
     "bokeh",
     "panel",
+    "walking-detection",
+    "step-detection",
+    "signal-processing",
+    "spectral-analysis",
+    "activity-recognition",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

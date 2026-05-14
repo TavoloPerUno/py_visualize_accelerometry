@@ -25,6 +25,12 @@ ARTIFACT_COLORS = {
     "tug": "yellow",
 }
 
+# Visual treatment for *suggested* (algorithm-detected, not yet confirmed)
+# walking segments.  Distinct from ARTIFACT_COLORS so annotators don't
+# mistake suggestions for human-made labels.  Rendered with a dashed
+# border on top of a translucent fill — see plotting.make_plot.
+WALKING_SUGGESTION_COLOR = "#ff8c00"
+
 # ---------------------------------------------------------------------------
 # Filesystem paths
 # ---------------------------------------------------------------------------
@@ -76,4 +82,13 @@ ANNOTATION_COLUMNS = [
 DISPLAYED_ANNOTATION_COLUMNS = [
     "artifact", "segment", "scoring", "review",
     "start_time", "end_time", "annotated_at", "user", "notes",
+]
+
+# Walking-detection suggestions — single shared xlsx for all users and
+# files.  Walking detection is deterministic per file, so there's no
+# per-user variation in the algorithm output; dismissals are also shared.
+WALKING_SUGGESTIONS_FILE = os.path.join(OUTPUT_FOLDER, "walking_suggestions.xlsx")
+WALKING_SUGGESTION_COLUMNS = [
+    "fname", "start_time", "end_time", "start_epoch", "end_epoch",
+    "duration_s", "mean_step_freq_hz", "detected_at", "deleted",
 ]

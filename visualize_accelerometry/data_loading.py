@@ -16,6 +16,8 @@ from . import config as _config
 from .config import (
     ANNOTATION_COLUMNS,
     TIME_FMT,
+    WALKING_SUGGESTIONS_FILE,
+    WALKING_SUGGESTION_COLUMNS,
 )
 
 
@@ -101,6 +103,47 @@ def get_filedata(fname, anchor_timestamp, windowsize):
         pdf = pdf.loc[(pdf["timestamp"] >= ts_start) & (pdf["timestamp"] <= ts_end)]
 
     return anchor_timestamp, file_start, file_end, pdf
+
+
+def load_walking_suggestions():
+    """Load saved walking suggestions (shared across users, all files).
+
+    Returns an empty DataFrame with the right schema if no file exists yet.
+    """
+    if not os.path.exists(WALKING_SUGGESTIONS_FILE):
+        return pd.DataFrame(columns=WALKING_SUGGESTION_COLUMNS)
+    pdf = pd.read_excel(WALKING_SUGGESTIONS_FILE, engine="openpyxl")
+    # Backfill any missing columns so callers can rely on the full schema
+    for col in WALKING_SUGGESTION_COLUMNS:
+        if col not in pdf.columns:
+            pdf[col] = False if col == "deleted" else None
+    return pdf[WALKING_SUGGESTION_COLUMNS]
+
+
+def save_walking_suggestions(pdf):
+    """Persist the shared walking-suggestions DataFrame."""
+    os.makedirs(os.path.dirname(WALKING_SUGGESTIONS_FILE), exist_ok=True)
+    pdf.to_excel(WALKING_SUGGESTIONS_FILE, index=False)
+
+
+def get_full_filedata(fname):
+    """Load every row of an HDF5 readings file.
+
+    Used by whole-file algorithms (e.g. walking detection) that cannot
+    operate on a single time window.  Returned frame is unsorted; the
+    caller should rely on the file's natural row order.
+
+    Parameters
+    ----------
+    fname : str
+        Path to the HDF5 file (without ``.h5`` extension).
+
+    Returns
+    -------
+    DataFrame
+        All rows with at least ``timestamp``, ``x``, ``y``, ``z`` columns.
+    """
+    return pd.read_hdf(fname + ".h5", "readings")
 
 
 def clamp_anchor(anchor_timestamp, file_start, file_end, windowsize):

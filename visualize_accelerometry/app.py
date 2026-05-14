@@ -215,6 +215,31 @@ def create_app():
     btn_notes = pn.widgets.Button(
         name="Save notes", button_type="warning", disabled=True,
     )
+
+    # Walking detection (Urbanek 2015 SHW).  Runs on the whole file and
+    # surfaces candidate walking segments as dashed-border overlays.  The
+    # Prev/Next pair jumps the time window through each candidate so the
+    # annotator can review and either accept (via the existing activity
+    # buttons) or ignore.
+    btn_detect_walking = pn.widgets.Button(
+        name="Detect walking", button_type="primary", sizing_mode="stretch_width",
+    )
+    walking_status = pn.pane.HTML(
+        "<div style='font-size:11px;color:#666;padding:4px 0;'>"
+        "No walking suggestions yet.</div>",
+        sizing_mode="stretch_width",
+    )
+    # Scrollable click-to-jump list of detected segments.  Populated each
+    # time detection runs; the active segment is rendered in success/maroon,
+    # the rest in muted "light" style.
+    walking_list_col = pn.Column(
+        scroll=True, max_height=180, sizing_mode="stretch_width",
+        margin=(0, 0),
+    )
+    btn_clear_walking = pn.widgets.Button(
+        name="Clear", button_type="light",
+        sizing_mode="stretch_width", disabled=True,
+    )
     btn_clear = pn.widgets.Button(
         name="Clear", button_type="danger", disabled=True, stylesheets=_toolbar_btn_css,
     )
@@ -325,9 +350,19 @@ def create_app():
         "btn_prev": btn_prev,
         "btn_next": btn_next,
         "range_source": range_src,
+        # Walking detection
+        "time_input": time_input,
+        "walking_status": walking_status,
+        "walking_list_col": walking_list_col,
+        "btn_detect_walking": btn_detect_walking,
+        "btn_clear_walking": btn_clear_walking,
     }
 
     cb = CallbackManager(state, widgets)
+
+    # Restore any persisted walking suggestions for the initial file so
+    # they survive page refresh.
+    cb.load_persisted_walking_suggestions()
 
     # Wire box-select callback on the signal CDS.
     # Uses state.signal_cds (not the local signal_cds variable) so that
@@ -375,6 +410,9 @@ def create_app():
     btn_export.on_click(lambda e: cb.save())
     btn_notes.on_click(lambda e: cb.add_notes(notes_input.value))
 
+    btn_detect_walking.on_click(lambda e: cb.detect_walking())
+    btn_clear_walking.on_click(lambda e: cb.clear_walking_suggestions())
+
     def _clear_selection():
         state.selection_bounds = None
         state.signal_cds.selected.indices = []
@@ -412,6 +450,15 @@ def create_app():
         pn.layout.Divider(),
         notes_input,
         btn_notes,
+        pn.layout.Divider(),
+        pn.pane.Markdown(
+            "**Walking detection**",
+            styles={"margin": "0", "padding": "0", "font-size": "12px"},
+        ),
+        btn_detect_walking,
+        walking_status,
+        walking_list_col,
+        btn_clear_walking,
     ]
 
     # --- Admin panel in sidebar (for admin users) ---

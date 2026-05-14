@@ -73,7 +73,17 @@ class AppState:
             "segment": ColumnDataSource(data=dict(**empty)),
             "scoring": ColumnDataSource(data=dict(**empty)),
             "review": ColumnDataSource(data=dict(**empty)),
+            # Algorithm-detected walking candidates — not part of the
+            # human annotation set.  Rendered with a distinct visual
+            # treatment (dashed border) so annotators can tell them apart.
+            "walking_suggestion": ColumnDataSource(data=dict(**empty)),
         }
+
+        # Whole-file walking detection results.  list[dict] with keys
+        # start_time, end_time, duration_s, mean_step_freq_hz.
+        # Index tracks which suggestion the navigation buttons land on next.
+        self.walking_suggestions = []
+        self.walking_suggestion_idx = None
 
         # CDS for the "selected bounds" and "selected annotations" tables
         self.selected_data = ColumnDataSource(data=dict(start_time=[], end_time=[]))
@@ -117,6 +127,14 @@ class AppState:
 
         self.pdf_signal_to_display = pdf
         return pdf
+
+    def clear_walking_suggestions(self):
+        """Drop any cached walking-detection results and clear the overlay."""
+        self.walking_suggestions = []
+        self.walking_suggestion_idx = None
+        self.annotation_cds["walking_suggestion"].data = dict(
+            start_time=[], end_time=[]
+        )
 
     def refresh_annotations(self):
         """Reload annotations from disk (all users, all files)."""

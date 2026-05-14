@@ -14,12 +14,32 @@ from bokeh.models import (
 )
 from bokeh.plotting import figure
 
-from .config import ARTIFACT_COLORS, LST_COLORS, UCHICAGO_MAROON
+from .config import (
+    ARTIFACT_COLORS, LST_COLORS, UCHICAGO_MAROON, WALKING_SUGGESTION_COLOR,
+)
 
 # Maximum points to send to the browser per signal axis.
 # 10000 provides high visual fidelity while remaining responsive
 # with the canvas backend (no WebGL).
 MAX_POINTS = 10000
+
+# Traces drawn on the main plot.  Vector magnitude (vm) is derived from
+# the raw axes as sqrt(x^2 + y^2 + z^2) — an orientation-independent
+# view of total acceleration, useful for spotting impacts and counting
+# periodic motion (steps, sit-stand cycles).  Hidden by default; toggle
+# via the legend (click_policy="hide").
+TRACE_COLS = ["x", "y", "z", "vm"]
+VM_COLOR = "#000000"
+TRACE_COLORS = list(LST_COLORS) + [VM_COLOR]
+TRACE_LABELS = ["x", "y", "z", "VM"]
+TRACE_VISIBLE = [True, True, True, False]
+
+
+def _compute_vm(pdf):
+    """Compute vector magnitude sqrt(x^2 + y^2 + z^2) from a DataFrame."""
+    return np.sqrt(
+        pdf["x"].values ** 2 + pdf["y"].values ** 2 + pdf["z"].values ** 2
+    )
 
 
 def _downsample(timestamps, values, n_out):
@@ -85,7 +105,9 @@ def make_plot(pdf, annotation_cds):
     if pdf is None or len(pdf) == 0:
         empty_fig1 = figure(height=300, sizing_mode="stretch_width")
         empty_fig2 = figure(height=130, sizing_mode="stretch_width")
-        empty_cds = ColumnDataSource(data=dict(timestamp=[], x=[], y=[], z=[]))
+        empty_cds = ColumnDataSource(
+            data=dict(timestamp=[], x=[], y=[], z=[], vm=[])
+        )
         return (
             pn.pane.Bokeh(empty_fig1, sizing_mode="stretch_width"),
             pn.pane.Bokeh(empty_fig2, sizing_mode="stretch_width"),
@@ -95,15 +117,17 @@ def make_plot(pdf, annotation_cds):
         )
 
     ts_raw = pdf["timestamp"].values
+    vm_raw = _compute_vm(pdf)
 
-    # --- Downsample each axis independently via LTTB ---
-    # Each axis may pick slightly different representative timestamps,
-    # but we reuse the first axis's timestamps for all three.  This is
-    # a minor approximation that keeps the code simple without visible
-    # impact on the plot.
+    # --- Downsample each trace independently via LTTB ---
+    # Each trace may pick slightly different representative timestamps,
+    # but we reuse the first trace's timestamps for all of them.  This
+    # is a minor approximation that keeps the code simple without
+    # visible impact on the plot.
     ds_data = {"timestamp": None}
-    for col in ["x", "y", "z"]:
-        ds_ts, ds_vals = _downsample(ts_raw, pdf[col].values, MAX_POINTS)
+    for col in TRACE_COLS:
+        vals = vm_raw if col == "vm" else pdf[col].values
+        ds_ts, ds_vals = _downsample(ts_raw, vals, MAX_POINTS)
         if ds_data["timestamp"] is None:
             ds_data["timestamp"] = ds_ts
         ds_data[col] = ds_vals
@@ -118,6 +142,8 @@ def make_plot(pdf, annotation_cds):
     # Explicit y_range computed from signal data.  Using Range1d (not
     # DataRange1d) is critical because DataRange1d would auto-expand to
     # include annotation quad bounds, squashing the signal to a thin line.
+    # VM is excluded because it is hidden by default; including it would
+    # leave wasted vertical space until the user toggles it on.
     y_min = float(np.nanmin([np.nanmin(ds_data["x"]), np.nanmin(ds_data["y"]), np.nanmin(ds_data["z"])]))
     y_max = float(np.nanmax([np.nanmax(ds_data["x"]), np.nanmax(ds_data["y"]), np.nanmax(ds_data["z"])]))
     y_pad = max((y_max - y_min) * 0.05, 0.1)
@@ -136,20 +162,32 @@ def make_plot(pdf, annotation_cds):
     )
     main_fig.yaxis.visible = False
 
-    for color, col in zip(LST_COLORS, ["x", "y", "z"]):
-        main_fig.line(
+    for color, col, label, visible in zip(
+        TRACE_COLORS, TRACE_COLS, TRACE_LABELS, TRACE_VISIBLE
+    ):
+        line = main_fig.line(
             "timestamp", col, color=color, source=colsource,
             alpha=0.95, line_width=1.5,
+            legend_label=label,
             # Dim unselected data so the box-selected region stands out
             nonselection_alpha=0.2, selection_alpha=1,
         )
+        line.visible = visible
         # Invisible scatter points on top of lines so that BoxSelectTool
         # can select data indices.  Line glyphs alone don't support
-        # index-based hit testing.
-        main_fig.scatter(
-            "timestamp", col, color=None, source=colsource,
-            size=0, alpha=0, nonselection_alpha=0, selection_alpha=0,
-        )
+        # index-based hit testing.  Only the raw axes need scatter hit
+        # targets — VM is a viewing-only derived signal.
+        if col != "vm":
+            main_fig.scatter(
+                "timestamp", col, color=None, source=colsource,
+                size=0, alpha=0, nonselection_alpha=0, selection_alpha=0,
+            )
+
+    # Click a legend entry to show/hide its trace.  Lets the user view
+    # VM alone (or x/y/z alone) without any extra widgets.
+    main_fig.legend.click_policy = "hide"
+    main_fig.legend.location = "top_right"
+    main_fig.legend.background_fill_alpha = 0.7
 
     main_fig.xaxis.formatter = DatetimeTickFormatter(
         days="%Y/%m/%d",
@@ -195,17 +233,27 @@ def make_plot(pdf, annotation_cds):
             name="annotation_quad",
         )
 
+    # Walking-suggestion overlay (dashed border, low-alpha fill).
+    # Visually distinct from confirmed annotations so the annotator can
+    # tell algorithm output apart from human labels at a glance.
+    if "walking_suggestion" in annotation_cds:
+        main_fig.quad(
+            left="start_time", right="end_time", top=q_top, bottom=q_bot,
+            fill_color=WALKING_SUGGESTION_COLOR, fill_alpha=0.15,
+            line_color=WALKING_SUGGESTION_COLOR, line_dash="dashed",
+            line_alpha=0.9, line_width=2,
+            source=annotation_cds["walking_suggestion"], level="overlay",
+            name="annotation_quad",
+        )
+
     # --- Range selector (minimap) ---
     # Subsample from the already-downsampled main data (10K → 2K)
     # instead of re-running LTTB on the full raw signal.
     n_main = len(ds_data["timestamp"])
     step = max(1, n_main // 2000)
-    range_data = {
-        "timestamp": ds_data["timestamp"][::step],
-        "x": ds_data["x"][::step],
-        "y": ds_data["y"][::step],
-        "z": ds_data["z"][::step],
-    }
+    range_data = {"timestamp": ds_data["timestamp"][::step]}
+    for col in TRACE_COLS:
+        range_data[col] = ds_data[col][::step]
     range_source = ColumnDataSource(data=range_data)
 
     range_fig = figure(
@@ -219,11 +267,12 @@ def make_plot(pdf, annotation_cds):
         sizing_mode="stretch_width",
     )
 
-    for color, col in zip(LST_COLORS, ["x", "y", "z"]):
-        range_fig.line(
+    for color, col, visible in zip(TRACE_COLORS, TRACE_COLS, TRACE_VISIBLE):
+        rline = range_fig.line(
             "timestamp", col, color=color, source=range_source,
             alpha=0.8, line_width=1.2,
         )
+        rline.visible = visible
 
     range_fig.xaxis.formatter = DatetimeTickFormatter(
         days="%m/%d %H:%M",
@@ -274,11 +323,13 @@ def update_plot_data(pdf, signal_cds, main_fig, range_source=None):
         return False
 
     ts_raw = pdf["timestamp"].values
+    vm_raw = _compute_vm(pdf)
 
     # Downsample
     ds_data = {"timestamp": None}
-    for col in ["x", "y", "z"]:
-        ds_ts, ds_vals = _downsample(ts_raw, pdf[col].values, MAX_POINTS)
+    for col in TRACE_COLS:
+        vals = vm_raw if col == "vm" else pdf[col].values
+        ds_ts, ds_vals = _downsample(ts_raw, vals, MAX_POINTS)
         if ds_data["timestamp"] is None:
             ds_data["timestamp"] = ds_ts
         ds_data[col] = ds_vals
@@ -311,11 +362,9 @@ def update_plot_data(pdf, signal_cds, main_fig, range_source=None):
     if range_source is not None:
         n_main = len(ds_data["timestamp"])
         step = max(1, n_main // 2000)
-        range_source.data = {
-            "timestamp": ds_data["timestamp"][::step],
-            "x": ds_data["x"][::step],
-            "y": ds_data["y"][::step],
-            "z": ds_data["z"][::step],
-        }
+        new_range_data = {"timestamp": ds_data["timestamp"][::step]}
+        for col in TRACE_COLS:
+            new_range_data[col] = ds_data[col][::step]
+        range_source.data = new_range_data
 
     return True

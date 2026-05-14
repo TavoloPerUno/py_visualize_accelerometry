@@ -12,8 +12,21 @@ from datetime import datetime, timedelta
 import pandas as pd
 import bokeh.plotting as bp
 
-from .config import DISPLAYED_ANNOTATION_COLUMNS, TIME_FMT
+from .config import (
+    DISPLAYED_ANNOTATION_COLUMNS, TIME_FMT, WALKING_SUGGESTION_COLUMNS,
+)
 from .data_loading import save_annotations
+
+
+def _row_to_segment(row):
+    """Convert a walking-suggestions xlsx row to the in-memory segment dict."""
+    return {
+        "start_time": pd.to_datetime(row["start_time"]),
+        "end_time": pd.to_datetime(row["end_time"]),
+        "duration_s": float(row["duration_s"]),
+        "mean_step_freq_hz": float(row["mean_step_freq_hz"]),
+        "dismissed": bool(row.get("deleted", False)),
+    }
 
 
 def capture_new_annotation(start_ts, end_ts, artifact, fname, uname):
@@ -532,6 +545,11 @@ class CallbackManager:
             os.path.dirname(s.fname),
             parts[1] if len(parts) == 2 else parts[0],
         )
+        # Walking suggestions are file-specific; load any persisted ones
+        # for the new file so the user sees their prior detection state.
+        # If no saved suggestions exist for this file, the list is empty.
+        s.clear_walking_suggestions()
+        self.load_persisted_walking_suggestions()
         self.update_plot(_empty_depth=_empty_depth)
         self.w["summary"].object = build_summary_html(s)
 
@@ -661,3 +679,365 @@ class CallbackManager:
                     [s.pdf_annotations, new_rows], ignore_index=True
                 ).reset_index(drop=True)
             s.get_displayed_annotations()
+
+    # ------------------------------------------------------------------
+    # Walking detection (Urbanek 2015 SHW)
+    # ------------------------------------------------------------------
+
+    def load_persisted_walking_suggestions(self):
+        """Populate the in-memory suggestion list from the shared xlsx
+        for the currently-loaded file.
+
+        Loads *all* rows for this file, including dismissed ones — the
+        UI displays dismissed entries as red rows so the user can toggle
+        their state.  Only non-dismissed entries appear in the plot
+        overlay CDS.
+
+        Called on session start and after a file switch so that prior
+        detection runs survive page refresh.
+        """
+        from .data_loading import load_walking_suggestions
+
+        s = self.state
+        try:
+            saved = load_walking_suggestions()
+        except Exception as ex:
+            print(f"Walking suggestions: failed to load xlsx: {ex}")
+            saved = None
+
+        s.walking_suggestions = []
+        s.walking_suggestion_idx = None
+
+        if saved is not None and not saved.empty:
+            basename = os.path.basename(s.fname)
+            mine = saved.loc[saved["fname"] == basename]
+            loaded = [_row_to_segment(row) for _, row in mine.iterrows()]
+            s.walking_suggestions = loaded
+            if loaded:
+                # Land on the first non-dismissed if any, else the first row
+                first_active = next(
+                    (i for i, seg in enumerate(loaded) if not seg["dismissed"]),
+                    0,
+                )
+                s.walking_suggestion_idx = first_active
+
+        self._sync_walking_overlay_cds()
+        self._update_walking_nav_state()
+
+    def _sync_walking_overlay_cds(self):
+        """Push only non-dismissed segments into the plot overlay CDS."""
+        s = self.state
+        active = [
+            seg for seg in s.walking_suggestions if not seg["dismissed"]
+        ]
+        s.annotation_cds["walking_suggestion"].data = {
+            "start_time": [seg["start_time"] for seg in active],
+            "end_time": [seg["end_time"] for seg in active],
+        }
+
+    def detect_walking(self):
+        """Run sustained-harmonic-walking detection on the entire file.
+
+        Loads the whole HDF5 file (not just the visible window), scans
+        it with the SHW algorithm, persists the result to the user's
+        walking-suggestions xlsx, then populates the in-memory list and
+        plot overlay with the non-deleted entries.  Dismissals from prior
+        sessions for the same file are preserved by matching
+        (start_epoch, end_epoch).
+        """
+        from .data_loading import (
+            get_full_filedata, load_walking_suggestions, save_walking_suggestions,
+        )
+        from .walking_detection import detect_walking_segments
+
+        s = self.state
+        basename = os.path.basename(s.fname)
+        self._notify("Scanning file for walking segments…", duration=4000)
+        try:
+            pdf_full = get_full_filedata(s.fname)
+        except Exception as ex:
+            print(f"Walking detect: failed to load {s.fname}: {ex}")
+            self._notify("Could not load file for detection.", duration=3000, kind="error")
+            return
+
+        segments = detect_walking_segments(pdf_full)
+
+        # Preserve prior dismissals for this file
+        existing = load_walking_suggestions()
+        deleted_keys = set()
+        if not existing.empty:
+            this_file = existing.loc[existing["fname"] == basename]
+            for _, row in this_file.iterrows():
+                if bool(row.get("deleted", False)):
+                    deleted_keys.add(
+                        (float(row["start_epoch"]), float(row["end_epoch"]))
+                    )
+
+        # Build fresh rows for this file, marking previously-dismissed ones
+        detected_at = str(pd.Timestamp.now())
+        new_rows = []
+        for seg in segments:
+            start_epoch = pd.to_datetime(seg["start_time"]).timestamp()
+            end_epoch = pd.to_datetime(seg["end_time"]).timestamp()
+            new_rows.append(
+                {
+                    "fname": basename,
+                    "start_time": str(seg["start_time"]),
+                    "end_time": str(seg["end_time"]),
+                    "start_epoch": start_epoch,
+                    "end_epoch": end_epoch,
+                    "duration_s": seg["duration_s"],
+                    "mean_step_freq_hz": seg["mean_step_freq_hz"],
+                    "detected_at": detected_at,
+                    "deleted": (start_epoch, end_epoch) in deleted_keys,
+                }
+            )
+
+        # Replace just this file's rows; keep rows for other files intact
+        other_rows = (
+            existing.loc[existing["fname"] != basename]
+            if not existing.empty else existing
+        )
+        merged = pd.concat(
+            [other_rows, pd.DataFrame(new_rows, columns=WALKING_SUGGESTION_COLUMNS)],
+            ignore_index=True,
+        )
+        save_walking_suggestions(merged)
+
+        # In-memory list: store all segments (including dismissed) so the
+        # UI can render dismissed ones as red rows that can be toggled.
+        in_memory = []
+        for seg, row in zip(segments, new_rows):
+            in_memory.append(
+                {
+                    "start_time": seg["start_time"],
+                    "end_time": seg["end_time"],
+                    "duration_s": seg["duration_s"],
+                    "mean_step_freq_hz": seg["mean_step_freq_hz"],
+                    "dismissed": bool(row["deleted"]),
+                }
+            )
+        s.walking_suggestions = in_memory
+        # Land on the first non-dismissed entry, or 0 if everything's dismissed
+        if in_memory:
+            s.walking_suggestion_idx = next(
+                (i for i, seg in enumerate(in_memory) if not seg["dismissed"]),
+                0,
+            )
+        else:
+            s.walking_suggestion_idx = None
+
+        self._sync_walking_overlay_cds()
+        self._update_walking_nav_state()
+
+        dismissed_count = sum(1 for seg in in_memory if seg["dismissed"])
+        active_count = len(in_memory) - dismissed_count
+        if not in_memory:
+            self._notify("No sustained walking detected.", duration=3000)
+            return
+
+        if active_count == 0:
+            self._notify(
+                f"All {len(in_memory)} detected segments are dismissed.",
+                duration=3000,
+            )
+            return
+
+        suffix = "s" if active_count != 1 else ""
+        dismissed_note = (
+            f" ({dismissed_count} dismissed)" if dismissed_count else ""
+        )
+        self._notify(
+            f"Found {active_count} walking segment{suffix}{dismissed_note}.",
+            duration=3000,
+        )
+        # Jump to the first non-dismissed candidate so the user sees one in context
+        self._navigate_to_current_walking()
+
+    def jump_to_walking_suggestion(self, idx):
+        """Jump directly to the i-th walking candidate (from the list click)."""
+        s = self.state
+        if not s.walking_suggestions:
+            return
+        if idx < 0 or idx >= len(s.walking_suggestions):
+            return
+        s.walking_suggestion_idx = idx
+        self._navigate_to_current_walking()
+        self._update_walking_nav_state()
+
+    def toggle_walking_dismissed(self, idx):
+        """Flip the ``dismissed`` flag on a single walking candidate.
+
+        Dismissed segments stay in the list (rendered red) so the user
+        can reinstate them with another click on the ✕.  The plot
+        overlay shows only non-dismissed segments.  Change is persisted
+        immediately to the shared walking-suggestions xlsx.
+        """
+        from .data_loading import (
+            load_walking_suggestions, save_walking_suggestions,
+        )
+
+        s = self.state
+        if not s.walking_suggestions:
+            return
+        if idx < 0 or idx >= len(s.walking_suggestions):
+            return
+
+        seg = s.walking_suggestions[idx]
+        new_state = not seg["dismissed"]
+        seg["dismissed"] = new_state
+
+        # Refresh the plot overlay so the dismissed segment disappears
+        # (or reappears) from the orange dashed boxes
+        self._sync_walking_overlay_cds()
+
+        # Persist via (fname, start_epoch, end_epoch) match — exact across
+        # the Excel round-trip because epoch is stored as a float.
+        try:
+            existing = load_walking_suggestions()
+            if not existing.empty:
+                basename = os.path.basename(s.fname)
+                start_epoch = pd.to_datetime(seg["start_time"]).timestamp()
+                end_epoch = pd.to_datetime(seg["end_time"]).timestamp()
+                mask = (
+                    (existing["fname"] == basename)
+                    & (existing["start_epoch"].astype(float) == start_epoch)
+                    & (existing["end_epoch"].astype(float) == end_epoch)
+                )
+                if mask.any():
+                    existing.loc[mask, "deleted"] = new_state
+                    save_walking_suggestions(existing)
+        except Exception as ex:
+            print(f"Walking toggle: failed to persist deleted flag: {ex}")
+
+        self._update_walking_nav_state()
+
+    def clear_walking_suggestions(self):
+        """Discard the current candidate list and clear the overlay."""
+        self.state.clear_walking_suggestions()
+        self._update_walking_nav_state()
+
+    def _navigate_to_current_walking(self):
+        """Recenter the time window on the active walking candidate."""
+        s = self.state
+        if s.walking_suggestion_idx is None:
+            return
+        seg = s.walking_suggestions[s.walking_suggestion_idx]
+        # Center the window on the candidate's midpoint so the annotator
+        # sees context on both sides.  Keeps the current windowsize —
+        # the user can zoom independently if they want a tighter view.
+        midpoint = seg["start_time"] + (seg["end_time"] - seg["start_time"]) / 2
+        s.anchor_timestamp = midpoint.strftime(TIME_FMT)
+        self.w["time_input"].value = s.anchor_timestamp
+        self.update_plot()
+
+    def _update_walking_nav_state(self):
+        """Refresh the walking-detection status pane and button states."""
+        s = self.state
+        segs = s.walking_suggestions
+        idx = s.walking_suggestion_idx
+
+        # Status text
+        if not segs:
+            html = (
+                "<div style='font-size:11px;color:#666;padding:4px 0;'>"
+                "No walking suggestions yet.</div>"
+            )
+        else:
+            seg = segs[idx]
+            dismissed_count = sum(1 for x in segs if x.get("dismissed", False))
+            tail = (
+                f" &middot; <span style='color:#c62828;'>{dismissed_count} "
+                f"dismissed</span>" if dismissed_count else ""
+            )
+            current_note = (
+                " <span style='color:#c62828;'>(dismissed)</span>"
+                if seg.get("dismissed", False) else ""
+            )
+            html = (
+                f"<div style='font-size:11px;padding:4px 0;'>"
+                f"<b>{idx + 1} / {len(segs)}</b>"
+                f"{tail}<br>"
+                f"{seg['duration_s']:.0f}s &middot; "
+                f"{seg['mean_step_freq_hz']:.2f} Hz{current_note}"
+                f"</div>"
+            )
+        if "walking_status" in self.w:
+            self.w["walking_status"].object = html
+
+        # Clear button: disabled when nothing to clear
+        if "btn_clear_walking" in self.w:
+            self.w["btn_clear_walking"].disabled = not segs
+
+        # Scrollable click-to-jump list
+        if "walking_list_col" in self.w:
+            self._populate_walking_list()
+
+    def _populate_walking_list(self):
+        """Rebuild the click-to-jump button list of detected segments.
+
+        Each row is a (jump_button, ✕_button) pair.  The ✕ toggles the
+        segment's ``dismissed`` state; dismissed rows are rendered with
+        a red, struck-through label.  The wide jump button still
+        navigates regardless of dismissed state, so users can review a
+        dismissed segment without reinstating it.
+        """
+        import panel as pn
+
+        col = self.w["walking_list_col"]
+        segs = self.state.walking_suggestions
+        active_idx = self.state.walking_suggestion_idx
+        if not segs:
+            col.objects = []
+            return
+
+        jump_css_active = [
+            ":host { font-size: 10px; flex: 1 1 auto !important; }"
+            "button { text-align: left !important; padding: 2px 6px !important; "
+            "white-space: nowrap !important; overflow: hidden !important; "
+            "text-overflow: ellipsis !important; }"
+        ]
+        # Dismissed rows: muted background, red strike-through text.
+        jump_css_dismissed = [
+            ":host { font-size: 10px; flex: 1 1 auto !important; }"
+            "button { text-align: left !important; padding: 2px 6px !important; "
+            "white-space: nowrap !important; overflow: hidden !important; "
+            "text-overflow: ellipsis !important; "
+            "color: #c62828 !important; text-decoration: line-through !important; "
+            "background: #fce4ec !important; border-color: #f4c2c2 !important; }"
+        ]
+        toggle_css = [
+            ":host { font-size: 10px; flex: 0 0 24px !important; }"
+            "button { padding: 2px 4px !important; color: #888 !important; }"
+        ]
+
+        rows = []
+        for i, seg in enumerate(segs):
+            label = (
+                f"{seg['start_time'].strftime('%b %d %H:%M:%S')} "
+                f"· {seg['duration_s']:.0f}s · {seg['mean_step_freq_hz']:.2f} Hz"
+            )
+            is_active = i == active_idx
+            is_dismissed = bool(seg.get("dismissed", False))
+            if is_dismissed:
+                btn_type = "light"
+                css = jump_css_dismissed
+            else:
+                btn_type = "success" if is_active else "light"
+                css = jump_css_active
+
+            jump_btn = pn.widgets.Button(
+                name=label, button_type=btn_type, margin=(1, 0), stylesheets=css,
+            )
+            jump_btn.on_click(lambda e, idx=i: self.jump_to_walking_suggestion(idx))
+
+            toggle_btn = pn.widgets.Button(
+                name="✕", button_type="light", width=24,
+                margin=(1, 0), stylesheets=toggle_css,
+            )
+            toggle_btn.on_click(lambda e, idx=i: self.toggle_walking_dismissed(idx))
+
+            rows.append(
+                pn.Row(jump_btn, toggle_btn, sizing_mode="stretch_width", margin=(0, 0))
+            )
+        col.objects = rows
