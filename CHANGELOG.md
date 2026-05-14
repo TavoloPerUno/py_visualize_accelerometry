@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-05-13
+
+### Added
+- Vector magnitude (VM) overlay: orientation-independent fourth signal trace, toggle via the plot legend
+- Walking detection (Urbanek 2015 sustained harmonic walking): FFT-based detector on VM with hysteresis thresholds, gap-bridging, and 10s sustained-duration filter
+- Walking-suggestions sidebar panel: scrollable click-to-jump candidate list with per-row dismiss/reinstate toggle, persisted in a shared `walking_suggestions.xlsx` and auto-loaded on session start
+- 15 reference images from the NSHAP annotation guidelines and Urbanek 2015 Figure 2 in `docs/images/`
+
+### Changed
+- Rewrote `docs/annotation-guide.md` based on the NSHAP annotation guidelines
+- Added Vector magnitude and Walking detection sections to `docs/usage.md`
+- Tightened prose across README and docs
+
 ## [3.4.2] - 2026-03-14
 
 ### Changed
@@ -353,3 +366,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [3.4.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.4.0...v3.4.1
 
 [3.4.2]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.4.1...v3.4.2
+
+[3.5.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.4.2...v3.5.0
