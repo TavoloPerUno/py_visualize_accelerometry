@@ -2,7 +2,7 @@
 
 ## Overview
 
-The application is built on [Panel](https://panel.holoviz.org/) (which wraps [Bokeh](https://bokeh.org/) server) and follows a clear separation between state management, UI callbacks, plotting, and data I/O.
+The app is built on [Panel](https://panel.holoviz.org/) (which wraps Bokeh server) with separate modules for state, UI callbacks, plotting, and data I/O.
 
 ```
 app.py ──────── Layout, widget creation, callback wiring
@@ -26,11 +26,11 @@ Each browser session gets its own `AppState` instance. This avoids shared mutabl
 
 ### Persistent ColumnDataSources
 
-Annotation overlays use persistent `ColumnDataSource` objects that are created once and shared between `AppState` and the Bokeh figure. Updating `.data` on these sources triggers Bokeh to re-render the overlay quads without rebuilding the entire plot. This is critical for responsiveness — annotation changes are near-instant.
+Annotation overlays use persistent `ColumnDataSource` objects created once and shared between `AppState` and the Bokeh figure. Updating `.data` on a source re-renders just the overlay quads, not the whole plot. Annotation changes appear immediately.
 
 ### LTTB downsampling
 
-Raw accelerometry files can contain 500K+ data points per axis. Sending all of them to the browser would be slow and unresponsive. The plotting module uses the **Largest Triangle Three Buckets** (LTTB) algorithm to reduce each axis to ~10,000 visually representative points for the main plot and ~2,000 for the range selector minimap. LTTB preserves the visual shape of the signal — peaks, valleys, and rapid transitions are retained while flat regions are compressed. If the `lttbc` C extension is not installed, it falls back to uniform strided sampling.
+Raw files can hold 500K+ points per axis. Sending them all to the browser would be slow. The plotting module uses Largest Triangle Three Buckets (LTTB) to reduce each axis to ~10,000 points for the main plot and ~2,000 for the range selector. LTTB keeps the shape of the signal: peaks, valleys, and rapid transitions stay; flat regions compress. The `lttbc` C extension makes this fast; without it, the code falls back to uniform strided sampling.
 
 ### Box-select via invisible scatter points
 
@@ -38,22 +38,22 @@ Bokeh's `BoxSelectTool` selects data indices from point-based glyphs (scatter, c
 
 ### HDF5 server-side filtering
 
-Data loading uses PyTables `where` clauses (`pd.read_hdf(..., where="timestamp >= ts_start & timestamp <= ts_end")`) to read only the time window needed, instead of loading the entire file into memory and filtering in Python. This reduces load times from seconds to milliseconds on large files (e.g., 14 ms vs 1.38 s on a 123 MB file). A fallback to in-memory filtering is included for fixed-format HDF5 files.
+Data loading uses PyTables `where` clauses (`pd.read_hdf(..., where="timestamp >= ts_start & timestamp <= ts_end")`) so only the visible time window leaves disk. On a 123 MB file, that's 14 ms instead of 1.38 s. Fixed-format HDF5 files fall back to in-memory filtering.
 
 ### Fast-path navigation
 
-When the user navigates with Previous/Next, the app updates the existing Bokeh `ColumnDataSource.data` and adjusts axis ranges in place, rather than rebuilding the entire figure. Bokeh sends this as a lightweight websocket data-patch. Annotation quad bounds (`top`/`bottom`) are also updated dynamically to match the new y-range. A full figure rebuild is only needed on the initial load.
+Previous/Next patches the existing `ColumnDataSource.data` and adjusts axis ranges in place instead of rebuilding the figure. Bokeh ships this as a small websocket data-patch. Annotation quad bounds (`top`/`bottom`) update to match the new y-range. Full figure rebuild only happens on the first load.
 
 ### Explicit y-range
 
-The plot uses `Range1d` (not `DataRange1d`) for the y-axis. This is because `DataRange1d` auto-expands to include all renderers — including annotation quad overlays — which would squash the signal to a thin line. The y-range is computed from the actual signal data with 5% padding.
+The plot uses `Range1d`, not `DataRange1d`, for the y-axis. `DataRange1d` would auto-expand to include the annotation quad overlays, which would squash the signal to a thin line. The y-range is computed from the signal with 5% padding.
 
-### Canvas rendering (not WebGL)
+### Canvas rendering, not WebGL
 
-Despite having up to 10,000 points per axis, the app uses the default canvas backend instead of WebGL. This is because:
+The app uses the default canvas backend instead of WebGL because:
 - WebGL doesn't support hatch patterns (used for segment/scoring/review overlays)
-- WebGL has rendering glitches when updating CDS data in-place
-- With LTTB downsampling, canvas performance is more than adequate
+- WebGL has rendering glitches when updating CDS data in place
+- With LTTB, canvas is fast enough at 10,000 points per axis
 
 ## Data flow
 

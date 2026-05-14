@@ -1,4 +1,4 @@
-Follow the instructions below to connect to the shared annotation server on the HPC cluster. The script handles everything automatically — it checks for a running server, starts one if needed, and creates the SSH tunnel.
+Follow these instructions to connect to the shared annotation server on the HPC cluster. The script handles everything: it checks for a running server, starts one if needed, and creates the SSH tunnel.
 
 # Preliminary steps (one-time setup)
 

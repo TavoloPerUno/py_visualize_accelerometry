@@ -18,7 +18,7 @@ The app has three main areas:
 
 ### Header bar
 
-The header displays the app logo, title, a **network latency indicator** (round-trip time to the server, updated every 10 seconds), the currently logged-in user, an impersonation dropdown (for admins), and a logout icon on the far right. The latency value is color-coded: teal (<100 ms), orange (<300 ms), or red (≥300 ms).
+The header shows the app logo, title, a network latency indicator (round-trip time to the server, updated every 10 seconds), the current user, an impersonation dropdown for admins, and a logout icon on the right. Latency is color-coded: teal (<100 ms), orange (<300 ms), red (≥300 ms).
 
 ![Header bar](images/header_bar.png)
 
@@ -34,7 +34,7 @@ The sidebar contains all controls for file selection, time navigation, plot upda
 
 ### File selection
 
-Use the **File** dropdown at the top of the sidebar to select a file. Files are deterministically assigned to annotators so each person has a consistent workload. The file name format is `username--participant_id-date`.
+Pick a file from the **File** dropdown at the top of the sidebar. Files are assigned deterministically so each annotator sees a consistent workload. The file name format is `username--participant_id-date`.
 
 ### Time controls
 
@@ -83,18 +83,100 @@ The color key strip below the toolbar explains what each color and pattern means
 
 ### Downsampling and performance
 
-Raw accelerometry files can contain **500,000+ data points per axis**. Sending all of them to the browser would make the interface slow and unresponsive. To solve this, the app uses **LTTB (Largest Triangle Three Buckets)** downsampling to reduce each axis to ~10,000 visually representative points.
+Raw files can hold 500,000+ points per axis. Sending them all to the browser would be slow. The app uses **LTTB (Largest Triangle Three Buckets)** downsampling to cut each axis down to ~10,000 representative points.
 
-LTTB is a perceptual downsampling algorithm that preserves the visual shape of the signal — peaks, valleys, and rapid changes are retained while flat regions are compressed. This means the plot looks nearly identical to the full-resolution data, but renders much faster.
+LTTB keeps the visual shape of the signal: peaks, valleys, and rapid changes stay; flat regions compress. The plot looks nearly identical to full-resolution data and renders much faster.
 
-- **Main plot**: ~10,000 points per axis
-- **Range selector minimap**: ~2,000 points per axis (lower resolution since it is smaller)
+- **Main plot:** ~10,000 points per axis
+- **Range selector minimap:** ~2,000 points per axis
 
-If the `lttbc` C extension is installed, downsampling is very fast. Otherwise, the app falls back to uniform strided sampling, which is less accurate but still performant.
+The `lttbc` C extension makes downsampling fast. Without it, the app falls back to uniform strided sampling, which is less accurate but still quick.
 
-The window size also affects how much data is loaded and downsampled. A smaller window (e.g., 60 seconds) shows more detail from fewer raw points, while a larger window (e.g., 3600 seconds) compresses more data into the same number of display points.
+Window size affects how much raw data is loaded and downsampled. A smaller window (e.g. 60 s) shows more detail from fewer raw points; a larger window (e.g. 3600 s) compresses more data into the same display budget.
 
-When navigating with **Previous** / **Next**, the app uses a fast path that updates the existing plot data in place (no full figure rebuild), so transitions between windows are near-instant.
+Previous/Next uses a fast path that patches the existing plot data in place. No full figure rebuild, so transitions between windows are near-instant.
+
+---
+
+## Vector magnitude overlay
+
+The plot can show a fourth trace, **vector magnitude** (VM = √(x² + y² + z²)), as a black line. Toggle it on by clicking **VM** in the plot's legend (top right).
+
+VM is orientation-independent. Rotating the sensor doesn't change the value, so periodic motion shows up as a clean oscillation around 1 g and impacts show up as sharp spikes. It's useful for:
+
+- Spotting where activity starts and ends without having to fuse three axes by eye.
+- Counting reps. Each sit-to-stand or footfall is one VM peak.
+- Sanity checks. A long flat near 1 g means the device sat still; a flat near 0 g means a sensor fault or data gap.
+
+VM is hidden by default to keep the initial view simple. Clicking **x**, **y**, **z**, or **VM** in the legend toggles each line independently.
+
+---
+
+## Walking detection
+
+The **Walking detection** panel in the sidebar runs an algorithm based on Urbanek et al. 2015 ("sustained harmonic walking") on the whole file. Candidates appear as dashed orange overlays on the plot.
+
+Candidates are suggestions, not annotations. You decide which to keep, dismiss, or convert.
+
+### What the algorithm looks for
+
+Urbanek classifies short windows of accelerometry into four signal types. Walking is the fourth: a locally periodic signal where most of the spectral power lands in a single peak inside the walking band.
+
+![Four signal types from Urbanek 2015 Figure 2](images/urbanek_signal_types.png)
+
+*Each row shows a 60-second window. Left: raw tri-axial signal. Middle: rolling mean and standard deviation. Right: Fourier spectrum. From top to bottom: resting (flat signal, no spectral peaks), change in position (mean shift, peak at 0 Hz only), compound activity (busy signal, many unaligned spectral peaks across axes), and walking (clean periodic signal, one dominant peak around 2 Hz with a harmonic at 4 Hz). Figure adapted from [Urbanek et al. 2015](https://arxiv.org/abs/1505.04066).*
+
+What separates walking from the other three:
+
+- The signal is **periodic** (unlike resting or position changes).
+- The dominant frequency falls in the **walking band**: 0.5–3 Hz, or 30 to 180 steps per minute.
+- Most of the in-band power is concentrated at one peak (unlike compound activities, where many frequencies share the spectrum).
+
+### How the detector works
+
+The algorithm operates on the vector-magnitude signal `VM = √(x² + y² + z²)`. VM is used because it does not depend on sensor orientation — rotating the device on the wrist doesn't change it. This matters in free-living data where the sensor can rotate freely.
+
+For each 3-second window (sliding with a 1-second hop):
+
+1. Detrend (subtract the mean — VM sits around 1 g due to gravity).
+2. Compute the FFT and restrict to the walking band.
+3. Find the dominant peak frequency `f_peak` and its power.
+4. Compute **harmonicity** = `peak_power / total_band_power`. High harmonicity means the energy is concentrated at one frequency, which is the signature of clean periodic motion.
+
+Two thresholds with hysteresis then turn the per-window scores into segments:
+
+- A **strict** threshold (harmonicity ≥ 0.5) identifies the core of a walking bout. At least two consecutive strict windows are required to anchor a segment, to filter out single-window false positives.
+- A **loose** threshold (harmonicity ≥ 0.4) extends the segment outward from its core through the ramp-up and ramp-down phases. Without this, the algorithm would clip the first and last few seconds of every walking bout, where the cadence is still stabilizing.
+
+After the per-segment pass, segments separated by gaps of three seconds or less get merged, since a tiny dropout inside a longer bout usually reflects a brief cadence change, not a real pause. Finally, segments shorter than 10 seconds get dropped — Urbanek defines "sustained" as ≥10 s of stable cadence.
+
+Each kept segment carries its mean step frequency (averaged across strict windows in the segment). Typical adult walking ranges from 1.5 to 2.5 Hz (90 to 150 steps per minute).
+
+### Reference
+
+Urbanek, J.K., et al. (2015). *Prediction of sustained harmonic walking in the free-living environment using raw accelerometry data.* arXiv:[1505.04066](https://arxiv.org/abs/1505.04066).
+
+### Using it
+
+- Click **Detect walking** to scan the file. Results are saved to `data/output/walking_suggestions.xlsx`.
+- The list below the button shows every detected segment with its time, duration, and step frequency. Click a row to jump the time window to that segment.
+- Click the **✕** next to a row to dismiss it. Dismissed rows turn red, disappear from the plot overlay, and are flagged `deleted=True` in the xlsx. Clicking ✕ again restores them.
+- **Clear** hides the in-memory list and overlay for the current session without modifying the xlsx.
+
+### Persistence
+
+- The xlsx is **shared across users**, since the algorithm output is deterministic per file.
+- Results survive page refresh — on load, the app reads back the saved list (minus dismissed entries) for the current file.
+- Clicking **Detect walking** again replaces this file's rows in the xlsx with fresh algorithm output. Dismissals are preserved by matching on `(fname, start_epoch, end_epoch)`.
+
+### Converting a suggestion to an annotation
+
+Suggestions stay separate from annotations. To accept one:
+
+1. Box-select over the highlighted region.
+2. Click `3m Walk` or `6min Walk` exactly as you would for any manual annotation.
+
+The dashed orange box is just a visual hint; nothing is auto-labeled.
 
 ---
 
@@ -131,13 +213,13 @@ After creating an annotation, you can add flags to provide additional classifica
 | **Scoring** | Scoring selection | Dot pattern | Indicates the segment selected for frailty assessment scoring |
 | **Review** | Review needed | Checkerboard | Flags the annotation for review by another annotator when the signal is difficult to interpret |
 
-**Segment flag.** Some activities consist of multiple repetitions within a single episode. The segment flag is used to mark each individual repetition. For example, a Chair Stand Test episode may contain five sit-to-stand cycles; each cycle should be marked with its own segment box inside the larger activity annotation. Activities like TUG, which are performed as a single continuous movement, typically have only one segment.
+**Segment flag.** Some activities have multiple reps within one episode. The segment flag marks each rep. For example, a Chair Stand Test episode may contain five sit-to-stand cycles, and each cycle gets its own segment box inside the activity annotation. TUG is a single continuous movement, so it usually has just one segment.
 
-**Scoring flag.** After segmenting an episode into individual repetitions, the annotator uses their judgement to select the one segment that best represents the activity for frailty assessment scoring. Only one segment per episode should carry the scoring flag. The chosen segment should be the most clearly executed and representative repetition — avoid segments where the participant paused, used their hands for support, or where the signal is ambiguous.
+**Scoring flag.** Once an episode is split into reps, the annotator picks the segment that best represents the activity for scoring. Only one segment per episode should carry the scoring flag. Pick the cleanest, most representative rep. Avoid segments where the participant paused, used hands for support, or where the signal is ambiguous.
 
-**Review flag.** When accelerometry signals are noisy, ambiguous, or otherwise difficult to interpret with confidence, the annotator should apply the review flag and add a note explaining the concern. This flags the annotation for a second opinion from another annotator or admin. Common reasons to flag for review include overlapping activities, sensor artifacts, or uncertainty about segment boundaries.
+**Review flag.** When a signal is noisy or ambiguous, apply the review flag and add a note explaining the concern. This sends the annotation to another annotator or admin for a second opinion. Common reasons: overlapping activities, sensor artifacts, or uncertain segment boundaries.
 
-Flags are **toggles** — clicking the same flag button again removes the flag from the selected annotations. Multiple flags can be applied to the same annotation simultaneously (e.g., a segment can be both the scoring selection and flagged for review if the annotator is unsure).
+Flags are toggles. Clicking the same flag button again removes it. Multiple flags can sit on the same annotation (e.g., a segment can be both the scoring selection and flagged for review if you're unsure).
 
 #### Example workflow: annotating a Chair Stand Test
 

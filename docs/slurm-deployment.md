@@ -2,13 +2,9 @@
 
 ## Overview
 
-The application supports a **shared server** deployment model on HPC clusters
-managed by Slurm. Any team member can run the connect script — it automatically
-checks for an existing server, starts one if needed, and creates an SSH tunnel.
-No dedicated admin is required.
+The app supports a shared-server deployment on Slurm-managed HPC clusters. Any team member can run the connect script. It checks for an existing server, starts one if needed, and creates the SSH tunnel. No dedicated admin needed.
 
-This replaces the earlier model where every annotator launched a separate Slurm
-job, which was wasteful of cluster resources and harder to coordinate.
+This replaces the earlier model, where every annotator launched their own Slurm job. That wasted cluster resources and was harder to coordinate.
 
 ## System Architecture
 

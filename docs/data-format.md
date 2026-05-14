@@ -2,7 +2,7 @@
 
 ## HDF5 input format
 
-The application reads accelerometry data from HDF5 files (`.h5`). Each file must contain a `readings` table with the following columns:
+The app reads accelerometry data from HDF5 files (`.h5`). Each file must contain a `readings` table with these columns:
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -11,7 +11,7 @@ The application reads accelerometry data from HDF5 files (`.h5`). Each file must
 | `y` | float | Acceleration along the y-axis |
 | `z` | float | Acceleration along the z-axis |
 
-The `readings` table is stored as a PyTables (HDF5) table, which allows efficient time-range queries without loading the entire file into memory.
+The `readings` table is stored as a PyTables (HDF5) table so the app can query a time window without loading the whole file.
 
 ## File placement
 
@@ -25,7 +25,7 @@ Any file with an `.h5` extension in this directory will be discovered by the app
 
 ## File naming
 
-There are no strict naming requirements — any `.h5` extension works. However, the application displays filenames in the file picker dropdown, so descriptive names are recommended. A common convention is:
+Any `.h5` filename works. The file picker dropdown shows filenames as-is, so use something descriptive. A common pattern:
 
 ```
 participant_id-date.h5
@@ -33,13 +33,9 @@ participant_id-date.h5
 
 ## File assignment
 
-Files are distributed across annotators using a **deterministic shuffle with a fixed seed**. This ensures that:
+Files are spread across annotators with a deterministic shuffle (fixed seed). The same user gets the same assignment across sessions, and the workload is balanced. Two annotators see different assignment orders, which reduces redundant work.
 
-- Each annotator sees a consistent set of files across sessions
-- The workload is evenly distributed
-- Two annotators never see the same assignment order (reducing redundant work)
-
-The assignment is computed at startup based on the list of available files and registered users. Admins can see all files and can impersonate other users to view their assignments.
+The assignment runs at startup from the file list and registered users. Admins see all files and can impersonate another user to view their assignments.
 
 ## Annotation output format
 
@@ -94,4 +90,4 @@ df.to_hdf(
 )
 ```
 
-The `format="table"` argument is important — it creates a PyTables table that supports efficient row-level queries, which the application uses to load only the visible time window rather than the entire file.
+The `format="table"` argument matters. It creates a PyTables table that supports row-level queries, which the app needs to load just the visible time window.

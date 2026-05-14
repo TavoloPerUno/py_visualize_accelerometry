@@ -1,165 +1,249 @@
 # Annotation Guide
 
-## Overview
+This guide is the annotator-facing reference for marking up accelerometry recordings of the NSHAP Round 4 physical-function tests: Chair Stand, 3-Meter Usual Walk, Timed Up and Go (TUG), and the 6-Minute Walk Test (6MWT). It covers what to look for in the signal, where to start and stop each annotation, and how to handle common edge cases.
 
-Annotations in this tool represent **time boundaries of activities** within continuous accelerometry recordings. Each annotation marks when a specific activity began and ended, along with metadata about individual repetitions, scoring selections, and review status.
+## Definitions
 
-The goal is to produce a structured dataset that links raw accelerometry signals to labeled activity segments for downstream analysis. The built-in activity labels are configured for physical performance tests (Chair Stand, TUG, 3-Meter Walk, 6-Minute Walk), but the app can visualize and annotate accelerometry data from any setting.
+| Term | Meaning |
+|---|---|
+| **Annotation** | A time range marked on the recording, with one or more labels applied to it. |
+| **Episode** | The full duration of one performance-test attempt, including warm-up, false starts, and recovery. |
+| **Score** | The clean section of the episode used to time the participant. |
+| **Segment** | An individual repetition or sub-section within an episode (e.g. one of the five sit-to-stand cycles). |
+| **Dominant stride** | A stride from the leg on the same side as the accelerometer. |
+| **Non-dominant stride** | A stride from the opposite leg. |
 
-## Activity types and colors
+## How the app's labels map to Episode / Score / Segment
 
-Each activity type is displayed as a colored overlay on the signal plot:
+The app stores every annotation as a time range plus an *artifact* label (the test type) and up to three *flags* (segment, scoring, review). The three annotation types from the NSHAP guide map onto this as follows:
 
-| Activity | Overlay color | Description |
-|----------|--------------|-------------|
-| **Chair Stand** | Cyan | Repeated sit-to-stand cycles measuring lower-extremity strength |
-| **TUG** | Yellow | Timed Up and Go — stand, walk 3 m, turn, walk back, sit |
-| **3-Meter Walk** | Magenta | Short-distance gait speed measurement |
-| **6-Minute Walk** | Green | Submaximal endurance test — walk as far as possible in 6 minutes |
+| NSHAP guide term | What you do in the app |
+|---|---|
+| Episode | Box-select the range, click the test button (`Chairstand`, `TUG`, `3m Walk`, `6min Walk`). No flag is needed. |
+| Score | On a fresh annotation of the same range, click the test button, then click **Scoring**. |
+| Segment | On a fresh annotation of the sub-range, click the test button, then click **Segment**. |
+| Flag for review | Click **Review** on any annotation that needs a second pair of eyes. Add a note explaining why. |
 
-See [Physical Performance Tests](tests-overview.md) for detailed descriptions of each test, including what the accelerometry signals look like and how to identify them.
+Flags are toggles. Clicking the same button again removes that flag. An annotation can carry more than one flag at a time (e.g. the scoring segment also flagged for review).
 
-## The three flags
+![Episode, Score, and Segment annotations side by side](images/annotation_types_overview.png)
 
-After marking an activity episode, annotators use three flags to add structured metadata. Each flag serves a distinct purpose in the annotation workflow.
+## Workflow
+
+1. **Select your name** in the "Annotate as" picker and open the participant's HDF5 file.
+2. **Position the time window** at the start of the file. For most tests the relevant signal lives in the first hour; for the 6MWT you'll need to navigate by time using the activity log.
+3. **Box-select the episode** by left-click-dragging across the disturbance. The box has no fill until you apply the first label.
+4. **Click the test button** (`Chairstand`, `TUG`, `3m Walk`, `6min Walk`). The annotation becomes a colored overlay.
+5. **Add score and segment annotations** by box-selecting the relevant sub-range and clicking the test button again, then the appropriate flag.
+6. **Flag for review** anything ambiguous and write a note explaining the concern.
+7. **Click Export** to write annotations to disk. The app does not auto-save.
+8. **Delete an annotation** by box-selecting fully around it (check "Selected annotations" lists the right one) and clicking **Delete**, then **Export**.
+
+## Activity types and overlay colors
+
+| Activity | Color | What it measures |
+|---|---|---|
+| Chair Stand | Cyan | Lower-extremity strength via five sit-to-stand cycles |
+| TUG | Yellow | Functional mobility — stand, walk 3 m, turn, walk back, sit |
+| 3-Meter Walk | Magenta | Short-distance gait speed |
+| 6-Minute Walk | Green | Submaximal aerobic capacity |
+
+## Chair Stand Test
+
+The signal shows five distinct waves where all three axes diverge from the flat baseline, separated by brief returns to baseline. Each wave is one sit-to-stand-to-sit cycle. The large amplitude reflects the thigh rotating roughly 90° between sitting and standing.
+
+### Episode
+
+- **Start:** the first disturbance from flat — *all three axes* diverge.
+- **Stop:** the last disturbance before flat returns — *two of the three axes* converge to the same count level.
+- **Label:** `Chairstand`.
+
+![Chair Stand episode boundaries](images/chair_stand_episode.png)
+
+### Score
+
+- **Start:** the first disturbance from flat — all three axes diverge.
+- **Stop:** the mid-peak of the **5th** chair-stand wave.
+- **Label:** `Chairstand` + **Scoring**.
+- The participant must have completed at least 5 chair stands to be scored. If fewer than 5 are completed, skip the score. If more than 5, score the first 5.
+
+![Chair Stand score range](images/chair_stand_score.png)
+
+### Segments
+
+Annotate every chair stand, even past 5.
+
+- **Start:** the rise of each chair stand — all three axes diverge.
+- **Stop:** the end of the sit — two of the three axes converge.
+- **Label:** `Chairstand` + **Segment**.
+
+### Common issues
+
+- **Fewer than 5 chair stands.** Annotate the episode and each segment, but do not score.
+- **More than 5 chair stands.** Episode covers all attempts; score the first 5 only; segments cover every attempted stand.
+- **Multiple 5-rep attempts.** One episode covers everything. Add a separate score per attempt and a separate segment per stand.
+
+## 3-Meter Usual Walk
+
+After the initial stand, look for this sequence: ~5 s flat → walk 1 (3–25 s of steps) → flat → short step (turnaround) → flat → walk 2 → ~5 s flat.
+
+![3-Meter Walk structure](images/three_m_walk_structure.png)
+
+### Episode
+
+- **Start:** the inflection from rest to the first motion on *any* axis, before walk 1.
+- **Stop:** the inflection from the last motion on *any* axis at the end of walk 2 back to flat.
+- **Label:** `3m Walk`.
+
+![3-Meter Walk episode](images/three_m_walk_episode.png)
+
+### Score
+
+Each walk has alternating dominant and non-dominant strides. Each step typically shows two "M"-shaped movements along one axis; amplitude differences tell you which is which. Zoom in for clarity.
+
+![Dominant vs non-dominant strides](images/three_m_walk_strides.png)
+
+- **Start:** the inflection from rest to the **first full-swing** step on all three axes.
+- **Stop:** the *base* of the **final full-swing** step. A full-swing step has amplitude similar to the prior steps (>50 % of their height). A half-amplitude step is not a full swing.
+- The X and Z axes diverge in opposite directions on each stride and return to baseline (Z hits 0) at the stride's end.
+- **Label:** `3m Walk` + **Scoring**.
+
+![3-Meter Walk score boundaries](images/three_m_walk_score.png)
+
+### Segments
+
+None. The 3 m walk doesn't use segment annotations.
+
+### Common issues
+
+- **More than 2 walks.** Include all attempts in the episode. Score each individual walk.
+- **No pause before turnaround.** When the turn flows directly into the next walk, use stride pattern and count to identify the boundary — each walk should have a similar number of strides.
+
+![No-pause turnaround](images/three_m_walk_no_pause.png)
+
+## Timed Up and Go (TUG)
+
+A composite test: chair rise (one large burst) → walk out (regular oscillations) → turn (brief disrupted rhythm with reduced amplitude) → walk back → chair sit (another large burst).
+
+### Episode
+
+- **Start:** the first disturbance from flat — all three axes diverge.
+- **Stop:** the last disturbance before flat returns — two of three axes converge.
+- **Label:** `TUG`.
+
+![TUG episode](images/tug_episode.png)
+
+### Score
+
+- **Start:** the first disturbance — all three axes diverge.
+- **Stop:** the end of the chair sit — two of three axes converge.
+- **Label:** `TUG` + **Scoring**.
+
+(The score and episode often share start/stop points for TUG; the score formalizes the timed portion.)
 
 ### Segment
 
-**Visual pattern:** diagonal stripes
+Mark the walking portion only — exclude the chair rise and chair sit.
 
-The segment flag marks **individual repetitions within an activity episode**. Some activities consist of multiple discrete movements within a single episode. For example, a Chair Stand Test episode contains five sit-to-stand cycles — each cycle is one segment.
+- **Start:** the first step after rising. The top axis (usually red, when the device is placed correctly) is the clearest reference.
+- **Stop:** immediately after the last step, before the descent into the chair.
+- **Label:** `TUG` + **Segment**.
 
-- **Chair Stand**: mark each sit-to-stand-to-sit cycle as a separate segment (typically 5 segments per episode)
-- **TUG**: usually a single segment covering the entire movement sequence
-- **3-Meter Walk**: one segment per trial (some protocols include multiple trials)
-- **6-Minute Walk**: typically one segment for the full walk
+![TUG segment](images/tug_segment.png)
 
-### Scoring
+### Common issues
 
-**Visual pattern:** dot pattern
+- **More than one TUG attempt.** Single episode covers everything; one score per attempt.
+- **Pauses mid-TUG.** Episode and score follow the standard rules. For segments, split the walking portion into two segments if the pause falls mid-walk; otherwise use one segment that excludes the pause.
 
-The scoring flag marks **which segment the annotator selected for frailty assessment scoring**. After segmenting an episode into individual repetitions, the annotator uses their judgement to pick the one segment that best represents the activity. Only one segment per episode should carry the scoring flag.
+## 6-Minute Walk Test
 
-Choose the segment where:
-- The participant's movement was smooth and clearly executed
-- The accelerometry signal is unambiguous
-- The participant did not pause, use hands for support, or deviate from the test protocol
+The 6MWT has a distinctive boundary marker: participants do a "hand wave" before and after the walk. The wave shows up as a clean sinusoidal pattern in the north-south direction. The walk itself is sustained rhythmic stepping for around 6 minutes; participants may walk slightly more or less.
 
-### Review
+### Finding the 6MWT in the recording
 
-**Visual pattern:** checkerboard
+1. Look up the date and time of the test in the sleep/activity log (cross-reference by `su_id` and device serial).
+2. Position the time window at the start of that day.
+3. Set windowsize to **14400** (4-hour frames) and step through with **Next**.
+4. Look for the sinusoidal hand-wave pattern that brackets the walk.
 
-The review flag marks **difficult-to-interpret signals for review by other annotators**. When the accelerometry data is noisy, ambiguous, or the annotator is uncertain about segment boundaries, they should apply the review flag and add a note explaining the concern.
+![Hand wave at start of 6MWT](images/six_min_walk_hand_wave_start.png)
 
-Common reasons to flag for review:
-- Overlapping activities that are hard to separate
-- Sensor artifacts or signal dropout
-- Uncertainty about whether a movement is a test activity or normal daily activity
-- Ambiguous segment boundaries (e.g., the participant paused mid-repetition)
+![Hand wave at end of 6MWT](images/six_min_walk_hand_wave_end.png)
 
-Flags are **toggles** — clicking the same flag button again removes it. Multiple flags can coexist on the same annotation (e.g., a segment can be both the scoring selection and flagged for review).
+### Episode
 
-## Annotation boundaries
+The walking pattern between the two hand waves shows rapid, repeated arm-swing waves.
 
-**Start** the annotation at the **first disturbance from the flat baseline** — the moment the accelerometer axes begin to diverge from their resting values. **End** the annotation at the **last disturbance before the signal returns to flat**. Do not include extended periods of inactivity before or after the actual movement.
+- **Start:** the first repeated rapid arm-swing wave (just after the opening hand wave).
+- **Stop:** the end of the walking pattern, just before the closing hand wave.
+- **Label:** `6min Walk`.
+- Device rotation on the wrist can shift which axes show the pattern.
 
-## What the signals look like
+![Continuous walking strides](images/six_min_walk_strides.png)
 
-At rest, the three accelerometer axes (X, Y, Z) converge near a flat baseline. During activity, the axes **diverge** — the amplitude and direction of divergence depend on the type and vigor of movement. Between repetitions, the axes briefly **converge** back to baseline.
+![6MWT episode](images/six_min_walk_episode.png)
 
-### Chair Stand Test
+### Score (10-second segment)
 
-Five distinct waves where all three axes diverge from the flat baseline, separated by brief convergence periods. Each wave corresponds to one sit-to-stand-to-sit cycle. The large deflections reflect the thigh rotating approximately 90° between sitting (horizontal) and standing (vertical).
+Pick any clean 10-second stretch of continuous walking with no breaks, pauses, turns, or device rotation if possible.
 
-![Chair Stand signal pattern](images/signal_chair_stand.svg)
+- **Start:** any point near the beginning of a clean walk stretch.
+- **Stop:** ≥ 10 s later, still in the clean walk.
+- **Label:** `6min Walk` + **Scoring**.
+- Longer than 10 s is fine.
 
-### Timed Up and Go (TUG)
+![10-second walking score](images/six_min_walk_score.png)
 
-A composite activity: a chair rise (large single burst like one chair stand), rhythmic walking out (regular oscillations), a turn (brief disrupted rhythm with reduced amplitude), walking back, and a chair sit (another large burst). The walking phases show periodic gait oscillations between the rise and sit bursts.
+### Segments
 
-![TUG signal pattern](images/signal_tug.svg)
+None. The 6MWT doesn't use segment annotations.
 
-### 3-Meter Walk
+## Vector magnitude overlay
 
-Two walking segments separated by a turnaround. The signal shows: flat baseline → rhythmic gait oscillations (walk out) → brief turn → rhythmic gait oscillations (walk back) → flat baseline. The walk-back segment may show slightly different amplitudes due to dominant vs. non-dominant stride differences.
+The plot can show a fourth trace, vector magnitude (VM = √(x² + y² + z²)), as a black line. VM is orientation-independent. Rotating the sensor doesn't change it, so periodic motion shows up as a clean oscillation around 1 g and impacts show up as sharp spikes. Toggle it on or off by clicking **VM** in the plot's legend.
 
-![3-Meter Walk signal pattern](images/signal_3m_walk.svg)
+VM is useful for:
 
-### 6-Minute Walk Test
+- Spotting where activity starts and ends without having to fuse three axes by eye.
+- Counting reps. Each sit-to-stand bump or footfall is one VM peak.
+- Sanity checks. A long flat near 1 g means the device sat still; a flat near 0 g means a sensor fault or data gap.
 
-Sustained rhythmic walking with periodic brief disruptions from corridor turns. May show subtle fatigue effects (decreasing amplitude) toward the end. Turn points appear as momentary reductions in oscillation amplitude.
+## Automated walking detection
 
-![6-Minute Walk signal pattern](images/signal_6min_walk.svg)
+The **Walking detection** panel in the sidebar runs a sustained-harmonic-walking detector (based on Urbanek et al. 2015) on the whole file. Candidates appear as dashed orange overlays on the plot. They are suggestions, not labels.
 
-## Complete workflow example: Chair Stand Test
-
-This walkthrough covers the full annotation process for a typical Chair Stand Test episode.
-
-### Step 1: Select the episode
-
-Navigate to the portion of the file where the chair stands occur. Box-select from the **first disturbance** (where axes begin to diverge from flat) to the **last disturbance** (where axes return to flat after the final repetition), then click **Chairstand**. Keep the boundaries tight — do not include extended flat periods before or after the activity.
-
-![Step 1: Box-select the episode](images/step1_mark_episode.svg)
-
-### Step 2: Episode annotated
-
-A cyan overlay appears on the plot, marking the full Chair Stand episode.
-
-![Step 2: Cyan overlay marks the episode](images/step2_episode_annotated.svg)
-
-### Step 3: Add segment markers
-
-Zoom in so that individual sit-to-stand cycles are clearly visible. For each repetition, box-select the time range and click **Segment**. Diagonal stripe patterns appear on each segment.
-
-![Step 3: Segment markers on each repetition](images/step3_add_segments.svg)
-
-### Step 4: Select a segment for scoring
-
-Identify the cleanest, most representative repetition — where the participant's movement was smooth and the signal is unambiguous. Select that segment and click **Scoring**. A dot pattern and gold highlight appear on the chosen segment.
-
-![Step 4: Scoring flag on the selected segment](images/step4_select_scoring.svg)
-
-### Step 5: Flag anything unclear
-
-If a repetition has a noisy signal or the participant appears to have paused mid-stand:
-- Select that segment
-- Click **Review** (checkerboard pattern appears)
-- Add a note in the sidebar (e.g., "possible pause at top of stand — unclear if completed")
-
-### Step 6: Add notes and export
-
-Use the **Notes** field in the sidebar to attach free-text context. Click **Save notes** to persist, then click **Export** to save all annotations to disk.
+- Click **Detect walking** to scan the file. Results are saved to `data/output/walking_suggestions.xlsx` and survive page refresh.
+- The list under the button shows every candidate with time, duration, and step frequency. Click a row to jump the time window to that segment.
+- Click the **✕** next to a row to dismiss it. Dismissed rows turn red, leave the plot overlay, and get flagged `deleted=True` in the xlsx. Clicking ✕ again reinstates them.
+- To convert a suggestion into a real annotation, box-select over the highlighted region and click `3m Walk` or `6min Walk` as you would for any manual annotation.
+- **Clear** hides the current session's list and overlay without touching the xlsx.
 
 ## Annotation export format
 
-Annotations are saved as Excel files in `data/output/`, one file per user, with the naming pattern:
-
-```
-data/output/annotations_{username}.xlsx
-```
-
-Each row in the file represents one annotation. The columns are:
+Annotations are written to `data/output/annotations_<username>.xlsx` on click of **Export**. One row per annotation:
 
 | Column | Type | Description |
-|--------|------|-------------|
+|---|---|---|
 | `fname` | string | Source HDF5 filename |
-| `artifact` | string | Activity type (e.g., "chairstand", "tug", "3mw", "6mw") |
-| `segment` | bool | Whether this annotation is a segment marker |
-| `scoring` | bool | Whether this segment was selected for scoring |
-| `review` | bool | Whether this annotation is flagged for review |
+| `artifact` | string | Activity type (`chair_stand`, `tug`, `3m_walk`, `6min_walk`) |
+| `segment` | bool | Segment flag |
+| `scoring` | bool | Scoring flag |
+| `review` | bool | Review flag |
 | `start_epoch` | float | Start time as Unix epoch (seconds) |
-| `end_epoch` | float | End time as Unix epoch (seconds) |
-| `start_time` | string | Start time as formatted string |
-| `end_time` | string | End time as formatted string |
-| `annotated_at` | string | Timestamp when the annotation was created |
-| `user` | string | Username of the annotator |
-| `notes` | string | Free-text notes attached by the annotator |
+| `end_epoch` | float | End time |
+| `start_time` | string | Start time formatted as text |
+| `end_time` | string | End time formatted as text |
+| `annotated_at` | string | When this row was written |
+| `user` | string | Annotator username |
+| `notes` | string | Free-text note |
 
-## Tips for efficient annotation
+Walking-detection results are written to `data/output/walking_suggestions.xlsx` (shared across users; one row per detected segment, with a `deleted` column for dismissals).
 
-- **Start with a large window** (e.g., 3600 seconds) to scan for activity episodes, then zoom in to annotate.
-- **Use the range selector minimap** to quickly navigate to different parts of the file.
-- **Annotate all episodes of one activity type** before moving to the next — this helps maintain consistency.
-- **Export frequently** so your work is saved. The app does not auto-save annotations; you must click Export.
-- **Use notes liberally** — they help other annotators (and your future self) understand ambiguous decisions.
-- **Flag rather than guess** — when in doubt, apply the review flag and move on. It is faster and more reliable than spending time on an uncertain annotation.
+## Tips
+
+- Start with a wide window (e.g. 3600 s) to find episodes, then zoom in to annotate.
+- Use the range-selector minimap to scrub long recordings.
+- Annotate one test type across the whole file before moving to the next — keeps your eye calibrated.
+- Export often. Closing the tab without exporting loses your work.
+- When you're not sure, flag for review and move on. A flag is faster and more reliable than a guess.

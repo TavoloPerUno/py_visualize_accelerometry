@@ -7,7 +7,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19023756.svg)](https://doi.org/10.5281/zenodo.19023756)
 
-A web-based application for visualizing and annotating accelerometry data. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/), it enables research teams to collaboratively label activity segments in large time-series recordings. The app is sensor-agnostic — it works with any tri-axial accelerometry data stored in HDF5 format.
+A web app for viewing and annotating tri-axial accelerometry data. Research teams use it to label activity segments in long recordings together. Built with [Panel](https://panel.holoviz.org/) and [Bokeh](https://bokeh.org/). Sensor-agnostic: any HDF5 file with `timestamp`, `x`, `y`, `z` columns works.
 
 ![Full application view](docs/images/demo_full_app.png)
 
@@ -24,49 +24,51 @@ A publicly accessible demo is hosted on Hugging Face Spaces:
 
 > **Note:** The demo uses real accelerometer data from the dataset below,
 > resampled and composed into short recordings (~10 min at 85 Hz). It does
-> not contain real participant recordings. Example annotations are
-> pre-populated to showcase labeling, flags, and inter-annotator variability.
+> not contain real participant data. Example annotations are pre-populated
+> to show labeling, flags, and inter-annotator variability.
 >
 > AlSahly, A. (2022). *Accelerometer Gyro Mobile Phone Dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.3390/s22176513
 
 ## Shared Server Deployment (HPC / Slurm)
 
-For HPC environments, you can run a single shared instance via Slurm that all team members connect to through SSH tunneling.
+On HPC, one Slurm job hosts the app for the whole team. Each member connects through an SSH tunnel.
 
-**Connect** (each user — submits job automatically if not running):
+Connect (submits a job automatically if one isn't running):
 ```bash
 bash hpc_utils/connect.sh
 ```
 
-**Stop the server**:
+Stop the server:
 ```bash
 bash hpc_utils/stop_server.sh
 ```
 
 ## What it does
 
-Researchers collect tri-axial accelerometry signals (x, y, z) and need to identify and label activity segments within those recordings. This tool lets annotators visually inspect signals and mark the time boundaries of activities of interest.
+Researchers collect tri-axial accelerometry signals and need to mark where specific activities happen in long recordings. This tool lets annotators inspect the signal, box-select a time range, and label it.
 
-The built-in activity labels are configured for standardized physical performance tests, but the app can load and visualize accelerometry data from any setting:
+The built-in labels target four physical performance tests, but the app loads any HDF5 file with the right schema.
 
-- **Chair Stand Test** — Repeated sit-to-stand cycles measuring lower-extremity strength
-- **Timed Up and Go (TUG)** — Rise, walk 3 m, turn, walk back, sit — assesses functional mobility
-- **3-Meter Walk Test** — Short-distance gait speed as a proxy for mobility and physical function
-- **6-Minute Walk Test** — Submaximal endurance test for aerobic capacity
+- **Chair Stand Test.** Five sit-to-stand cycles. Measures lower-extremity strength.
+- **Timed Up and Go (TUG).** Rise, walk 3 m, turn, walk back, sit. Measures functional mobility.
+- **3-Meter Walk Test.** Short-distance gait speed.
+- **6-Minute Walk Test.** Submaximal endurance.
 
 ## Features
 
-- **LTTB downsampling** — Renders 500K+ data points smoothly by reducing to ~10,000 visually representative points using the Largest Triangle Three Buckets algorithm
-- **Server-side HDF5 filtering** — Loads only the visible time window from disk using PyTables `where` clauses, keeping load times under 20 ms even for 1 GB+ files
-- **Fast navigation** — Previous/Next updates plot data in place (no full figure rebuild), so transitions are near-instant
-- **Network latency indicator** — Header displays live round-trip latency to the server, color-coded by speed
-- **Range selector** — Minimap for navigating long recordings without losing context
-- **Box-select annotation** — Select a time range and label it with one click
-- **Segment, scoring, and review flags** — Mark annotations for segmentation, scoring, or review with distinct hatch-pattern overlays
-- **Notes** — Attach free-text notes to any annotation
-- **Multi-user collaboration** — Each annotator sees their own file assignments; admins can impersonate users and manage accounts
-- **Authentication** — Built-in basic auth (or OAuth for production deployments)
-- **Auto-save to Excel** — Per-user annotation files for easy downstream analysis
+- **LTTB downsampling.** Renders 500K+ points smoothly by reducing each axis to ~10,000 visually representative points (Largest Triangle Three Buckets).
+- **Server-side HDF5 filtering.** Loads only the visible time window via PyTables `where` clauses. Under 20 ms on 1 GB+ files.
+- **Fast navigation.** Previous/Next patches the plot data in place; no full figure rebuild.
+- **Network latency indicator.** Header shows live round-trip latency to the server, color-coded by speed.
+- **Range selector.** Minimap to navigate long recordings without losing context.
+- **Box-select annotation.** Drag a time range, click an activity button.
+- **Segment, scoring, and review flags.** Three hatch patterns on top of the activity overlay.
+- **Vector magnitude overlay.** Toggle a fourth trace (√(x²+y²+z²)). Orientation-independent, so periodic motion and impacts pop out.
+- **Walking detection (Urbanek 2015).** FFT-based scan for sustained harmonic walking. Candidates show as dashed orange overlays, persist across refresh in a shared xlsx, and can be dismissed or reinstated per segment. No ML — classical signal processing.
+- **Notes.** Free text attached to any annotation.
+- **Multi-user collaboration.** Each annotator sees their own file assignments. Admins can impersonate users and manage accounts.
+- **Authentication.** Basic auth out of the box; OAuth for production.
+- **Excel export.** One annotation file per user.
 
 ## Installation
 

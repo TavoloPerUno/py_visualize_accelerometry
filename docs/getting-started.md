@@ -57,7 +57,7 @@ See `credentials.json.example` for a template.
 
 ## Running the app
 
-Once the app is running you will see the branded login page:
+Once the app is running you'll see the login page:
 
 ![Login page](images/login_page.png)
 
@@ -76,10 +76,10 @@ Open [http://localhost:5601/app](http://localhost:5601/app) in your browser.
 
 ### HPC (SLURM cluster)
 
-For running on a university SLURM cluster (e.g., Randi at UChicago), use the self-service connect script. It checks for an existing server, starts one if needed, and creates the SSH tunnel automatically:
+For a university SLURM cluster (e.g. Randi at UChicago), run the self-service connect script. It checks for an existing server, starts one if needed, and creates the SSH tunnel:
 
 ```bash
 bash hpc_utils/connect.sh
 ```
 
-See [Shared server startup](shared-server-startup.md) for detailed instructions and [Slurm deployment guide](slurm-deployment.md) for the full deployment guide.
+See [Shared server startup](shared-server-startup.md) for usage and [Slurm deployment guide](slurm-deployment.md) for the full setup.

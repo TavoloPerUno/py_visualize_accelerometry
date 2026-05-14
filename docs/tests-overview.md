@@ -1,18 +1,18 @@
 # Physical Performance Tests
 
-The app ships with built-in activity labels for four standardized physical performance tests commonly used in aging and clinical research. These labels serve as the default annotation categories, but the app itself is sensor-agnostic and can visualize accelerometry data from any context.
+The app ships with labels for four physical performance tests used in aging and clinical research. The app itself is sensor-agnostic — these labels are defaults, not constraints. You can annotate any accelerometry recording.
 
 ## Chair Stand Test
 
-The Chair Stand Test measures lower-extremity strength, balance, and postural control. The participant sits in a standard armless chair (approximately 43 cm high) with arms folded across the chest and is timed while standing up and sitting down repeatedly — either 5 times as fast as possible (Five Times Sit-to-Stand) or as many times as possible in 30 seconds (30-Second Chair Stand).
+The Chair Stand Test measures lower-extremity strength and postural control. The participant sits in a standard armless chair (~43 cm high) with arms folded across the chest and is timed while standing up and sitting down. There are two common variants: Five Times Sit-to-Stand (5 reps as fast as possible) and 30-Second Chair Stand (as many reps as possible in 30 seconds).
 
-The ability to rise from a seated position is a prerequisite for functional independence, making this test a key indicator of fall risk and physical decline in older adults.
+Rising from a seated position is a prerequisite for functional independence, so this test is a common indicator of fall risk and physical decline in older adults.
 
-**In accelerometry data**, chair stands produce distinctive periodic spikes as the participant transitions between sitting and standing. Each repetition appears as a high-amplitude burst separated by brief low-amplitude pauses.
+**In accelerometry data:** chair stands produce periodic spikes as the participant moves between sitting and standing. Each rep is a high-amplitude burst with brief low-amplitude pauses in between.
 
 ![Chair Stand signal pattern](images/signal_chair_stand.svg)
 
-**Annotation segments.** The Chair Stand Test is the primary example of an activity with multiple segments. Each individual sit-to-stand-to-sit cycle is one segment. A Five Times Sit-to-Stand episode should contain five segment annotations; a 30-Second Chair Stand episode may contain a variable number depending on the participant's ability. The annotator should mark the full episode as a single Chairstand activity, then create a segment box for each repetition within it.
+**Annotation segments.** Chair Stand is the main example of an activity with multiple segments. Each sit-to-stand-to-sit cycle is one segment. A Five Times Sit-to-Stand episode has five segments; a 30-Second Chair Stand has however many the participant completed. Mark the whole episode as one Chairstand annotation, then add a Segment flag for each rep.
 
 ### References
 
@@ -21,15 +21,15 @@ The ability to rise from a seated position is a prerequisite for functional inde
 
 ## Timed Up and Go (TUG)
 
-The TUG test assesses functional mobility, dynamic balance, and fall risk. The participant rises from a seated position, walks 3 meters at a comfortable pace, turns around, walks back, and sits down again. The entire sequence is timed.
+The TUG test measures functional mobility and fall risk. The participant rises from a seated position, walks 3 meters at a comfortable pace, turns, walks back, and sits. The full sequence is timed.
 
-Per CDC STEADI guidelines, an older adult who takes 12 seconds or longer to complete the TUG is considered at increased risk for falling.
+Per CDC STEADI guidelines, an older adult who takes 12 seconds or longer to complete the TUG is at increased risk of falling.
 
-**In accelerometry data**, TUG shows a sit-to-stand transition, a walking segment with rhythmic gait patterns, a turn (brief deceleration/acceleration), another walking segment, and a stand-to-sit transition.
+**In accelerometry data:** a sit-to-stand burst, a walking segment with rhythmic gait, a turn (brief deceleration then acceleration), another walking segment, and a stand-to-sit burst.
 
 ![TUG signal pattern](images/signal_tug.svg)
 
-**Annotation segments.** The TUG is performed as a single continuous movement, so it typically has only one segment covering the entire episode. The segment and scoring flags can both be applied to this single segment.
+**Annotation segments.** TUG is one continuous movement, so it usually gets one segment covering the full episode. The segment can also carry the scoring flag.
 
 ### References
 
@@ -39,15 +39,15 @@ Per CDC STEADI guidelines, an older adult who takes 12 seconds or longer to comp
 
 ## 3-Meter Walk Test
 
-The 3-Meter Walk Test measures gait speed over a short distance as an indicator of mobility and physical function. The participant walks 3 meters at their usual pace while being timed. Gait speed (meters/second) is calculated from the result.
+The 3-Meter Walk Test measures gait speed as an indicator of mobility and physical function. The participant walks 3 meters at their usual pace, timed. Gait speed (meters/second) is derived from the result.
 
-It is commonly used when space is limited (e.g., home-based assessments) and serves as a practical alternative to longer walk tests. Gait speed is widely regarded as "the sixth vital sign" due to its ability to predict mortality, disability, and hospitalization in older adults.
+This test fits constrained spaces like in-home assessments. Gait speed has been called "the sixth vital sign" because it predicts mortality, disability, and hospitalization in older adults.
 
-**In accelerometry data**, the 3-meter walk produces a short burst of rhythmic tri-axial oscillations corresponding to gait cycles.
+**In accelerometry data:** a short burst of rhythmic tri-axial oscillations matching the gait cycle.
 
 ![3-Meter Walk signal pattern](images/signal_3m_walk.svg)
 
-**Annotation segments.** The 3-Meter Walk is typically annotated as a single segment covering the full walk. In some protocols the participant may perform multiple trials; in that case, each trial is a separate segment within the activity episode, and the annotator selects the most representative trial for scoring.
+**Annotation segments.** Usually one segment for the full walk. If the protocol has multiple trials, each trial is a separate segment within the episode, and the annotator picks the cleanest one for scoring.
 
 ### References
 
@@ -57,15 +57,15 @@ It is commonly used when space is limited (e.g., home-based assessments) and ser
 
 ## 6-Minute Walk Test (6MWT)
 
-The 6-Minute Walk Test is a submaximal exercise test that measures aerobic capacity and endurance. The participant walks as far as possible along a flat corridor for 6 minutes at a self-selected pace. The primary outcome is the total distance covered.
+The 6MWT is a submaximal exercise test that measures aerobic capacity and endurance. The participant walks as far as possible along a flat corridor for 6 minutes at a self-selected pace. The outcome is the total distance.
 
-It is widely used in clinical and research settings to evaluate patients with cardiac and pulmonary conditions (e.g., heart failure, COPD) and does not require specialized equipment.
+Clinical and research settings use it to evaluate patients with cardiac and pulmonary conditions (heart failure, COPD). No special equipment is required.
 
-**In accelerometry data**, the 6MWT appears as a sustained period (up to 6 minutes) of rhythmic gait-pattern oscillations, often with gradual changes in amplitude or frequency as fatigue sets in. Brief disruptions in the pattern indicate corridor turns.
+**In accelerometry data:** a sustained run of rhythmic gait oscillations, sometimes with gradual amplitude or frequency changes as fatigue sets in. Brief disruptions are corridor turns.
 
 ![6-Minute Walk signal pattern](images/signal_6min_walk.svg)
 
-**Annotation segments.** The 6MWT is generally annotated as a single segment for the entire walk. If the participant takes rest breaks or the protocol involves turn-arounds at corridor ends, annotators may optionally mark start/stop or turn segments, but this is not required. A single segment with the scoring flag is sufficient for most use cases.
+**Annotation segments.** Usually one segment for the entire walk. If the participant rests or the protocol uses corridor turn-arounds, you can mark start/stop or turn segments, but it isn't required. One segment with the scoring flag is enough for most use cases.
 
 ### References
 
@@ -75,7 +75,7 @@ It is widely used in clinical and research settings to evaluate patients with ca
 
 ## Context: NSHAP Study
 
-These physical performance tests are part of the **National Social Life, Health, and Aging Project (NSHAP)**, a longitudinal study of health and social factors in older Americans conducted at the University of Chicago. Accelerometry data is collected during in-home assessments to objectively measure physical activity and functional performance.
+These tests are part of the **National Social Life, Health, and Aging Project (NSHAP)**, a longitudinal study of health and social factors in older Americans run at the University of Chicago. Accelerometry data is collected during in-home assessments to measure physical activity and functional performance objectively.
 
 ### References
 
