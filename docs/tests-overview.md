@@ -10,7 +10,7 @@ Rising from a seated position is a prerequisite for functional independence, so 
 
 **In accelerometry data:** chair stands produce periodic spikes as the participant moves between sitting and standing. Each rep is a high-amplitude burst with brief low-amplitude pauses in between.
 
-![Chair Stand signal pattern](images/signal_chair_stand.svg)
+![Chair Stand signal pattern](images/chair_stand_episode.png)
 
 **Annotation segments.** Chair Stand is the main example of an activity with multiple segments. Each sit-to-stand-to-sit cycle is one segment. A Five Times Sit-to-Stand episode has five segments; a 30-Second Chair Stand has however many the participant completed. Mark the whole episode as one Chairstand annotation, then add a Segment flag for each rep.
 
@@ -27,7 +27,7 @@ Per CDC STEADI guidelines, an older adult who takes 12 seconds or longer to comp
 
 **In accelerometry data:** a sit-to-stand burst, a walking segment with rhythmic gait, a turn (brief deceleration then acceleration), another walking segment, and a stand-to-sit burst.
 
-![TUG signal pattern](images/signal_tug.svg)
+![TUG signal pattern](images/tug_episode.png)
 
 **Annotation segments.** TUG is one continuous movement, so it usually gets one segment covering the full episode. The segment can also carry the scoring flag.
 
@@ -45,7 +45,7 @@ This test fits constrained spaces like in-home assessments. Gait speed has been 
 
 **In accelerometry data:** a short burst of rhythmic tri-axial oscillations matching the gait cycle.
 
-![3-Meter Walk signal pattern](images/signal_3m_walk.svg)
+![3-Meter Walk signal pattern](images/three_m_walk_episode.png)
 
 **Annotation segments.** Usually one segment for the full walk. If the protocol has multiple trials, each trial is a separate segment within the episode, and the annotator picks the cleanest one for scoring.
 
@@ -63,7 +63,7 @@ Clinical and research settings use it to evaluate patients with cardiac and pulm
 
 **In accelerometry data:** a sustained run of rhythmic gait oscillations, sometimes with gradual amplitude or frequency changes as fatigue sets in. Brief disruptions are corridor turns.
 
-![6-Minute Walk signal pattern](images/signal_6min_walk.svg)
+![6-Minute Walk signal pattern](images/six_min_walk_episode.png)
 
 **Annotation segments.** Usually one segment for the entire walk. If the participant rests or the protocol uses corridor turn-arounds, you can mark start/stop or turn segments, but it isn't required. One segment with the scoring flag is enough for most use cases.
 
