@@ -51,9 +51,10 @@ class TestMakePlot:
             "segment": ColumnDataSource(data=dict(**empty)),
             "scoring": ColumnDataSource(data=dict(**empty)),
             "review": ColumnDataSource(data=dict(**empty)),
+            "walking_suggestion": ColumnDataSource(data=dict(**empty)),
         }
 
-    def test_returns_four_elements(self):
+    def test_returns_five_elements(self):
         n = 2000
         pdf = pd.DataFrame({
             "timestamp": pd.date_range("2023-01-01", periods=n, freq="12ms"),
@@ -62,16 +63,16 @@ class TestMakePlot:
             "z": np.random.randn(n),
         })
         result = make_plot(pdf, self._make_annotation_cds())
-        assert len(result) == 4
+        assert len(result) == 5
 
     def test_empty_data_returns_placeholders(self):
         result = make_plot(None, self._make_annotation_cds())
-        assert len(result) == 4
+        assert len(result) == 5
 
     def test_empty_dataframe_returns_placeholders(self):
         pdf = pd.DataFrame(columns=["timestamp", "x", "y", "z"])
         result = make_plot(pdf, self._make_annotation_cds())
-        assert len(result) == 4
+        assert len(result) == 5
 
     def test_signal_cds_has_expected_keys(self):
         n = 2000
@@ -81,8 +82,9 @@ class TestMakePlot:
             "y": np.random.randn(n),
             "z": np.random.randn(n),
         })
-        _, _, _, signal_cds = make_plot(pdf, self._make_annotation_cds())
+        _, _, _, signal_cds, _ = make_plot(pdf, self._make_annotation_cds())
         assert "timestamp" in signal_cds.data
         assert "x" in signal_cds.data
         assert "y" in signal_cds.data
         assert "z" in signal_cds.data
+        assert "vm" in signal_cds.data

@@ -30,7 +30,7 @@ class TestAppStateInit:
     def test_annotation_cds_keys(self, patch_config, sample_h5):
         state = AppState("test_user")
         expected = {"chair_stand", "3m_walk", "6min_walk", "tug",
-                    "segment", "scoring", "review"}
+                    "segment", "scoring", "review", "walking_suggestion"}
         assert set(state.annotation_cds.keys()) == expected
 
     def test_initial_selection_bounds_none(self, patch_config, sample_h5):
