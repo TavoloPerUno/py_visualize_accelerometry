@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.2] - 2026-05-14
+
+### Changed
+- test: update test fixtures for VM trace and walking_suggestion CDS
+
 ## [3.5.1] - 2026-05-14
 
 ### Changed
@@ -375,3 +380,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [3.5.0]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.4.2...v3.5.0
 
 [3.5.1]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.5.0...v3.5.1
+
+[3.5.2]: https://github.com/TavoloPerUno/py_visualize_accelerometry/compare/v3.5.1...v3.5.2
